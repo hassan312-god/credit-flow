@@ -1,0 +1,117 @@
+import { useEffect, useState } from 'react';
+import { MainLayout } from '@/components/layout/MainLayout';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Plus, Search, Phone, Mail } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Link } from 'react-router-dom';
+
+interface Client {
+  id: string;
+  full_name: string;
+  email: string | null;
+  phone: string;
+  profession: string | null;
+  created_at: string;
+}
+
+export default function Clients() {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      const { data } = await supabase
+        .from('clients')
+        .select('*')
+        .order('created_at', { ascending: false });
+      setClients(data || []);
+      setLoading(false);
+    };
+    fetchClients();
+  }, []);
+
+  const filteredClients = clients.filter(c =>
+    c.full_name.toLowerCase().includes(search.toLowerCase()) ||
+    c.phone.includes(search)
+  );
+
+  return (
+    <MainLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="font-display text-3xl font-bold">Clients</h1>
+          <Link to="/clients/new">
+            <Button className="gap-2">
+              <Plus className="w-4 h-4" />
+              Nouveau client
+            </Button>
+          </Link>
+        </div>
+
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Rechercher un client..."
+            className="pl-10"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-6">
+                  <div className="h-6 bg-muted rounded w-2/3 mb-4" />
+                  <div className="h-4 bg-muted rounded w-1/2" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : filteredClients.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredClients.map((client) => (
+              <Link key={client.id} to={`/clients/${client.id}`}>
+                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-lg font-semibold text-primary">
+                          {client.full_name.charAt(0)}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-foreground truncate">{client.full_name}</p>
+                        <p className="text-sm text-muted-foreground">{client.profession || 'Non renseigné'}</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Phone className="w-4 h-4" />
+                        <span>{client.phone}</span>
+                      </div>
+                      {client.email && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Mail className="w-4 h-4" />
+                          <span className="truncate">{client.email}</span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>Aucun client trouvé</p>
+          </div>
+        )}
+      </div>
+    </MainLayout>
+  );
+}
