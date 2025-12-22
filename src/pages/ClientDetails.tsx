@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { ArrowLeft, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, Plus } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, Plus, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useAuth } from '@/hooks/useAuth';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface Client {
   id: string;
@@ -34,9 +36,19 @@ interface Loan {
 export default function ClientDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { role } = useAuth();
   const [client, setClient] = useState<Client | null>(null);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Vérifier si l'utilisateur a accès aux clients
+  const canAccessClients = role === 'admin' || role === 'directeur' || role === 'agent_credit';
+
+  useEffect(() => {
+    if (!canAccessClients) {
+      navigate('/dashboard');
+    }
+  }, [canAccessClients, navigate]);
 
   useEffect(() => {
     const fetchClientData = async () => {
@@ -80,6 +92,20 @@ export default function ClientDetails() {
           <div className="h-8 bg-muted rounded w-1/3" />
           <div className="h-64 bg-muted rounded" />
         </div>
+      </MainLayout>
+    );
+  }
+
+  if (!canAccessClients) {
+    return (
+      <MainLayout>
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Accès refusé</AlertTitle>
+          <AlertDescription>
+            Vous n'avez pas les permissions nécessaires pour accéder aux détails d'un client.
+          </AlertDescription>
+        </Alert>
       </MainLayout>
     );
   }

@@ -11,6 +11,8 @@ import { ArrowLeft, Save, Loader2, Calculator } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { OperationBlocked } from '@/components/OperationBlocked';
+import { useWorkSession } from '@/hooks/useWorkSession';
 
 const loanSchema = z.object({
   client_id: z.string().uuid('Veuillez sélectionner un client'),
@@ -30,6 +32,7 @@ interface Client {
 
 export default function LoanForm() {
   const navigate = useNavigate();
+  const { canPerformOperations } = useWorkSession();
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [errors, setErrors] = useState<Partial<Record<keyof LoanFormData, string>>>({});
@@ -109,6 +112,7 @@ export default function LoanForm() {
   return (
     <MainLayout>
       <div className="max-w-3xl mx-auto space-y-6">
+        <OperationBlocked operation="créer un prêt" />
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
@@ -201,7 +205,7 @@ export default function LoanForm() {
                     <Button type="button" variant="outline" onClick={() => navigate(-1)}>
                       Annuler
                     </Button>
-                    <Button type="submit" disabled={loading} className="gap-2">
+                    <Button type="submit" disabled={loading || !canPerformOperations} className="gap-2">
                       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                       Soumettre
                     </Button>

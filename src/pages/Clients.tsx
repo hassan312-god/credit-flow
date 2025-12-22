@@ -3,9 +3,11 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Search, Phone, Mail } from 'lucide-react';
+import { Plus, Search, Phone, Mail, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface Client {
   id: string;
@@ -17,9 +19,21 @@ interface Client {
 }
 
 export default function Clients() {
+  const { role } = useAuth();
+  const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // Vérifier si l'utilisateur a accès aux clients
+  const canAccessClients = role === 'admin' || role === 'directeur' || role === 'agent_credit';
+
+  useEffect(() => {
+    if (!canAccessClients) {
+      navigate('/dashboard');
+      return;
+    }
+  }, [canAccessClients, navigate]);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -37,6 +51,20 @@ export default function Clients() {
     c.full_name.toLowerCase().includes(search.toLowerCase()) ||
     c.phone.includes(search)
   );
+
+  if (!canAccessClients) {
+    return (
+      <MainLayout>
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Accès refusé</AlertTitle>
+          <AlertDescription>
+            Vous n'avez pas les permissions nécessaires pour accéder à cette page.
+          </AlertDescription>
+        </Alert>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>

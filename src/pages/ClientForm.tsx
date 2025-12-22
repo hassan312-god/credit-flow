@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -6,10 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { OperationBlocked } from '@/components/OperationBlocked';
+import { useWorkSession } from '@/hooks/useWorkSession';
+import { useAuth } from '@/hooks/useAuth';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const clientSchema = z.object({
   full_name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères').max(100),
@@ -26,7 +30,18 @@ type ClientFormData = z.infer<typeof clientSchema>;
 
 export default function ClientForm() {
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const { canPerformOperations } = useWorkSession();
   const [loading, setLoading] = useState(false);
+
+  // Vérifier si l'utilisateur a accès aux clients
+  const canAccessClients = role === 'admin' || role === 'directeur' || role === 'agent_credit';
+
+  useEffect(() => {
+    if (!canAccessClients) {
+      navigate('/dashboard');
+    }
+  }, [canAccessClients, navigate]);
   const [errors, setErrors] = useState<Partial<Record<keyof ClientFormData, string>>>({});
   const [formData, setFormData] = useState<ClientFormData>({
     full_name: '',
@@ -89,9 +104,24 @@ export default function ClientForm() {
     }
   };
 
+  if (!canAccessClients) {
+    return (
+      <MainLayout>
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Accès refusé</AlertTitle>
+          <AlertDescription>
+            Vous n'avez pas les permissions nécessaires pour créer un client.
+          </AlertDescription>
+        </Alert>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <div className="max-w-2xl mx-auto space-y-6">
+        <OperationBlocked operation="créer un client" />
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
@@ -205,7 +235,7 @@ export default function ClientForm() {
                 <Button type="button" variant="outline" onClick={() => navigate(-1)}>
                   Annuler
                 </Button>
-                <Button type="submit" disabled={loading} className="gap-2">
+                <Button type="submit" disabled={loading || !canPerformOperations} className="gap-2">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   Enregistrer
                 </Button>

@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { NotificationBell } from '@/components/NotificationBell';
+import { WorkSessionStatus } from '@/components/WorkSessionStatus';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -15,6 +16,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           <div className="fixed top-4 right-8 z-50">
             <NotificationBell />
           </div>
+          <WorkSessionStatus />
           {children}
         </div>
       </main>

@@ -14,6 +14,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { OperationBlocked } from '@/components/OperationBlocked';
+import { useWorkSession } from '@/hooks/useWorkSession';
 
 interface PaymentSchedule {
   id: string;
@@ -40,6 +42,7 @@ interface Payment {
 }
 
 export default function Payments() {
+  const { canPerformOperations } = useWorkSession();
   const [schedules, setSchedules] = useState<PaymentSchedule[]>([]);
   const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
   const [search, setSearch] = useState('');
@@ -164,6 +167,7 @@ export default function Payments() {
   return (
     <MainLayout>
       <div className="space-y-6">
+        <OperationBlocked operation="enregistrer un paiement" />
         <div className="flex items-center justify-between">
           <h1 className="font-display text-3xl font-bold">Paiements</h1>
         </div>

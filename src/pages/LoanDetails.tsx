@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useWorkSession } from '@/hooks/useWorkSession';
 
 interface Loan {
   id: string;
@@ -61,6 +62,7 @@ export default function LoanDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, role } = useAuth();
+  const { canPerformOperations } = useWorkSession();
   const [loan, setLoan] = useState<Loan | null>(null);
   const [paymentSchedule, setPaymentSchedule] = useState<PaymentSchedule[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -213,6 +215,10 @@ export default function LoanDetails() {
 
   const handleValidate = async () => {
     if (!loan || !user) return;
+    if (!canPerformOperations) {
+      toast.error('Vous devez ouvrir votre journée de travail avant de valider un prêt');
+      return;
+    }
 
     setProcessing(true);
     try {
@@ -248,6 +254,10 @@ export default function LoanDetails() {
 
   const handleReject = async () => {
     if (!loan || !user) return;
+    if (!canPerformOperations) {
+      toast.error('Vous devez ouvrir votre journée de travail avant de rejeter un prêt');
+      return;
+    }
 
     setProcessing(true);
     try {

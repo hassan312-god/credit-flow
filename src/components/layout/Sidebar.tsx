@@ -25,7 +25,7 @@ const menuItems = [
     path: '/clients', 
     icon: Users, 
     label: 'Clients',
-    roles: ['admin', 'directeur', 'agent_credit', 'caissier', 'recouvrement']
+    roles: ['admin', 'directeur', 'agent_credit']
   },
   { 
     path: '/loans', 
