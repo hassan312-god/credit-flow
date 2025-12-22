@@ -226,10 +226,13 @@ VALUES
 ON CONFLICT (day_of_week) DO NOTHING;
 
 -- Create view for attendance summary
-CREATE OR REPLACE VIEW public.attendance_summary AS
+-- Note: This view will be secured in a later migration (20251223050000_fix_attendance_summary_security.sql)
+-- to avoid exposing auth.users and ensure proper RLS policies
+CREATE OR REPLACE VIEW public.attendance_summary
+WITH (security_invoker=true) AS
 SELECT 
   ws.user_id,
-  u.email,
+  p.email,
   p.full_name,
   DATE_TRUNC('month', ws.work_date)::DATE as month,
   COUNT(*) FILTER (WHERE ws.status = 'closed') as days_worked,
@@ -239,10 +242,9 @@ SELECT
   SUM(ws.total_work_minutes) as total_work_minutes,
   AVG(ws.total_work_minutes) as avg_work_minutes
 FROM public.work_sessions ws
-JOIN auth.users u ON ws.user_id = u.id
-LEFT JOIN public.profiles p ON u.id = p.id
-GROUP BY ws.user_id, u.email, p.full_name, DATE_TRUNC('month', ws.work_date)::DATE;
+LEFT JOIN public.profiles p ON ws.user_id = p.id
+GROUP BY ws.user_id, p.email, p.full_name, DATE_TRUNC('month', ws.work_date)::DATE;
 
--- Grant access to view
-GRANT SELECT ON public.attendance_summary TO authenticated;
+-- Note: Access will be restricted in migration 20251223050000_fix_attendance_summary_security.sql
+-- Do not grant public access here for security reasons
 

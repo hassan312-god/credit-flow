@@ -175,15 +175,16 @@ export default function Reports() {
               </DropdownMenuContent>
             </DropdownMenu>
             <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="3">3 derniers mois</SelectItem>
-              <SelectItem value="6">6 derniers mois</SelectItem>
-              <SelectItem value="12">12 derniers mois</SelectItem>
-            </SelectContent>
-          </Select>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3">3 derniers mois</SelectItem>
+                <SelectItem value="6">6 derniers mois</SelectItem>
+                <SelectItem value="12">12 derniers mois</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Key Metrics */}
