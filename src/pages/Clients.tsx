@@ -3,11 +3,16 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Search, Phone, Mail, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Phone, Mail, AlertTriangle, Trash2, MoreVertical } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalCache } from '@/hooks/useLocalCache';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { deleteFromLocal, STORES } from '@/services/localStorage';
 
 interface Client {
   id: string;
@@ -22,9 +27,12 @@ export default function Clients() {
   const { role } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+  const [deleting, setDeleting] = useState(false);
   
   // Utiliser le cache local avec synchronisation automatique
-  const { data: clients, loading, isOnline, refresh } = useLocalCache<Client>({
+  const { data: clients, loading, isOnline, refresh, removeFromCache } = useLocalCache<Client>({
     table: 'clients',
     autoSync: true,
     syncInterval: 5 * 60 * 1000, // Synchroniser toutes les 5 minutes
@@ -51,6 +59,70 @@ export default function Clients() {
     c.full_name.toLowerCase().includes(search.toLowerCase()) ||
     c.phone.includes(search)
   );
+
+  const canDeleteClient = (client: Client) => {
+    // Seuls admin et directeur peuvent supprimer
+    return (role === 'admin' || role === 'directeur');
+  };
+
+  const handleDeleteClick = (client: Client, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setClientToDelete(client);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteClient = async () => {
+    if (!clientToDelete) return;
+    
+    setDeleting(true);
+    try {
+      // Vérifier s'il y a des prêts actifs
+      const { data: activeLoans } = await supabase
+        .from('loans')
+        .select('id')
+        .eq('client_id', clientToDelete.id)
+        .in('status', ['en_cours', 'decaisse', 'en_attente', 'approuve']);
+
+      if (activeLoans && activeLoans.length > 0) {
+        toast.error(`Ce client a ${activeLoans.length} prêt(s) actif(s). Vous devez d'abord clôturer tous les prêts.`);
+        setDeleteDialogOpen(false);
+        setDeleting(false);
+        return;
+      }
+
+      // Supprimer de Supabase
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', clientToDelete.id);
+
+      if (error) throw error;
+
+      // Supprimer du cache local
+      try {
+        await removeFromCache(clientToDelete.id);
+      } catch (cacheError) {
+        console.warn('Error deleting from local cache:', cacheError);
+        // Essayer avec deleteFromLocal directement
+        try {
+          await deleteFromLocal(STORES.clients, clientToDelete.id);
+        } catch (e) {
+          console.warn('Error with deleteFromLocal:', e);
+        }
+      }
+
+      toast.success('Client supprimé avec succès');
+      setDeleteDialogOpen(false);
+      setClientToDelete(null);
+      refresh();
+    } catch (error: any) {
+      console.error('Error deleting client:', error);
+      toast.error(error.message || 'Erreur lors de la suppression du client');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (!canAccessClients) {
     return (
@@ -105,8 +177,8 @@ export default function Clients() {
         ) : filteredClients.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredClients.map((client) => (
-              <Link key={client.id} to={`/clients/${client.id}`}>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <Card key={client.id} className="hover:shadow-md transition-shadow relative group">
+                <Link to={`/clients/${client.id}`} className="block">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -132,8 +204,28 @@ export default function Clients() {
                       )}
                     </div>
                   </CardContent>
-                </Card>
-              </Link>
+                </Link>
+                {canDeleteClient(client) && (
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.preventDefault()}>
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={(e) => handleDeleteClick(client, e)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Supprimer
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                )}
+              </Card>
             ))}
           </div>
         ) : (
@@ -141,6 +233,56 @@ export default function Clients() {
             <p>Aucun client trouvé</p>
           </div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmer la suppression</DialogTitle>
+              <DialogDescription>
+                Êtes-vous sûr de vouloir supprimer le client <strong>{clientToDelete?.full_name}</strong> ?
+                <br />
+                <br />
+                Cette action est <strong>irréversible</strong> et supprimera également :
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>Tous les prêts associés à ce client</li>
+                  <li>Tous les échéanciers de paiement</li>
+                  <li>Tous les paiements enregistrés</li>
+                </ul>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDeleteDialogOpen(false);
+                  setClientToDelete(null);
+                }}
+                disabled={deleting}
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteClient}
+                disabled={deleting}
+                className="gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Suppression...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Supprimer définitivement
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );

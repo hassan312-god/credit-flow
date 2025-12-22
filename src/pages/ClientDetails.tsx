@@ -5,12 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { ArrowLeft, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, Plus, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, Plus, AlertTriangle, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useAuth } from '@/hooks/useAuth';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { toast } from 'sonner';
+import { deleteFromLocal } from '@/services/localStorage';
+import { STORES } from '@/services/localStorage';
 
 interface Client {
   id: string;
@@ -40,6 +44,8 @@ export default function ClientDetails() {
   const [client, setClient] = useState<Client | null>(null);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Vérifier si l'utilisateur a accès aux clients
   const canAccessClients = role === 'admin' || role === 'directeur' || role === 'agent_credit';
@@ -124,19 +130,74 @@ export default function ClientDetails() {
   }
 
   const totalLoans = loans.reduce((sum, l) => sum + Number(l.amount), 0);
-  const activeLoans = loans.filter(l => ['en_cours', 'decaisse'].includes(l.status)).length;
+  const activeLoans = loans.filter(l => ['en_cours', 'decaisse', 'en_attente', 'approuve'].includes(l.status)).length;
+  const canDeleteClient = (role === 'admin' || role === 'directeur') && activeLoans === 0;
+
+  const handleDeleteClient = async () => {
+    if (!client || !id) return;
+    
+    setDeleting(true);
+    try {
+      // Supprimer de Supabase
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Supprimer du cache local
+      try {
+        await deleteFromLocal(STORES.clients, id);
+      } catch (cacheError) {
+        console.warn('Error deleting from local cache:', cacheError);
+      }
+
+      toast.success('Client supprimé avec succès');
+      navigate('/clients');
+    } catch (error: any) {
+      console.error('Error deleting client:', error);
+      toast.error(error.message || 'Erreur lors de la suppression du client');
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+    }
+  };
 
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h1 className="font-display text-3xl font-bold">{client.full_name}</h1>
-            <p className="text-muted-foreground">Client depuis le {formatDate(client.created_at)}</p>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <div>
+                <h1 className="font-display text-3xl font-bold">{client.full_name}</h1>
+                <p className="text-muted-foreground">Client depuis le {formatDate(client.created_at)}</p>
+              </div>
+            </div>
+            {canDeleteClient && (
+              <Button
+                variant="destructive"
+                onClick={() => setDeleteDialogOpen(true)}
+                className="gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Supprimer le client
+              </Button>
+            )}
           </div>
+          {activeLoans > 0 && (role === 'admin' || role === 'directeur') && (
+            <Alert variant="destructive" className="max-w-2xl">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Suppression impossible</AlertTitle>
+              <AlertDescription>
+                Ce client a {activeLoans} prêt(s) actif(s) ou en attente. Vous devez d'abord clôturer ou annuler tous les prêts avant de pouvoir supprimer le client.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -265,6 +326,53 @@ export default function ClientDetails() {
             )}
           </CardContent>
         </Card>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmer la suppression</DialogTitle>
+              <DialogDescription>
+                Êtes-vous sûr de vouloir supprimer le client <strong>{client.full_name}</strong> ?
+                <br />
+                <br />
+                Cette action est <strong>irréversible</strong> et supprimera également :
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>Tous les prêts associés à ce client</li>
+                  <li>Tous les échéanciers de paiement</li>
+                  <li>Tous les paiements enregistrés</li>
+                </ul>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDeleteDialogOpen(false)}
+                disabled={deleting}
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteClient}
+                disabled={deleting}
+                className="gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Suppression...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Supprimer définitivement
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );
