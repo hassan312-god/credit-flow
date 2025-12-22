@@ -51,7 +51,7 @@ export function MobileHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-border md:hidden shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-border md:hidden shadow-sm">
       <div className="px-4 py-3 safe-area-top">
         {/* Top bar */}
         <div className="flex items-center justify-between">
@@ -60,15 +60,16 @@ export function MobileHeader() {
             size="icon"
             onClick={() => setIsMobileOpen(true)}
             className="h-9 w-9 -ml-2"
+            aria-label="Ouvrir le menu"
           >
             <Menu className="w-5 h-5" />
           </Button>
           
-          <h1 className="font-display text-base font-bold text-foreground">
+          <h1 className="font-display text-base font-bold text-foreground flex-1 text-center">
             {getPageTitle()}
           </h1>
           
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 w-9 justify-end">
             <NotificationBell />
           </div>
         </div>

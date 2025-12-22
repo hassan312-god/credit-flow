@@ -154,22 +154,11 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Bouton hamburger pour mobile */}
-      {isMobile && (
-        <button
-          onClick={toggleSidebar}
-          className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-sidebar hover:bg-sidebar-accent text-sidebar-foreground shadow-lg md:hidden"
-          aria-label="Toggle menu"
-        >
-          {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
-      )}
-
       <aside className={cn(
         "sidebar-container fixed left-0 top-0 h-screen bg-sidebar flex flex-col border-r border-sidebar-border transition-all duration-300 z-40",
         // Desktop
         isCollapsed ? "md:w-20" : "md:w-64",
-        // Mobile: overlay
+        // Mobile: overlay - toujours largeur complète avec noms visibles
         isMobile && (isMobileOpen ? "w-64" : "-translate-x-full"),
         !isMobile && "translate-x-0"
       )}>
@@ -208,13 +197,24 @@ export function Sidebar() {
                 <p className="text-xs text-sidebar-foreground/60 mt-0.5">Gestion des prêts</p>
               </div>
             </div>
-            <button
-              onClick={toggleSidebar}
-              className="p-1.5 rounded-lg hover:bg-sidebar-accent transition-colors flex-shrink-0"
-              aria-label="Collapse sidebar"
-            >
-              <ChevronLeft className="w-4 h-4 text-sidebar-foreground" />
-            </button>
+            {/* Bouton fermer sur mobile, collapse sur desktop */}
+            {isMobile ? (
+              <button
+                onClick={() => setIsMobileOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-sidebar-accent transition-colors flex-shrink-0"
+                aria-label="Fermer le menu"
+              >
+                <X className="w-5 h-5 text-sidebar-foreground" />
+              </button>
+            ) : (
+              <button
+                onClick={toggleSidebar}
+                className="p-1.5 rounded-lg hover:bg-sidebar-accent transition-colors flex-shrink-0"
+                aria-label="Collapse sidebar"
+              >
+                <ChevronLeft className="w-4 h-4 text-sidebar-foreground" />
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -237,13 +237,15 @@ export function Sidebar() {
                 'bg-white/5 hover:bg-white/10',
                 isActive && 'bg-sidebar-accent text-sidebar-foreground',
                 !isActive && 'text-sidebar-foreground/70',
-                isCollapsed && 'justify-center px-2'
+                // Sur mobile, toujours afficher les noms (pas de collapse)
+                isCollapsed && !isMobile && 'justify-center px-2'
               )
             }
-            title={isCollapsed ? item.label : undefined}
+            title={isCollapsed && !isMobile ? item.label : undefined}
           >
             <item.icon className="w-5 h-5 flex-shrink-0" />
-            {!isCollapsed && <span className="truncate">{item.label}</span>}
+            {/* Toujours afficher les noms sur mobile, sinon selon isCollapsed */}
+            {(isMobile || !isCollapsed) && <span className="truncate">{item.label}</span>}
           </NavLink>
         ))}
       </nav>
@@ -252,7 +254,7 @@ export function Sidebar() {
       <div className="p-4 border-t border-sidebar-border">
         <div className={cn(
           "flex items-center gap-3 mb-3",
-          isCollapsed && "justify-center"
+          isCollapsed && !isMobile && "justify-center"
         )}>
           <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center flex-shrink-0">
             <span className="text-sm font-medium text-sidebar-foreground">
@@ -274,12 +276,12 @@ export function Sidebar() {
           onClick={handleSignOut}
           className={cn(
             "w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors",
-            isCollapsed && "justify-center px-2"
+            isCollapsed && !isMobile && "justify-center px-2"
           )}
-          title={isCollapsed ? "Déconnexion" : undefined}
+          title={isCollapsed && !isMobile ? "Déconnexion" : undefined}
         >
           <LogOut className="w-4 h-4 flex-shrink-0" />
-          {!isCollapsed && <span>Déconnexion</span>}
+          {(isMobile || !isCollapsed) && <span>Déconnexion</span>}
         </button>
       </div>
     </aside>

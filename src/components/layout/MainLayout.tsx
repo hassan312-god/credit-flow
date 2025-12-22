@@ -42,17 +42,21 @@ function MainLayoutContent({ children }: MainLayoutProps) {
           // Mobile: pas de marge, la sidebar est en overlay
           "ml-0",
           // Padding bottom pour la navigation mobile
-          isMobile && "pb-20"
+          isMobile && "pb-20",
+          // Padding top pour le header mobile
+          isMobile && "pt-16"
         )}
       >
         <div className={cn(
           "p-4 md:p-8",
-          // Padding top pour le header mobile
-          isMobile && "pt-2"
+          // Pas de padding top supplémentaire sur mobile car déjà géré par main
+          "w-full"
         )}>
           <ConnectionStatus />
           <WorkSessionStatus />
-          {children}
+          <div className="w-full">
+            {children}
+          </div>
         </div>
       </main>
       
