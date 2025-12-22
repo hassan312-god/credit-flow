@@ -76,45 +76,46 @@ export default function Loans() {
         <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
-            <TableHeader>
-              <TableRow className="table-header">
-                <TableHead>Client</TableHead>
-                <TableHead>Montant</TableHead>
-                <TableHead>Durée</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                [...Array(5)].map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell colSpan={5}><div className="h-4 bg-muted rounded animate-pulse" /></TableCell>
-                  </TableRow>
-                ))
-              ) : filteredLoans.length > 0 ? (
-                filteredLoans.map((loan) => (
-                  <TableRow 
-                    key={loan.id} 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/loans/${loan.id}`)}
-                  >
-                    <TableCell className="font-medium">{loan.client?.full_name || 'N/A'}</TableCell>
-                    <TableCell>{formatCurrency(loan.amount)}</TableCell>
-                    <TableCell>{loan.duration_months} mois</TableCell>
-                    <TableCell><StatusBadge status={loan.status as any} /></TableCell>
-                    <TableCell className="text-muted-foreground">{formatDate(loan.created_at)}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    Aucun prêt trouvé
-                  </TableCell>
+              <TableHeader>
+                <TableRow className="table-header">
+                  <TableHead>Client</TableHead>
+                  <TableHead>Montant</TableHead>
+                  <TableHead>Durée</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Date</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell colSpan={5}><div className="h-4 bg-muted rounded animate-pulse" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : filteredLoans.length > 0 ? (
+                  filteredLoans.map((loan) => (
+                    <TableRow 
+                      key={loan.id} 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/loans/${loan.id}`)}
+                    >
+                      <TableCell className="font-medium">{loan.client?.full_name || 'N/A'}</TableCell>
+                      <TableCell>{formatCurrency(loan.amount)}</TableCell>
+                      <TableCell>{loan.duration_months} mois</TableCell>
+                      <TableCell><StatusBadge status={loan.status as any} /></TableCell>
+                      <TableCell className="text-muted-foreground">{formatDate(loan.created_at)}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      Aucun prêt trouvé
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
     </MainLayout>
