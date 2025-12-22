@@ -8,7 +8,14 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
+import ClientForm from "./pages/ClientForm";
+import ClientDetails from "./pages/ClientDetails";
 import Loans from "./pages/Loans";
+import LoanForm from "./pages/LoanForm";
+import Payments from "./pages/Payments";
+import Recovery from "./pages/Recovery";
+import Reports from "./pages/Reports";
+import Users from "./pages/Users";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,7 +32,14 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/clients" element={<Clients />} />
+            <Route path="/clients/new" element={<ClientForm />} />
+            <Route path="/clients/:id" element={<ClientDetails />} />
             <Route path="/loans" element={<Loans />} />
+            <Route path="/loans/new" element={<LoanForm />} />
+            <Route path="/payments" element={<Payments />} />
+            <Route path="/recovery" element={<Recovery />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/users" element={<Users />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
