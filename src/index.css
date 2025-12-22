@@ -273,6 +273,45 @@
   .sidebar-container:hover .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
     background-color: hsl(222 30% 30% / 0.7);
   }
+
+  /* Mobile Table Scroll Optimization */
+  .table-scroll-wrapper {
+    @apply overflow-x-auto -mx-4 md:mx-0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(220 13% 60% / 0.3) transparent;
+  }
+
+  .table-scroll-wrapper::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .table-scroll-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .table-scroll-wrapper::-webkit-scrollbar-thumb {
+    background-color: hsl(220 13% 60% / 0.3);
+    border-radius: 3px;
+  }
+
+  .table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(220 13% 60% / 0.5);
+  }
+
+  /* Mobile responsive improvements */
+  @media (max-width: 768px) {
+    /* Améliorer le touch target sur mobile */
+    button, a {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* Optimiser les inputs sur mobile */
+    input, textarea, select {
+      font-size: 16px; /* Évite le zoom automatique sur iOS */
+    }
+  }
 }
 
 @layer utilities {

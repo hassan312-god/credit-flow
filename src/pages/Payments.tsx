@@ -196,21 +196,21 @@ export default function Payments() {
         {!canPerformOperations && canRecordPayments && (
           <OperationBlocked operation="enregistrer un paiement" />
         )}
-        <div className="flex items-center justify-between">
-          <h1 className="font-display text-3xl font-bold">Paiements</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <h1 className="font-display text-2xl md:text-3xl font-bold">Paiements</h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           {/* Pending Schedules */}
           <div className="lg:col-span-2 space-y-4">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5" />
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                  <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                    <Calendar className="w-4 h-4 md:w-5 md:h-5" />
                     Échéances à payer
                   </CardTitle>
-                  <div className="relative w-64">
+                  <div className="relative w-full sm:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       placeholder="Rechercher..."
@@ -222,7 +222,9 @@ export default function Payments() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
+                <div className="overflow-x-auto -mx-4 md:mx-0">
+                  <div className="inline-block min-w-full align-middle px-4 md:px-0">
+                    <Table>
                   <TableHeader>
                     <TableRow className="table-header">
                       <TableHead>Client</TableHead>
@@ -284,6 +286,8 @@ export default function Payments() {
                     )}
                   </TableBody>
                 </Table>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>

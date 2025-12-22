@@ -16,11 +16,14 @@ import {
   Activity,
   Cloud,
   RefreshCw,
-  Wallet
+  Wallet,
+  Menu,
+  X
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { useSidebarContext } from './SidebarContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const menuItems = [
   { 
@@ -122,7 +125,8 @@ const roleLabels: Record<string, string> = {
 export function Sidebar() {
   const { profile, role, signOut } = useAuth();
   const navigate = useNavigate();
-  const { isCollapsed, setIsCollapsed } = useSidebarContext();
+  const { isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen } = useSidebarContext();
+  const isMobile = useIsMobile();
 
   const handleSignOut = async () => {
     await signOut();
@@ -130,7 +134,18 @@ export function Sidebar() {
   };
 
   const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
+    if (isMobile) {
+      setIsMobileOpen(!isMobileOpen);
+    } else {
+      setIsCollapsed(!isCollapsed);
+    }
+  };
+
+  const handleNavClick = () => {
+    // Fermer le menu mobile après navigation
+    if (isMobile) {
+      setIsMobileOpen(false);
+    }
   };
 
   const filteredMenuItems = menuItems.filter(
@@ -138,10 +153,26 @@ export function Sidebar() {
   );
 
   return (
-    <aside className={cn(
-      "sidebar-container fixed left-0 top-0 h-screen bg-sidebar flex flex-col border-r border-sidebar-border transition-all duration-300 z-10",
-      isCollapsed ? "w-20" : "w-64"
-    )}>
+    <>
+      {/* Bouton hamburger pour mobile */}
+      {isMobile && (
+        <button
+          onClick={toggleSidebar}
+          className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-sidebar hover:bg-sidebar-accent text-sidebar-foreground shadow-lg md:hidden"
+          aria-label="Toggle menu"
+        >
+          {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      )}
+
+      <aside className={cn(
+        "sidebar-container fixed left-0 top-0 h-screen bg-sidebar flex flex-col border-r border-sidebar-border transition-all duration-300 z-40",
+        // Desktop
+        isCollapsed ? "md:w-20" : "md:w-64",
+        // Mobile: overlay
+        isMobile && (isMobileOpen ? "w-64" : "-translate-x-full"),
+        !isMobile && "translate-x-0"
+      )}>
       {/* Logo officiel N'FA KA SÉRUM */}
       <div className={cn(
         "border-b border-sidebar-border transition-all relative",
@@ -198,6 +229,7 @@ export function Sidebar() {
               // Ne pas ouvrir la sidebar automatiquement lors de la navigation
               // La sidebar reste dans son état actuel (fermée ou ouverte)
               e.stopPropagation();
+              handleNavClick();
             }}
             className={({ isActive }) =>
               cn(

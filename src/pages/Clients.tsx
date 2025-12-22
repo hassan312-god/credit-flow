@@ -140,12 +140,12 @@ export default function Clients() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="font-display text-3xl font-bold">Clients</h1>
+      <div className="space-y-4 md:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <h1 className="font-display text-2xl md:text-3xl font-bold">Clients</h1>
           {(role === 'directeur' || role === 'agent_credit') && (
             <Link to="/clients/new">
-              <Button className="gap-2">
+              <Button className="gap-2 w-full sm:w-auto" size="sm">
                 <Plus className="w-4 h-4" />
                 Nouveau client
               </Button>

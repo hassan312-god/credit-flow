@@ -149,11 +149,11 @@ export default function ClientForm() {
     <MainLayout>
       <div className="max-w-2xl mx-auto space-y-6">
         <OperationBlocked operation="créer un client" />
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="font-display text-3xl font-bold">Nouveau Client</h1>
+          <h1 className="font-display text-2xl md:text-3xl font-bold">Nouveau Client</h1>
         </div>
 
         <Card>

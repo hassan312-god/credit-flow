@@ -127,21 +127,22 @@ export default function Dashboard() {
     <MainLayout>
       <div className="space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="font-display text-3xl font-bold text-foreground">
+            <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
               Bonjour, {profile?.full_name?.split(' ')[0] || 'Utilisateur'}
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-muted-foreground mt-1 text-sm md:text-base">
               Voici un aperçu de votre activité aujourd'hui
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3 flex-wrap">
             <NotificationBell />
             {isInstallable && !isInstalled && (
               <Button 
                 variant="outline" 
-                className="gap-2"
+                size="sm"
+                className="gap-2 text-xs md:text-sm"
                 onClick={async () => {
                   const result = await install();
                   if (result.success) {
@@ -151,15 +152,17 @@ export default function Dashboard() {
                   }
                 }}
               >
-                <Download className="w-4 h-4" />
-                Installer l'app
+                <Download className="w-3 h-3 md:w-4 md:h-4" />
+                <span className="hidden sm:inline">Installer l'app</span>
+                <span className="sm:hidden">Installer</span>
               </Button>
             )}
             {(role === 'directeur' || role === 'agent_credit') && (
               <Link to="/loans/new">
-                <Button className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Nouveau prêt
+                <Button className="gap-2 text-xs md:text-sm" size="sm">
+                  <Plus className="w-3 h-3 md:w-4 md:h-4" />
+                  <span className="hidden sm:inline">Nouveau prêt</span>
+                  <span className="sm:hidden">Nouveau</span>
                 </Button>
               </Link>
             )}

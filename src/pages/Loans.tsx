@@ -54,12 +54,12 @@ export default function Loans() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="font-display text-3xl font-bold">Prêts</h1>
+      <div className="space-y-4 md:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <h1 className="font-display text-2xl md:text-3xl font-bold">Prêts</h1>
           {canCreateLoans && (
             <Link to="/loans/new">
-              <Button className="gap-2">
+              <Button className="gap-2 w-full sm:w-auto" size="sm">
                 <Plus className="w-4 h-4" />
                 Nouveau prêt
               </Button>
@@ -67,13 +67,14 @@ export default function Loans() {
           )}
         </div>
 
-        <div className="relative max-w-md">
+        <div className="relative max-w-md w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Rechercher..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
 
         <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
-          <Table>
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow className="table-header">
                 <TableHead>Client</TableHead>

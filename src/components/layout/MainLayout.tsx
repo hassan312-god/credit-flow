@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 import { Sidebar } from './Sidebar';
 import { WorkSessionStatus } from '@/components/WorkSessionStatus';
 import { ConnectionStatus } from '@/components/ConnectionStatus';
@@ -10,15 +11,32 @@ interface MainLayoutProps {
 }
 
 function MainLayoutContent({ children }: MainLayoutProps) {
-  const { isCollapsed } = useSidebarContext();
+  const { isCollapsed, isMobileOpen, setIsMobileOpen } = useSidebarContext();
   // Initialize attendance alerts for admins and directors
   useAttendanceAlerts();
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Overlay pour mobile */}
+      {isMobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+      
       <Sidebar />
-      <main className={isCollapsed ? "ml-20" : "ml-64"} style={{ transition: 'margin-left 300ms ease-in-out' }}>
-        <div className="p-8">
+      
+      <main 
+        className={cn(
+          "transition-all duration-300",
+          // Desktop: marge selon l'état de la sidebar
+          isCollapsed ? "md:ml-20" : "md:ml-64",
+          // Mobile: pas de marge, la sidebar est en overlay
+          "ml-0"
+        )}
+      >
+        <div className="p-4 md:p-8">
           <ConnectionStatus />
           <WorkSessionStatus />
           {children}
