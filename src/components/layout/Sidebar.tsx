@@ -15,7 +15,8 @@ import {
   Calendar,
   Activity,
   Cloud,
-  RefreshCw
+  RefreshCw,
+  Wallet
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
@@ -62,6 +63,12 @@ const menuItems = [
     path: '/users', 
     icon: Shield, 
     label: 'Utilisateurs',
+    roles: ['admin', 'directeur']
+  },
+  { 
+    path: '/company-funds', 
+    icon: Wallet, 
+    label: 'Fond de l\'entreprise',
     roles: ['admin', 'directeur']
   },
   { 

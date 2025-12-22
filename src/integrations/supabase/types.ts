@@ -432,6 +432,92 @@ export type Database = {
         }
         Relationships: []
       }
+      company_funds: {
+        Row: {
+          id: string
+          initial_capital: number
+          current_balance: number
+          notes: string | null
+          updated_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          initial_capital: number
+          current_balance?: number
+          notes?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          initial_capital?: number
+          current_balance?: number
+          notes?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_funds_updated_by_fkey"
+            columns: ["updated_by"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      company_funds_history: {
+        Row: {
+          id: string
+          fund_id: string | null
+          previous_balance: number
+          new_balance: number
+          change_amount: number
+          change_type: string
+          notes: string | null
+          updated_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          fund_id?: string | null
+          previous_balance: number
+          new_balance: number
+          change_amount: number
+          change_type: string
+          notes?: string | null
+          updated_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          fund_id?: string | null
+          previous_balance?: number
+          new_balance?: number
+          change_amount?: number
+          change_type?: string
+          notes?: string | null
+          updated_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_funds_history_fund_id_fkey"
+            columns: ["fund_id"]
+            referencedRelation: "company_funds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_funds_history_updated_by_fkey"
+            columns: ["updated_by"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

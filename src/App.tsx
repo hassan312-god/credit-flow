@@ -18,6 +18,7 @@ import Recovery from "./pages/Recovery";
 import Reports from "./pages/Reports";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
+import CompanyFunds from "./pages/CompanyFunds";
 import WorkSchedule from "./pages/WorkSchedule";
 import Attendance from "./pages/Attendance";
 import AttendanceReports from "./pages/AttendanceReports";
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/reports" element={<Reports />} />
             <Route path="/users" element={<Users />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/company-funds" element={<CompanyFunds />} />
             <Route path="/work-schedule" element={<WorkSchedule />} />
             <Route path="/attendance" element={<Attendance />} />
             <Route path="/attendance-reports" element={<AttendanceReports />} />
