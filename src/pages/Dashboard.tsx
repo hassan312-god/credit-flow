@@ -20,6 +20,7 @@ import { usePaymentNotifications } from '@/hooks/usePaymentNotifications';
 import { NotificationBell } from '@/components/NotificationBell';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { Download } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface DashboardStats {
   totalClients: number;
@@ -144,7 +145,9 @@ export default function Dashboard() {
                 onClick={async () => {
                   const result = await install();
                   if (result.success) {
-                    // Installation réussie
+                    toast.success('Application installée avec succès !');
+                  } else if (result.error) {
+                    toast.error(result.error);
                   }
                 }}
               >
