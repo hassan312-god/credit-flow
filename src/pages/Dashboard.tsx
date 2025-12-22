@@ -16,6 +16,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
+import { usePaymentNotifications } from '@/hooks/usePaymentNotifications';
 
 interface DashboardStats {
   totalClients: number;
@@ -36,6 +37,7 @@ interface RecentLoan {
 
 export default function Dashboard() {
   const { profile, role } = useAuth();
+  const { notifications } = usePaymentNotifications();
   const [stats, setStats] = useState<DashboardStats>({
     totalClients: 0,
     totalLoans: 0,
@@ -277,7 +279,48 @@ export default function Dashboard() {
                   </Link>
                 )}
 
-                {stats.pendingLoans === 0 && stats.overdueLoans === 0 && (
+                {notifications.length > 0 && (
+                  <div className="space-y-2">
+                    {notifications.filter(n => n.type === 'overdue').length > 0 && (
+                      <Link to="/recovery" className="block">
+                        <div className="flex items-center justify-between p-4 rounded-lg bg-destructive/5 border border-destructive/20 hover:bg-destructive/10 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center">
+                              <AlertTriangle className="w-5 h-5 text-destructive" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-foreground">Paiements en retard</p>
+                              <p className="text-sm text-muted-foreground">
+                                {notifications.filter(n => n.type === 'overdue').length} échéance{notifications.filter(n => n.type === 'overdue').length > 1 ? 's' : ''} dépassée{notifications.filter(n => n.type === 'overdue').length > 1 ? 's' : ''}
+                              </p>
+                            </div>
+                          </div>
+                          <ArrowRight className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                      </Link>
+                    )}
+                    {notifications.filter(n => n.type === 'reminder').length > 0 && (
+                      <Link to="/payments" className="block">
+                        <div className="flex items-center justify-between p-4 rounded-lg bg-warning/5 border border-warning/20 hover:bg-warning/10 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center">
+                              <Clock className="w-5 h-5 text-warning" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-foreground">Rappels de paiement</p>
+                              <p className="text-sm text-muted-foreground">
+                                {notifications.filter(n => n.type === 'reminder').length} échéance{notifications.filter(n => n.type === 'reminder').length > 1 ? 's' : ''} dans les 7 prochains jours
+                              </p>
+                            </div>
+                          </div>
+                          <ArrowRight className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                      </Link>
+                    )}
+                  </div>
+                )}
+
+                {stats.pendingLoans === 0 && stats.overdueLoans === 0 && notifications.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-success/10 flex items-center justify-center">
                       <TrendingUp className="w-6 h-6 text-success" />

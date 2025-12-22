@@ -6,7 +6,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface Loan {
   id: string;
@@ -18,6 +18,7 @@ interface Loan {
 }
 
 export default function Loans() {
+  const navigate = useNavigate();
   const [loans, setLoans] = useState<Loan[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -86,7 +87,11 @@ export default function Loans() {
                 ))
               ) : filteredLoans.length > 0 ? (
                 filteredLoans.map((loan) => (
-                  <TableRow key={loan.id} className="cursor-pointer hover:bg-muted/50">
+                  <TableRow 
+                    key={loan.id} 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/loans/${loan.id}`)}
+                  >
                     <TableCell className="font-medium">{loan.client?.full_name || 'N/A'}</TableCell>
                     <TableCell>{formatCurrency(loan.amount)}</TableCell>
                     <TableCell>{loan.duration_months} mois</TableCell>

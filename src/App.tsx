@@ -12,6 +12,7 @@ import ClientForm from "./pages/ClientForm";
 import ClientDetails from "./pages/ClientDetails";
 import Loans from "./pages/Loans";
 import LoanForm from "./pages/LoanForm";
+import LoanDetails from "./pages/LoanDetails";
 import Payments from "./pages/Payments";
 import Recovery from "./pages/Recovery";
 import Reports from "./pages/Reports";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/clients/:id" element={<ClientDetails />} />
             <Route path="/loans" element={<Loans />} />
             <Route path="/loans/new" element={<LoanForm />} />
+            <Route path="/loans/:id" element={<LoanDetails />} />
             <Route path="/payments" element={<Payments />} />
             <Route path="/recovery" element={<Recovery />} />
             <Route path="/reports" element={<Reports />} />
