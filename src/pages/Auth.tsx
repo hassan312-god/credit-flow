@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, Loader2, Mail, Lock, User } from 'lucide-react';
+import { Loader2, Mail, Lock, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -90,14 +90,13 @@ export default function Auth() {
       {/* Left Panel - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-primary p-12 flex-col justify-between">
         <div>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-accent-foreground" />
-            </div>
-            <div>
-              <h1 className="font-display font-bold text-2xl text-primary-foreground">CréditPro</h1>
-              <p className="text-sm text-primary-foreground/70">Gestion des prêts</p>
-            </div>
+          {/* Logo officiel N'FA KA SÉRUM - En haut à gauche */}
+          <div className="mb-8">
+            <img 
+              src="https://rrgbccnkkarwasrmfnmc.supabase.co/storage/v1/object/public/Logo/lo.png"
+              alt="N'FA KA SÉRUM - Logo officiel"
+              className="w-48 h-48 object-contain drop-shadow-lg"
+            />
           </div>
         </div>
         
@@ -130,11 +129,12 @@ export default function Auth() {
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <Card className="w-full max-w-md border-border shadow-lg animate-fade-in">
           <CardHeader className="text-center pb-2">
-            <div className="lg:hidden flex items-center justify-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="font-display font-bold text-xl">CréditPro</span>
+            <div className="lg:hidden flex flex-col items-center justify-center gap-2 mb-6">
+              <img 
+                src="https://rrgbccnkkarwasrmfnmc.supabase.co/storage/v1/object/public/Logo/ChatGPT_Image_24_nov._2025__14_25_29-removebg-preview.png"
+                alt="N'FA KA SÉRUM - Logo officiel"
+                className="w-32 h-32 object-contain"
+              />
             </div>
             <CardTitle className="font-display text-2xl">Bienvenue</CardTitle>
             <CardDescription>Connectez-vous pour accéder à votre espace</CardDescription>

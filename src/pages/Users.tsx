@@ -6,15 +6,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Shield, UserPlus, Loader2, AlertTriangle } from 'lucide-react';
+import { Shield, UserPlus, Loader2, AlertTriangle, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useAuth } from '@/hooks/useAuth';
 import type { Database } from '@/integrations/supabase/types';
+import { z } from 'zod';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -44,15 +47,32 @@ const roleColors: Record<AppRole, string> = {
   recouvrement: 'bg-warning/10 text-warning border-warning/20',
 };
 
+const createUserSchema = z.object({
+  email: z.string().email('Email invalide'),
+  password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
+  full_name: z.string().min(2, 'Le nom complet doit contenir au moins 2 caractères'),
+  phone: z.string().optional(),
+  role: z.enum(['admin', 'directeur', 'agent_credit', 'caissier', 'recouvrement']),
+});
+
 export default function Users() {
   const { role } = useAuth();
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [selectedRole, setSelectedRole] = useState<AppRole | ''>('');
   const [submitting, setSubmitting] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newUser, setNewUser] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+    phone: '',
+    role: '' as AppRole | '',
+  });
 
   // Vérifier si l'utilisateur a accès à la gestion des utilisateurs
   const canManageUsers = role === 'admin' || role === 'directeur';
@@ -169,6 +189,82 @@ export default function Users() {
     }
   };
 
+  const handleCreateUser = async () => {
+    if (!canManageUsers) {
+      toast.error('Vous n\'avez pas les permissions nécessaires pour créer des utilisateurs');
+      return;
+    }
+
+    const result = createUserSchema.safeParse(newUser);
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
+      return;
+    }
+
+    setCreating(true);
+    try {
+      // Create user in auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: newUser.email,
+        password: newUser.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: newUser.full_name,
+          },
+        },
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Erreur lors de la création de l\'utilisateur');
+
+      // Wait a bit for the trigger to create the profile
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Update profile with phone if provided
+      if (newUser.phone) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ phone: newUser.phone })
+          .eq('id', authData.user.id);
+
+        if (profileError) {
+          console.error('Error updating profile:', profileError);
+        }
+      }
+
+      // Assign role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: authData.user.id,
+          role: newUser.role as AppRole,
+        });
+
+      if (roleError) throw roleError;
+
+      toast.success('Utilisateur créé avec succès');
+      setCreateDialogOpen(false);
+      setNewUser({
+        email: '',
+        password: '',
+        full_name: '',
+        phone: '',
+        role: '',
+      });
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      if (error.message.includes('already registered') || error.message.includes('already exists')) {
+        toast.error('Cet email est déjà utilisé');
+      } else {
+        toast.error('Erreur lors de la création de l\'utilisateur');
+      }
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const formatDate = (date: string) =>
     format(new Date(date), 'dd MMM yyyy', { locale: fr });
 
@@ -192,6 +288,12 @@ export default function Users() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="font-display text-3xl font-bold">Gestion des Utilisateurs</h1>
+          {canManageUsers && (
+            <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Créer un utilisateur
+            </Button>
+          )}
         </div>
 
         <Card>
@@ -276,6 +378,105 @@ export default function Users() {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Create User Dialog */}
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Créer un nouvel utilisateur</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="exemple@email.com"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Mot de passe *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Minimum 6 caractères"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="full_name">Nom complet *</Label>
+                <Input
+                  id="full_name"
+                  type="text"
+                  placeholder="Jean Dupont"
+                  value={newUser.full_name}
+                  onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Téléphone</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+33 6 12 34 56 78"
+                  value={newUser.phone}
+                  onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="role">Rôle *</Label>
+                <Select
+                  value={newUser.role}
+                  onValueChange={(v) => setNewUser({ ...newUser, role: v as AppRole })}
+                >
+                  <SelectTrigger id="role">
+                    <SelectValue placeholder="Sélectionner un rôle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Administrateur</SelectItem>
+                    <SelectItem value="directeur">Directeur</SelectItem>
+                    <SelectItem value="agent_credit">Agent de crédit</SelectItem>
+                    <SelectItem value="caissier">Caissier</SelectItem>
+                    <SelectItem value="recouvrement">Recouvrement</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setCreateDialogOpen(false);
+                    setNewUser({
+                      email: '',
+                      password: '',
+                      full_name: '',
+                      phone: '',
+                      role: '',
+                    });
+                  }}
+                  disabled={creating}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={handleCreateUser}
+                  disabled={creating || !newUser.email || !newUser.password || !newUser.full_name || !newUser.role}
+                >
+                  {creating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Créer
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Role Dialog */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

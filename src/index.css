@@ -131,6 +131,37 @@
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     @apply font-semibold tracking-tight;
   }
+
+  /* Global Scrollbar Styles - Fine, discrete, modern scrollbars */
+  /* Webkit browsers (Chrome, Edge, Safari) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: hsl(220 13% 60% / 0.3);
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(220 13% 60% / 0.5);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(220 13% 60% / 0.3) transparent;
+  }
 }
 
 @layer components {
@@ -176,6 +207,71 @@
 
   .card-gradient {
     background: var(--gradient-card);
+  }
+
+  /* Custom Scrollbar Class - Pour les éléments avec overflow-y-auto */
+  .custom-scrollbar {
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: hsl(220 13% 60% / 0.3) transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: hsl(220 13% 60% / 0.3);
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(220 13% 60% / 0.5);
+  }
+
+  /* Sidebar Scrollbar Styles - Fine, discrete, dark scrollbar */
+  .sidebar-scrollbar {
+    /* Firefox - Fine scrollbar, discrète */
+    scrollbar-width: thin;
+    scrollbar-color: hsl(222 30% 25% / 0.3) transparent;
+  }
+
+  /* Webkit browsers (Chrome, Edge, Safari) */
+  .sidebar-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background-color: hsl(222 30% 25% / 0.3);
+    border-radius: 3px;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(222 30% 30% / 0.6);
+  }
+
+  /* Rendre la scrollbar plus visible au survol de la sidebar */
+  .sidebar-container:hover .sidebar-scrollbar {
+    scrollbar-color: hsl(222 30% 25% / 0.5) transparent; /* Firefox */
+  }
+
+  .sidebar-container:hover .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background-color: hsl(222 30% 25% / 0.5);
+  }
+
+  .sidebar-container:hover .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(222 30% 30% / 0.7);
   }
 }
 
