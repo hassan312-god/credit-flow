@@ -49,45 +49,6 @@ export function useLocalCache<T extends { id: string }>(options: UseLocalCacheOp
     }
   }, [storeName, table]);
 
-  // Charger les données (depuis le cache ou Supabase)
-  const fetchData = useCallback(async (forceOnline = false) => {
-    setLoading(true);
-
-    try {
-      if (isOnline && forceOnline) {
-        // Si en ligne et forceOnline=true, récupérer depuis Supabase et mettre à jour le cache
-        const { data: remoteData, error } = await supabase
-          .from(table)
-          .select('*')
-          .order('updated_at', { ascending: false })
-          .limit(1000);
-
-        if (error) throw error;
-
-        if (remoteData) {
-          // Sauvegarder dans le cache local
-          await saveToLocal(storeName, remoteData as T[], true);
-          setData(remoteData as T[]);
-          setLastSync(Date.now());
-        }
-      } else {
-        // Charger depuis le cache (hors ligne ou première charge)
-        await loadFromCache();
-        
-        // Si en ligne, synchroniser en arrière-plan
-        if (isOnline) {
-          sync();
-        }
-      }
-    } catch (error) {
-      console.error(`Error fetching data for ${table}:`, error);
-      // En cas d'erreur, essayer de charger depuis le cache
-      await loadFromCache();
-    } finally {
-      setLoading(false);
-    }
-  }, [isOnline, table, storeName, loadFromCache]);
-
   // Synchroniser les données
   const sync = useCallback(async () => {
     if (!isOnline || syncing) return;
@@ -112,6 +73,65 @@ export function useLocalCache<T extends { id: string }>(options: UseLocalCacheOp
       setSyncing(false);
     }
   }, [isOnline, syncing, syncQueue, table, loadFromCache]);
+
+  // Charger les données (depuis le cache ou Supabase)
+  const fetchData = useCallback(async (forceOnline = false) => {
+    setLoading(true);
+
+    try {
+      if (isOnline && forceOnline) {
+        // Si en ligne et forceOnline=true, récupérer depuis Supabase et mettre à jour le cache
+        const { data: remoteData, error } = await supabase
+          .from(table)
+          .select('*')
+          .order('updated_at', { ascending: false })
+          .limit(1000);
+
+        if (error) throw error;
+
+        if (remoteData) {
+          // Sauvegarder dans le cache local
+          await saveToLocal(storeName, remoteData as T[], true);
+          setData(remoteData as T[]);
+          setLastSync(Date.now());
+        }
+      } else {
+        // Charger depuis le cache (hors ligne ou première charge)
+        const cachedData = await getFromLocal<T>(storeName);
+        setData(cachedData);
+        
+        // Si en ligne et le cache est vide, charger depuis Supabase
+        if (isOnline && cachedData.length === 0) {
+          try {
+            const { data: remoteData, error } = await supabase
+              .from(table)
+              .select('*')
+              .order('updated_at', { ascending: false })
+              .limit(1000);
+
+            if (!error && remoteData && remoteData.length > 0) {
+              await saveToLocal(storeName, remoteData as T[], true);
+              setData(remoteData as T[]);
+              setLastSync(Date.now());
+            }
+          } catch (fetchError) {
+            console.warn(`Could not fetch ${table} from Supabase, using cache:`, fetchError);
+          }
+        } else if (isOnline && cachedData.length > 0) {
+          // Si en ligne et cache non vide, synchroniser en arrière-plan (sans bloquer)
+          setTimeout(() => {
+            sync().catch(err => console.warn('Background sync failed:', err));
+          }, 100);
+        }
+      }
+    } catch (error) {
+      console.error(`Error fetching data for ${table}:`, error);
+      // En cas d'erreur, essayer de charger depuis le cache
+      await loadFromCache();
+    } finally {
+      setLoading(false);
+    }
+  }, [isOnline, table, storeName, sync]);
 
   // Télécharger toutes les données depuis Supabase
   const downloadAll = useCallback(async () => {

@@ -55,12 +55,25 @@ export default function AttendanceReports() {
 
       if (sessionsError) throw sessionsError;
 
-      // Fetch profiles separately
+      // Fetch profiles separately (with error handling for offline mode)
       const userIds = [...new Set((sessions || []).map((s: any) => s.user_id))];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .in('id', userIds);
+      let profiles: any[] = [];
+      
+      if (userIds.length > 0) {
+        try {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, full_name, email')
+            .in('id', userIds);
+          
+          if (!profilesError && profilesData) {
+            profiles = profilesData;
+          }
+        } catch (profilesErr) {
+          console.warn('Could not fetch profiles (may be offline):', profilesErr);
+          // Continue without profiles - we'll show user_id instead
+        }
+      }
 
       // Group by user and calculate statistics
       const userMap = new Map<string, MonthlyReport>();
@@ -71,8 +84,8 @@ export default function AttendanceReports() {
         if (!userMap.has(userId)) {
           userMap.set(userId, {
             user_id: userId,
-            full_name: profile?.full_name || 'Utilisateur inconnu',
-            email: profile?.email || '',
+            full_name: profile?.full_name || `Utilisateur ${userId.substring(0, 8)}...`,
+            email: profile?.email || 'Email non disponible',
             days_worked: 0,
             days_late: 0,
             days_absent: 0,

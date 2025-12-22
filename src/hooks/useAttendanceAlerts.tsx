@@ -65,10 +65,23 @@ export function useAttendanceAlerts() {
 
         if (!sessionsError && sessions) {
           // Get all active users (excluding admins)
+          // First, get user IDs with the specified roles
+          const { data: userRoles, error: rolesError } = await supabase
+            .from('user_roles')
+            .select('user_id')
+            .in('role', ['agent_credit', 'caissier', 'recouvrement']);
+
+          if (rolesError || !userRoles || userRoles.length === 0) {
+            return;
+          }
+
+          const userIds = userRoles.map(ur => ur.user_id);
+
+          // Then, get profiles for these users
           const { data: users, error: usersError } = await supabase
             .from('profiles')
             .select('id, full_name, email')
-            .in('role', ['agent_credit', 'caissier', 'recouvrement']);
+            .in('id', userIds);
 
           if (!usersError && users) {
             const newAlerts: AttendanceAlert[] = [];

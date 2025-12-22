@@ -70,12 +70,25 @@ export default function Attendance() {
 
       if (error) throw error;
 
-      // Fetch profiles separately
+      // Fetch profiles separately (with error handling for offline mode)
       const userIds = [...new Set((sessions || []).map((s: any) => s.user_id))];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .in('id', userIds);
+      let profiles: any[] = [];
+      
+      if (userIds.length > 0) {
+        try {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, full_name, email')
+            .in('id', userIds);
+          
+          if (!profilesError && profilesData) {
+            profiles = profilesData;
+          }
+        } catch (profilesErr) {
+          console.warn('Could not fetch profiles (may be offline):', profilesErr);
+          // Continue without profiles - we'll show user_id instead
+        }
+      }
 
       // Combine data
       const attendanceWithProfiles = (sessions || []).map((session: any) => ({
@@ -244,10 +257,10 @@ export default function Attendance() {
                       <TableCell>
                         <div>
                           <div className="font-medium">
-                            {record.profile?.full_name || 'Utilisateur inconnu'}
+                            {record.profile?.full_name || `Utilisateur ${record.user_id.substring(0, 8)}...`}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {record.profile?.email}
+                            {record.profile?.email || 'Email non disponible'}
                           </div>
                         </div>
                       </TableCell>

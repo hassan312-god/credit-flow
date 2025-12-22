@@ -40,6 +40,13 @@ export default function Clients() {
     }
   }, [canAccessClients, navigate]);
 
+  // Forcer le chargement depuis Supabase si le cache est vide et que l'utilisateur est en ligne
+  useEffect(() => {
+    if (canAccessClients && isOnline && !loading && clients.length === 0) {
+      refresh();
+    }
+  }, [canAccessClients, isOnline, loading, clients.length, refresh]);
+
   const filteredClients = clients.filter(c =>
     c.full_name.toLowerCase().includes(search.toLowerCase()) ||
     c.phone.includes(search)
