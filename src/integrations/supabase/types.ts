@@ -309,6 +309,45 @@ export type Database = {
         }
         Relationships: []
       }
+      work_sessions: {
+        Row: {
+          id: string
+          user_id: string
+          opened_at: string
+          closed_at: string | null
+          work_date: string
+          initial_cash: number | null
+          final_cash: number | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          opened_at?: string
+          closed_at?: string | null
+          work_date?: string
+          initial_cash?: number | null
+          final_cash?: number | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          opened_at?: string
+          closed_at?: string | null
+          work_date?: string
+          initial_cash?: number | null
+          final_cash?: number | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -34,7 +34,7 @@ export function useWorkSession() {
     const fetchWorkSession = async () => {
       try {
         const { data, error } = await supabase
-          .from('work_sessions')
+          .from('work_sessions' as any)
           .select('*')
           .eq('user_id', user.id)
           .eq('work_date', today)
@@ -44,7 +44,7 @@ export function useWorkSession() {
         if (error) throw error;
 
         if (data) {
-          setWorkSession(data);
+          setWorkSession(data as WorkSession);
           setIsOpen(true);
         } else {
           setIsOpen(false);
@@ -65,7 +65,7 @@ export function useWorkSession() {
 
     try {
       const { data, error } = await supabase
-        .from('work_sessions')
+        .from('work_sessions' as any)
         .insert({
           user_id: user.id,
           work_date: today,
@@ -77,7 +77,7 @@ export function useWorkSession() {
 
       if (error) throw error;
 
-      setWorkSession(data);
+      setWorkSession(data as WorkSession);
       setIsOpen(true);
       return { error: null };
     } catch (error: any) {
@@ -91,7 +91,7 @@ export function useWorkSession() {
 
     try {
       const { data, error } = await supabase
-        .from('work_sessions')
+        .from('work_sessions' as any)
         .update({
           closed_at: new Date().toISOString(),
           final_cash: finalCash,
@@ -103,7 +103,7 @@ export function useWorkSession() {
 
       if (error) throw error;
 
-      setWorkSession(data);
+      setWorkSession(data as WorkSession);
       setIsOpen(false);
       return { error: null };
     } catch (error: any) {
