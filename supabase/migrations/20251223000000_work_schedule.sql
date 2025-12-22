@@ -14,6 +14,10 @@ CREATE TABLE IF NOT EXISTS public.work_schedule (
 -- Enable RLS
 ALTER TABLE public.work_schedule ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (for idempotency)
+DROP POLICY IF EXISTS "Admins and Directors can manage work schedule" ON public.work_schedule;
+DROP POLICY IF EXISTS "All authenticated users can view work schedule" ON public.work_schedule;
+
 -- RLS Policies for work_schedule
 CREATE POLICY "Admins and Directors can manage work schedule"
 ON public.work_schedule FOR ALL
