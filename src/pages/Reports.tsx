@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, LineChart, Line, Legend 
 } from 'recharts';
-import { TrendingUp, Users, FileText, CreditCard, ArrowUp, ArrowDown } from 'lucide-react';
+import { TrendingUp, Users, FileText, CreditCard, ArrowUp, ArrowDown, Download, FileSpreadsheet } from 'lucide-react';
+import { exportToPDF, exportToXLSX } from '@/utils/exportUtils';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -144,7 +147,34 @@ export default function Reports() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="font-display text-3xl font-bold">Rapports & Statistiques</h1>
-          <Select value={period} onValueChange={setPeriod}>
+          <div className="flex items-center gap-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Exporter
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => {
+                  const headers = ['Mois', 'Prêts', 'Paiements', 'Montant'];
+                  const rows = monthlyData.map(d => [d.month, d.loans.toString(), d.payments.toString(), formatCurrency(d.amount)]);
+                  exportToPDF(rows, headers, `rapports-${period}-mois`, `Rapports & Statistiques - ${period} mois`);
+                }}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Exporter en PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  const headers = ['Mois', 'Prêts', 'Paiements', 'Montant'];
+                  const rows = monthlyData.map(d => [d.month, d.loans.toString(), d.payments.toString(), formatCurrency(d.amount)]);
+                  exportToXLSX(rows, headers, `rapports-${period}-mois`, 'Rapports');
+                }}>
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  Exporter en Excel (XLSX)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-40">
               <SelectValue />
             </SelectTrigger>

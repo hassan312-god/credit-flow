@@ -15,8 +15,13 @@ import {
   Database, 
   Save,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Download,
+  FileText,
+  FileSpreadsheet
 } from 'lucide-react';
+import { exportToPDF, exportToXLSX } from '@/utils/exportUtils';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -426,9 +431,64 @@ export default function Settings() {
               </div>
               <Separator />
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1">
-                  Exporter les données
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="flex-1">
+                      <Download className="w-4 h-4 mr-2" />
+                      Exporter les données
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={async () => {
+                      try {
+                        const { data: clients } = await supabase.from('clients').select('*');
+                        const { data: loans } = await supabase.from('loans').select('*');
+                        const { data: payments } = await supabase.from('payments').select('*');
+                        
+                        const allData = [
+                          ...(clients || []).map(c => ({ Type: 'Client', ...c })),
+                          ...(loans || []).map(l => ({ Type: 'Prêt', ...l })),
+                          ...(payments || []).map(p => ({ Type: 'Paiement', ...p })),
+                        ];
+                        
+                        const headers = ['Type', ...Object.keys(allData[0] || {}).filter(k => k !== 'Type')];
+                        const rows = allData.map(item => headers.map(h => String(item[h as keyof typeof item] || '')));
+                        exportToPDF(rows, headers, `export-donnees-${format(new Date(), 'yyyy-MM-dd')}`, 'Export des données');
+                        toast.success('Export PDF généré avec succès');
+                      } catch (error) {
+                        console.error('Error exporting data:', error);
+                        toast.error('Erreur lors de l\'export');
+                      }
+                    }}>
+                      <FileText className="w-4 h-4 mr-2" />
+                      Exporter en PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={async () => {
+                      try {
+                        const { data: clients } = await supabase.from('clients').select('*');
+                        const { data: loans } = await supabase.from('loans').select('*');
+                        const { data: payments } = await supabase.from('payments').select('*');
+                        
+                        const allData = [
+                          ...(clients || []).map(c => ({ Type: 'Client', ...c })),
+                          ...(loans || []).map(l => ({ Type: 'Prêt', ...l })),
+                          ...(payments || []).map(p => ({ Type: 'Paiement', ...p })),
+                        ];
+                        
+                        const headers = ['Type', ...Object.keys(allData[0] || {}).filter(k => k !== 'Type')];
+                        const rows = allData.map(item => headers.map(h => String(item[h as keyof typeof item] || '')));
+                        exportToXLSX(rows, headers, `export-donnees-${format(new Date(), 'yyyy-MM-dd')}`, 'Export');
+                        toast.success('Export Excel généré avec succès');
+                      } catch (error) {
+                        console.error('Error exporting data:', error);
+                        toast.error('Erreur lors de l\'export');
+                      }
+                    }}>
+                      <FileSpreadsheet className="w-4 h-4 mr-2" />
+                      Exporter en Excel (XLSX)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button variant="outline" className="flex-1">
                   Importer les données
                 </Button>

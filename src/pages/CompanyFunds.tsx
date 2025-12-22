@@ -14,8 +14,13 @@ import {
   TrendingUp,
   TrendingDown,
   History,
-  DollarSign
+  DollarSign,
+  Download,
+  FileText,
+  FileSpreadsheet
 } from 'lucide-react';
+import { exportToPDF, exportToXLSX } from '@/utils/exportUtils';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -355,13 +360,59 @@ export default function CompanyFunds() {
         {showHistory && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <History className="w-5 h-5" />
-                Historique des modifications
-              </CardTitle>
-              <CardDescription>
-                Liste des changements apportés au fond de l'entreprise
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <History className="w-5 h-5" />
+                    Historique des modifications
+                  </CardTitle>
+                  <CardDescription>
+                    Liste des changements apportés au fond de l'entreprise
+                  </CardDescription>
+                </div>
+                {history.length > 0 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Download className="w-4 h-4 mr-2" />
+                        Exporter
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => {
+                        const headers = ['Date', 'Type', 'Solde précédent', 'Nouveau solde', 'Variation', 'Notes'];
+                        const rows = history.map(entry => [
+                          formatDate(entry.created_at),
+                          getChangeTypeLabel(entry.change_type),
+                          formatCurrency(entry.previous_balance),
+                          formatCurrency(entry.new_balance),
+                          formatCurrency(entry.change_amount),
+                          entry.notes || '-',
+                        ]);
+                        exportToPDF(rows, headers, `historique-fond-${format(new Date(), 'yyyy-MM-dd')}`, 'Historique du fond de l\'entreprise');
+                      }}>
+                        <FileText className="w-4 h-4 mr-2" />
+                        Exporter en PDF
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        const headers = ['Date', 'Type', 'Solde précédent', 'Nouveau solde', 'Variation', 'Notes'];
+                        const rows = history.map(entry => [
+                          formatDate(entry.created_at),
+                          getChangeTypeLabel(entry.change_type),
+                          formatCurrency(entry.previous_balance),
+                          formatCurrency(entry.new_balance),
+                          formatCurrency(entry.change_amount),
+                          entry.notes || '-',
+                        ]);
+                        exportToXLSX(rows, headers, `historique-fond-${format(new Date(), 'yyyy-MM-dd')}`, 'Historique');
+                      }}>
+                        <FileSpreadsheet className="w-4 h-4 mr-2" />
+                        Exporter en Excel (XLSX)
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {history.length > 0 ? (

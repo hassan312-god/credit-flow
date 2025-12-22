@@ -7,7 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Activity, AlertCircle, Search, Download, Filter } from 'lucide-react';
+import { Loader2, Activity, AlertCircle, Search, Download, Filter, FileText, FileSpreadsheet } from 'lucide-react';
+import { exportToPDF, exportToXLSX, exportToCSV } from '@/utils/exportUtils';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -90,9 +92,9 @@ export default function ActivityLogs() {
     }
   };
 
-  const exportToCSV = () => {
+  const prepareExportData = () => {
     const headers = ['Date', 'Utilisateur', 'Action', 'Table', 'ID Enregistrement', 'IP', 'Données'];
-    const rows = logs.map(log => [
+    const rows = filteredLogs.map(log => [
       format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss', { locale: fr }),
       log.profile?.full_name || log.profile?.email || 'Système',
       log.action,
@@ -101,13 +103,22 @@ export default function ActivityLogs() {
       log.ip_address || '-',
       JSON.stringify(log.new_data || log.old_data || {}),
     ]);
+    return { headers, rows };
+  };
 
-    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `logs-activite-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    link.click();
+  const handleExportPDF = () => {
+    const { headers, rows } = prepareExportData();
+    exportToPDF(rows, headers, `logs-activite-${format(new Date(), 'yyyy-MM-dd')}`, 'Journal d\'activité');
+  };
+
+  const handleExportXLSX = () => {
+    const { headers, rows } = prepareExportData();
+    exportToXLSX(rows, headers, `logs-activite-${format(new Date(), 'yyyy-MM-dd')}`, 'Journal d\'activité');
+  };
+
+  const handleExportCSV = () => {
+    const { headers, rows } = prepareExportData();
+    exportToCSV(rows, headers, `logs-activite-${format(new Date(), 'yyyy-MM-dd')}`);
   };
 
   const getActionBadge = (action: string) => {
@@ -170,10 +181,28 @@ export default function ActivityLogs() {
               Consultez l'historique complet des actions effectuées dans le système
             </p>
           </div>
-          <Button onClick={exportToCSV} variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Exporter CSV
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Download className="w-4 h-4 mr-2" />
+                Exporter
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportPDF}>
+                <FileText className="w-4 h-4 mr-2" />
+                Exporter en PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportXLSX}>
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                Exporter en Excel (XLSX)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportCSV}>
+                <Download className="w-4 h-4 mr-2" />
+                Exporter en CSV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Filters */}

@@ -5,7 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Calendar, Download, AlertCircle, User } from 'lucide-react';
+import { Loader2, Calendar, Download, AlertCircle, User, FileText, FileSpreadsheet } from 'lucide-react';
+import { exportToPDF, exportToXLSX, exportToCSV } from '@/utils/exportUtils';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -131,7 +133,7 @@ export default function AttendanceReports() {
     return `${hours}h${mins.toString().padStart(2, '0')}`;
   };
 
-  const exportToCSV = () => {
+  const prepareExportData = () => {
     const headers = ['Employé', 'Email', 'Jours travaillés', 'Retards', 'Absences', 'Minutes de retard', 'Heures totales', 'Moyenne heures/jour'];
     const rows = reports.map(r => [
       r.full_name,
@@ -143,13 +145,22 @@ export default function AttendanceReports() {
       formatDuration(r.total_work_minutes),
       formatDuration(r.avg_work_minutes),
     ]);
+    return { headers, rows };
+  };
 
-    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `rapport-presence-${selectedMonth}.csv`;
-    link.click();
+  const handleExportPDF = () => {
+    const { headers, rows } = prepareExportData();
+    exportToPDF(rows, headers, `rapport-presence-${selectedMonth}`, `Rapport de présence - ${selectedMonth}`);
+  };
+
+  const handleExportXLSX = () => {
+    const { headers, rows } = prepareExportData();
+    exportToXLSX(rows, headers, `rapport-presence-${selectedMonth}`, 'Rapport de présence');
+  };
+
+  const handleExportCSV = () => {
+    const { headers, rows } = prepareExportData();
+    exportToCSV(rows, headers, `rapport-presence-${selectedMonth}`);
   };
 
   if (loading) {
@@ -197,10 +208,28 @@ export default function AttendanceReports() {
               <Calendar className="w-4 h-4 mr-2" />
               Actualiser
             </Button>
-            <Button onClick={exportToCSV} variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Exporter CSV
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Exporter
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportPDF}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Exporter en PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportXLSX}>
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  Exporter en Excel (XLSX)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportCSV}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Exporter en CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
