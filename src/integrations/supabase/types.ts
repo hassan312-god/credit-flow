@@ -319,6 +319,14 @@ export type Database = {
           initial_cash: number | null
           final_cash: number | null
           notes: string | null
+          actual_start_time: string | null
+          actual_end_time: string | null
+          scheduled_start_time: string | null
+          scheduled_end_time: string | null
+          is_late: boolean | null
+          late_minutes: number | null
+          total_work_minutes: number | null
+          status: string | null
           created_at: string
           updated_at: string
         }
@@ -331,6 +339,14 @@ export type Database = {
           initial_cash?: number | null
           final_cash?: number | null
           notes?: string | null
+          actual_start_time?: string | null
+          actual_end_time?: string | null
+          scheduled_start_time?: string | null
+          scheduled_end_time?: string | null
+          is_late?: boolean | null
+          late_minutes?: number | null
+          total_work_minutes?: number | null
+          status?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -343,6 +359,47 @@ export type Database = {
           initial_cash?: number | null
           final_cash?: number | null
           notes?: string | null
+          actual_start_time?: string | null
+          actual_end_time?: string | null
+          scheduled_start_time?: string | null
+          scheduled_end_time?: string | null
+          is_late?: boolean | null
+          late_minutes?: number | null
+          total_work_minutes?: number | null
+          status?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      work_schedule: {
+        Row: {
+          id: string
+          day_of_week: number
+          start_time: string
+          end_time: string
+          is_active: boolean | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          day_of_week: number
+          start_time: string
+          end_time: string
+          is_active?: boolean | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          day_of_week?: number
+          start_time?: string
+          end_time?: string
+          is_active?: boolean | null
+          created_by?: string | null
           created_at?: string
           updated_at?: string
         }

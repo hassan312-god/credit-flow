@@ -3,6 +3,7 @@ import { Sidebar } from './Sidebar';
 import { WorkSessionStatus } from '@/components/WorkSessionStatus';
 import { ConnectionStatus } from '@/components/ConnectionStatus';
 import { SidebarProvider, useSidebarContext } from './SidebarContext';
+import { useAttendanceAlerts } from '@/hooks/useAttendanceAlerts';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -10,6 +11,8 @@ interface MainLayoutProps {
 
 function MainLayoutContent({ children }: MainLayoutProps) {
   const { isCollapsed } = useSidebarContext();
+  // Initialize attendance alerts for admins and directors
+  useAttendanceAlerts();
 
   return (
     <div className="min-h-screen bg-background">

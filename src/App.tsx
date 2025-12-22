@@ -18,6 +18,9 @@ import Recovery from "./pages/Recovery";
 import Reports from "./pages/Reports";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
+import WorkSchedule from "./pages/WorkSchedule";
+import Attendance from "./pages/Attendance";
+import AttendanceReports from "./pages/AttendanceReports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +47,9 @@ const App = () => (
             <Route path="/reports" element={<Reports />} />
             <Route path="/users" element={<Users />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/work-schedule" element={<WorkSchedule />} />
+            <Route path="/attendance" element={<Attendance />} />
+            <Route path="/attendance-reports" element={<AttendanceReports />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

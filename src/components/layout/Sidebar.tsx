@@ -10,7 +10,9 @@ import {
   LogOut,
   Shield,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Clock,
+  Calendar
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
@@ -64,6 +66,24 @@ const menuItems = [
     icon: Settings, 
     label: 'Paramètres',
     roles: ['admin']
+  },
+  { 
+    path: '/work-schedule', 
+    icon: Clock, 
+    label: 'Horaires de travail',
+    roles: ['admin', 'directeur']
+  },
+  { 
+    path: '/attendance', 
+    icon: Calendar, 
+    label: 'Présences',
+    roles: ['admin', 'directeur']
+  },
+  { 
+    path: '/attendance-reports', 
+    icon: BarChart3, 
+    label: 'Rapports présence',
+    roles: ['admin', 'directeur']
   },
 ];
 
