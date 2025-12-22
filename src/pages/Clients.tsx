@@ -164,41 +164,41 @@ export default function Clients() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
             {[...Array(6)].map((_, i) => (
               <Card key={i} className="animate-pulse">
-                <CardContent className="p-6">
-                  <div className="h-6 bg-muted rounded w-2/3 mb-4" />
-                  <div className="h-4 bg-muted rounded w-1/2" />
+                <CardContent className="p-4 md:p-6">
+                  <div className="h-5 md:h-6 bg-muted rounded w-2/3 mb-3 md:mb-4" />
+                  <div className="h-3 md:h-4 bg-muted rounded w-1/2" />
                 </CardContent>
               </Card>
             ))}
           </div>
         ) : filteredClients.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
             {filteredClients.map((client) => (
-              <Card key={client.id} className="hover:shadow-md transition-shadow relative group">
+              <Card key={client.id} className="hover:shadow-md transition-all relative group shadow-sm">
                 <Link to={`/clients/${client.id}`} className="block">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-lg font-semibold text-primary">
+                  <CardContent className="p-4 md:p-6">
+                    <div className="flex items-center gap-3 md:gap-4">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-base md:text-lg font-semibold text-primary">
                           {client.full_name.charAt(0)}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground truncate">{client.full_name}</p>
-                        <p className="text-sm text-muted-foreground">{client.profession || 'Non renseigné'}</p>
+                        <p className="font-medium text-foreground truncate text-sm md:text-base">{client.full_name}</p>
+                        <p className="text-xs md:text-sm text-muted-foreground truncate">{client.profession || 'Non renseigné'}</p>
                       </div>
                     </div>
-                    <div className="mt-4 space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Phone className="w-4 h-4" />
-                        <span>{client.phone}</span>
+                    <div className="mt-3 md:mt-4 space-y-1.5 md:space-y-2">
+                      <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                        <Phone className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
+                        <span className="truncate">{client.phone}</span>
                       </div>
                       {client.email && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Mail className="w-4 h-4" />
+                        <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                          <Mail className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
                           <span className="truncate">{client.email}</span>
                         </div>
                       )}

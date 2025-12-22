@@ -311,6 +311,20 @@
     input, textarea, select {
       font-size: 16px; /* Évite le zoom automatique sur iOS */
     }
+
+    /* Safe area pour les iPhones avec notch */
+    .safe-area-top {
+      padding-top: env(safe-area-inset-top);
+    }
+
+    .safe-area-bottom {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* Améliorer les cartes sur mobile */
+    .stat-card {
+      @apply p-4;
+    }
   }
 }
 

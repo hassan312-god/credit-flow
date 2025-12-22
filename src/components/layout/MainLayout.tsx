@@ -5,6 +5,9 @@ import { WorkSessionStatus } from '@/components/WorkSessionStatus';
 import { ConnectionStatus } from '@/components/ConnectionStatus';
 import { SidebarProvider, useSidebarContext } from './SidebarContext';
 import { useAttendanceAlerts } from '@/hooks/useAttendanceAlerts';
+import { MobileHeader } from './MobileHeader';
+import { MobileBottomNav } from './MobileBottomNav';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -12,6 +15,7 @@ interface MainLayoutProps {
 
 function MainLayoutContent({ children }: MainLayoutProps) {
   const { isCollapsed, isMobileOpen, setIsMobileOpen } = useSidebarContext();
+  const isMobile = useIsMobile();
   // Initialize attendance alerts for admins and directors
   useAttendanceAlerts();
 
@@ -27,21 +31,33 @@ function MainLayoutContent({ children }: MainLayoutProps) {
       
       <Sidebar />
       
+      {/* Header mobile */}
+      <MobileHeader />
+      
       <main 
         className={cn(
           "transition-all duration-300",
           // Desktop: marge selon l'état de la sidebar
           isCollapsed ? "md:ml-20" : "md:ml-64",
           // Mobile: pas de marge, la sidebar est en overlay
-          "ml-0"
+          "ml-0",
+          // Padding bottom pour la navigation mobile
+          isMobile && "pb-20"
         )}
       >
-        <div className="p-4 md:p-8">
+        <div className={cn(
+          "p-4 md:p-8",
+          // Padding top pour le header mobile
+          isMobile && "pt-2"
+        )}>
           <ConnectionStatus />
           <WorkSessionStatus />
           {children}
         </div>
       </main>
+      
+      {/* Navigation mobile en bas */}
+      <MobileBottomNav />
     </div>
   );
 }

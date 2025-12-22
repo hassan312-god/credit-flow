@@ -55,11 +55,12 @@ export default function Loans() {
   return (
     <MainLayout>
       <div className="space-y-4 md:space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-          <h1 className="font-display text-2xl md:text-3xl font-bold">Prêts</h1>
+        {/* Header masqué sur mobile (déjà dans MobileHeader) */}
+        <div className="hidden md:flex md:flex-row md:items-center md:justify-between gap-4">
+          <h1 className="font-display text-3xl font-bold">Prêts</h1>
           {canCreateLoans && (
             <Link to="/loans/new">
-              <Button className="gap-2 w-full sm:w-auto" size="sm">
+              <Button className="gap-2">
                 <Plus className="w-4 h-4" />
                 Nouveau prêt
               </Button>

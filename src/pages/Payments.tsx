@@ -196,8 +196,9 @@ export default function Payments() {
         {!canPerformOperations && canRecordPayments && (
           <OperationBlocked operation="enregistrer un paiement" />
         )}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-          <h1 className="font-display text-2xl md:text-3xl font-bold">Paiements</h1>
+        {/* Header masqué sur mobile (déjà dans MobileHeader) */}
+        <div className="hidden md:flex md:flex-row md:items-center md:justify-between gap-4">
+          <h1 className="font-display text-3xl font-bold">Paiements</h1>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">

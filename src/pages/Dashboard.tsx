@@ -11,7 +11,8 @@ import {
   AlertTriangle, 
   Plus,
   ArrowRight,
-  Clock
+  Clock,
+  Search
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -125,24 +126,23 @@ export default function Dashboard() {
 
   return (
     <MainLayout>
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="space-y-4 md:space-y-8">
+        {/* Header - Masqué sur mobile (déjà dans MobileHeader) */}
+        <div className="hidden md:flex md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
+            <h1 className="font-display text-3xl font-bold text-foreground">
               Bonjour, {profile?.full_name?.split(' ')[0] || 'Utilisateur'}
             </h1>
-            <p className="text-muted-foreground mt-1 text-sm md:text-base">
+            <p className="text-muted-foreground mt-1">
               Voici un aperçu de votre activité aujourd'hui
             </p>
           </div>
-          <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
             <NotificationBell />
             {isInstallable && !isInstalled && (
               <Button 
                 variant="outline" 
-                size="sm"
-                className="gap-2 text-xs md:text-sm"
+                className="gap-2"
                 onClick={async () => {
                   const result = await install();
                   if (result.success) {
@@ -152,25 +152,34 @@ export default function Dashboard() {
                   }
                 }}
               >
-                <Download className="w-3 h-3 md:w-4 md:h-4" />
-                <span className="hidden sm:inline">Installer l'app</span>
-                <span className="sm:hidden">Installer</span>
+                <Download className="w-4 h-4" />
+                Installer l'app
               </Button>
             )}
             {(role === 'directeur' || role === 'agent_credit') && (
               <Link to="/loans/new">
-                <Button className="gap-2 text-xs md:text-sm" size="sm">
-                  <Plus className="w-3 h-3 md:w-4 md:h-4" />
-                  <span className="hidden sm:inline">Nouveau prêt</span>
-                  <span className="sm:hidden">Nouveau</span>
+                <Button className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Nouveau prêt
                 </Button>
               </Link>
             )}
           </div>
         </div>
 
+        {/* Search Bar - Mobile only */}
+        <div className="md:hidden">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher..."
+              className="pl-10 bg-white dark:bg-gray-900"
+            />
+          </div>
+        </div>
+
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
           <StatCard
             title="Total Clients"
             value={stats.totalClients}
@@ -202,23 +211,24 @@ export default function Dashboard() {
         </div>
 
         {/* Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           {/* Recent Loans */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="font-display text-lg">Derniers Prêts</CardTitle>
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <CardTitle className="font-display text-base md:text-lg">Derniers Prêts</CardTitle>
               <Link to="/loans">
-                <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground hover:text-foreground">
-                  Voir tout
-                  <ArrowRight className="w-4 h-4" />
+                <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground hover:text-foreground h-8 text-xs md:text-sm">
+                  <span className="hidden sm:inline">Voir tout</span>
+                  <span className="sm:hidden">Tout</span>
+                  <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
                 </Button>
               </Link>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               {loading ? (
-                <div className="space-y-4">
+                <div className="space-y-3 md:space-y-4">
                   {[...Array(3)].map((_, i) => (
-                    <div key={i} className="flex items-center gap-4 animate-pulse">
+                    <div key={i} className="flex items-center gap-3 md:gap-4 animate-pulse">
                       <div className="w-10 h-10 rounded-full bg-muted" />
                       <div className="flex-1 space-y-2">
                         <div className="h-4 bg-muted rounded w-1/2" />
@@ -228,25 +238,25 @@ export default function Dashboard() {
                   ))}
                 </div>
               ) : recentLoans.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-2 md:space-y-3">
                   {recentLoans.map((loan) => (
-                    <div key={loan.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <div key={loan.id} className="flex items-center justify-between p-3 md:py-3 rounded-lg hover:bg-muted/50 transition-colors border-b border-border last:border-0">
+                      <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                           <FileText className="w-5 h-5 text-primary" />
                         </div>
-                        <div>
-                          <p className="font-medium text-foreground">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground text-sm md:text-base truncate">
                             {loan.client?.full_name || 'Client inconnu'}
                           </p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs md:text-sm text-muted-foreground">
                             {formatCurrency(Number(loan.amount))}
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex-shrink-0 ml-2">
                         <StatusBadge status={loan.status as any} />
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-muted-foreground mt-1 hidden md:block">
                           {formatDate(loan.created_at)}
                         </p>
                       </div>
@@ -254,55 +264,55 @@ export default function Dashboard() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>Aucun prêt récent</p>
+                <div className="text-center py-6 md:py-8 text-muted-foreground">
+                  <FileText className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm md:text-base">Aucun prêt récent</p>
                 </div>
               )}
             </CardContent>
           </Card>
 
           {/* Pending Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-display text-lg">Actions en Attente</CardTitle>
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="font-display text-base md:text-lg">Actions en Attente</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="pt-0">
+              <div className="space-y-2 md:space-y-3">
                 {stats.pendingLoans > 0 && (
                   <Link to="/loans?status=en_attente" className="block">
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-warning/5 border border-warning/20 hover:bg-warning/10 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center">
+                    <div className="flex items-center justify-between p-3 md:p-4 rounded-lg bg-warning/5 border border-warning/20 hover:bg-warning/10 transition-colors">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center flex-shrink-0">
                           <Clock className="w-5 h-5 text-warning" />
                         </div>
-                        <div>
-                          <p className="font-medium text-foreground">Prêts à valider</p>
-                          <p className="text-sm text-muted-foreground">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground text-sm md:text-base">Prêts à valider</p>
+                          <p className="text-xs md:text-sm text-muted-foreground">
                             {stats.pendingLoans} demande{stats.pendingLoans > 1 ? 's' : ''} en attente
                           </p>
                         </div>
                       </div>
-                      <ArrowRight className="w-5 h-5 text-muted-foreground" />
+                      <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground flex-shrink-0 ml-2" />
                     </div>
                   </Link>
                 )}
 
                 {stats.overdueLoans > 0 && (
                   <Link to="/recovery" className="block">
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-destructive/5 border border-destructive/20 hover:bg-destructive/10 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center">
+                    <div className="flex items-center justify-between p-3 md:p-4 rounded-lg bg-destructive/5 border border-destructive/20 hover:bg-destructive/10 transition-colors">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center flex-shrink-0">
                           <AlertTriangle className="w-5 h-5 text-destructive" />
                         </div>
-                        <div>
-                          <p className="font-medium text-foreground">Prêts en retard</p>
-                          <p className="text-sm text-muted-foreground">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground text-sm md:text-base">Prêts en retard</p>
+                          <p className="text-xs md:text-sm text-muted-foreground">
                             {stats.overdueLoans} prêt{stats.overdueLoans > 1 ? 's' : ''} à recouvrer
                           </p>
                         </div>
                       </div>
-                      <ArrowRight className="w-5 h-5 text-muted-foreground" />
+                      <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground flex-shrink-0 ml-2" />
                     </div>
                   </Link>
                 )}
@@ -311,37 +321,37 @@ export default function Dashboard() {
                   <div className="space-y-2">
                     {notifications.filter(n => n.type === 'overdue').length > 0 && (
                       <Link to="/recovery" className="block">
-                        <div className="flex items-center justify-between p-4 rounded-lg bg-destructive/5 border border-destructive/20 hover:bg-destructive/10 transition-colors">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center">
+                        <div className="flex items-center justify-between p-3 md:p-4 rounded-lg bg-destructive/5 border border-destructive/20 hover:bg-destructive/10 transition-colors">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center flex-shrink-0">
                               <AlertTriangle className="w-5 h-5 text-destructive" />
                             </div>
-                            <div>
-                              <p className="font-medium text-foreground">Paiements en retard</p>
-                              <p className="text-sm text-muted-foreground">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-foreground text-sm md:text-base">Paiements en retard</p>
+                              <p className="text-xs md:text-sm text-muted-foreground">
                                 {notifications.filter(n => n.type === 'overdue').length} échéance{notifications.filter(n => n.type === 'overdue').length > 1 ? 's' : ''} dépassée{notifications.filter(n => n.type === 'overdue').length > 1 ? 's' : ''}
                               </p>
                             </div>
                           </div>
-                          <ArrowRight className="w-5 h-5 text-muted-foreground" />
+                          <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground flex-shrink-0 ml-2" />
                         </div>
                       </Link>
                     )}
                     {notifications.filter(n => n.type === 'reminder').length > 0 && (
                       <Link to="/payments" className="block">
-                        <div className="flex items-center justify-between p-4 rounded-lg bg-warning/5 border border-warning/20 hover:bg-warning/10 transition-colors">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center">
+                        <div className="flex items-center justify-between p-3 md:p-4 rounded-lg bg-warning/5 border border-warning/20 hover:bg-warning/10 transition-colors">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center flex-shrink-0">
                               <Clock className="w-5 h-5 text-warning" />
                             </div>
-                            <div>
-                              <p className="font-medium text-foreground">Rappels de paiement</p>
-                              <p className="text-sm text-muted-foreground">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-foreground text-sm md:text-base">Rappels de paiement</p>
+                              <p className="text-xs md:text-sm text-muted-foreground">
                                 {notifications.filter(n => n.type === 'reminder').length} échéance{notifications.filter(n => n.type === 'reminder').length > 1 ? 's' : ''} dans les 7 prochains jours
                               </p>
                             </div>
                           </div>
-                          <ArrowRight className="w-5 h-5 text-muted-foreground" />
+                          <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground flex-shrink-0 ml-2" />
                         </div>
                       </Link>
                     )}
