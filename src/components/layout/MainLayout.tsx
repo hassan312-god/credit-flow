@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { WorkSessionStatus } from '@/components/WorkSessionStatus';
+import { ConnectionStatus } from '@/components/ConnectionStatus';
 import { SidebarProvider, useSidebarContext } from './SidebarContext';
 
 interface MainLayoutProps {
@@ -15,6 +16,7 @@ function MainLayoutContent({ children }: MainLayoutProps) {
       <Sidebar />
       <main className={isCollapsed ? "ml-20" : "ml-64"} style={{ transition: 'margin-left 300ms ease-in-out' }}>
         <div className="p-8">
+          <ConnectionStatus />
           <WorkSessionStatus />
           {children}
         </div>

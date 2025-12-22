@@ -13,6 +13,7 @@ import { z } from 'zod';
 import { OperationBlocked } from '@/components/OperationBlocked';
 import { useWorkSession } from '@/hooks/useWorkSession';
 import { useAuth } from '@/hooks/useAuth';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const clientSchema = z.object({
@@ -30,8 +31,9 @@ type ClientFormData = z.infer<typeof clientSchema>;
 
 export default function ClientForm() {
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const { canPerformOperations } = useWorkSession();
+  const { isOnline, addToQueue } = useOfflineQueue();
   const [loading, setLoading] = useState(false);
 
   // Vérifier si l'utilisateur a accès aux clients
@@ -71,7 +73,7 @@ export default function ClientForm() {
         monthly_income: formData.monthly_income || undefined,
       });
 
-      const { error } = await supabase.from('clients').insert({
+      const clientData = {
         full_name: validatedData.full_name,
         phone: validatedData.phone,
         email: validatedData.email || null,
@@ -80,7 +82,23 @@ export default function ClientForm() {
         address: validatedData.address || null,
         profession: validatedData.profession || null,
         monthly_income: validatedData.monthly_income || null,
-      });
+        created_by: user?.id || null,
+      };
+
+      // Si hors ligne, ajouter à la queue
+      if (!isOnline) {
+        await addToQueue({
+          type: 'create_client',
+          table: 'clients',
+          data: clientData,
+        });
+        toast.success('Client ajouté à la file d\'attente. Il sera créé automatiquement lorsque la connexion sera rétablie.');
+        navigate('/clients');
+        return;
+      }
+
+      // Si en ligne, créer directement
+      const { error } = await supabase.from('clients').insert(clientData);
 
       if (error) throw error;
 
