@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { initLocalDB } from '@/services/localStorage';
 
 export interface QueuedAction {
   id: string;
@@ -11,37 +12,9 @@ export interface QueuedAction {
   error?: string;
 }
 
-const DB_NAME = 'credit-flow-offline';
-const STORE_NAME = 'offline-queue';
-const VERSION = 1;
+import { STORES } from '@/services/localStorage';
 
-let db: IDBDatabase | null = null;
-
-const initDB = (): Promise<IDBDatabase> => {
-  return new Promise((resolve, reject) => {
-    if (db) {
-      resolve(db);
-      return;
-    }
-
-    const request = indexedDB.open(DB_NAME, VERSION);
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => {
-      db = request.result;
-      resolve(db);
-    };
-
-    request.onupgradeneeded = (event) => {
-      const database = (event.target as IDBOpenDBRequest).result;
-      if (!database.objectStoreNames.contains(STORE_NAME)) {
-        const objectStore = database.createObjectStore(STORE_NAME, { keyPath: 'id' });
-        objectStore.createIndex('synced', 'synced', { unique: false });
-        objectStore.createIndex('timestamp', 'timestamp', { unique: false });
-      }
-    };
-  });
-};
+const STORE_NAME = STORES['offline-queue'];
 
 export function useOfflineQueue() {
   const [queue, setQueue] = useState<QueuedAction[]>([]);
@@ -65,14 +38,9 @@ export function useOfflineQueue() {
   useEffect(() => {
     const loadQueue = async () => {
       try {
-        const database = await initDB();
-        const transaction = database.transaction([STORE_NAME], 'readonly');
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.getAll();
-
-        request.onsuccess = () => {
-          setQueue(request.result || []);
-        };
+        const { getFromLocal } = await import('@/services/localStorage');
+        const queueData = await getFromLocal(STORE_NAME);
+        setQueue(queueData as QueuedAction[]);
       } catch (error) {
         console.error('Error loading queue:', error);
       }
@@ -98,15 +66,8 @@ export function useOfflineQueue() {
     };
 
     try {
-      const database = await initDB();
-      const transaction = database.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      await new Promise<void>((resolve, reject) => {
-        const request = store.add(queuedAction);
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
-      });
-
+      const { saveToLocal } = await import('@/services/localStorage');
+      await saveToLocal(STORE_NAME, queuedAction, false);
       setQueue(prev => [...prev, queuedAction]);
       return id;
     } catch (error) {
@@ -124,9 +85,7 @@ export function useOfflineQueue() {
     setIsSyncing(true);
 
     try {
-      const database = await initDB();
-      const transaction = database.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
+      const { markAsSynced, saveToLocal } = await import('@/services/localStorage');
 
       for (const action of unsyncedActions) {
         try {
@@ -164,25 +123,14 @@ export function useOfflineQueue() {
           }
 
           // Marquer comme synchronisé
-          const updatedAction = { ...action, synced: true };
-          await new Promise<void>((resolve, reject) => {
-            const request = store.put(updatedAction);
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-          });
-
-          setQueue(prev => prev.map(a => a.id === action.id ? updatedAction : a));
+          await markAsSynced(STORE_NAME, action.id);
+          setQueue(prev => prev.map(a => a.id === action.id ? { ...a, synced: true } : a));
         } catch (error: any) {
           console.error(`Error syncing action ${action.id}:`, error);
           
           // Marquer l'erreur
           const failedAction = { ...action, error: error.message };
-          await new Promise<void>((resolve, reject) => {
-            const request = store.put(failedAction);
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-          });
-
+          await saveToLocal(STORE_NAME, failedAction, false);
           setQueue(prev => prev.map(a => a.id === action.id ? failedAction : a));
         }
       }
@@ -195,15 +143,8 @@ export function useOfflineQueue() {
 
   const removeFromQueue = useCallback(async (id: string) => {
     try {
-      const database = await initDB();
-      const transaction = database.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      await new Promise<void>((resolve, reject) => {
-        const request = store.delete(id);
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
-      });
-
+      const { deleteFromLocal } = await import('@/services/localStorage');
+      await deleteFromLocal(STORE_NAME, id);
       setQueue(prev => prev.filter(a => a.id !== id));
     } catch (error) {
       console.error('Error removing from queue:', error);

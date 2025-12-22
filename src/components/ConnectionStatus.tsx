@@ -9,18 +9,84 @@ import {
   Download, 
   CheckCircle2, 
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Database,
+  Cloud
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react';
+import { syncAll, downloadAllData } from '@/services/syncService';
+import { toast } from 'sonner';
 
 export function ConnectionStatus() {
   const { isOnline, isSyncing, pendingCount, syncQueue } = useOfflineQueue();
   const { isInstallable, isInstalled, install } = usePWAInstall();
+  const [syncingAll, setSyncingAll] = useState(false);
+  const [lastFullSync, setLastFullSync] = useState<number | null>(null);
+
+  useEffect(() => {
+    // Charger le timestamp de la dernière synchronisation complète
+    const loadLastSync = async () => {
+      const { getMetadata } = await import('@/services/localStorage');
+      const timestamp = await getMetadata('last_full_sync');
+      if (timestamp) {
+        setLastFullSync(timestamp);
+      }
+    };
+    loadLastSync();
+  }, []);
 
   const handleInstall = async () => {
     const result = await install();
     if (result.success) {
       // Installation réussie
+    }
+  };
+
+  const handleFullSync = async () => {
+    if (!isOnline) {
+      toast.error('Connexion requise pour synchroniser');
+      return;
+    }
+
+    setSyncingAll(true);
+    try {
+      const result = await syncAll();
+      if (result.success) {
+        const { saveMetadata } = await import('@/services/localStorage');
+        await saveMetadata('last_full_sync', Date.now());
+        setLastFullSync(Date.now());
+        toast.success(`${result.synced} élément(s) synchronisé(s) avec succès`);
+      } else {
+        toast.error(`Erreur lors de la synchronisation: ${result.message || 'Erreur inconnue'}`);
+      }
+    } catch (error: any) {
+      toast.error(`Erreur: ${error.message}`);
+    } finally {
+      setSyncingAll(false);
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    if (!isOnline) {
+      toast.error('Connexion requise pour télécharger les données');
+      return;
+    }
+
+    setSyncingAll(true);
+    try {
+      const result = await downloadAllData();
+      if (result.success) {
+        const { saveMetadata } = await import('@/services/localStorage');
+        await saveMetadata('last_full_sync', Date.now());
+        setLastFullSync(Date.now());
+        toast.success(`${result.synced} élément(s) téléchargé(s) avec succès`);
+      } else {
+        toast.error(`Erreur lors du téléchargement: ${result.message || 'Erreur inconnue'}`);
+      }
+    } catch (error: any) {
+      toast.error(`Erreur: ${error.message}`);
+    } finally {
+      setSyncingAll(false);
     }
   };
 
@@ -80,12 +146,64 @@ export function ConnectionStatus() {
               variant="outline" 
               onClick={syncQueue}
               className="ml-4"
+              disabled={isSyncing}
             >
-              <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+              <RefreshCw className={cn("w-3.5 h-3.5 mr-1.5", isSyncing && "animate-spin")} />
               Synchroniser
             </Button>
           </AlertDescription>
         </Alert>
+      )}
+
+      {/* Boutons de synchronisation complète */}
+      {isOnline && (
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleFullSync}
+            disabled={syncingAll}
+            className="flex-1"
+          >
+            {syncingAll ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                Synchronisation...
+              </>
+            ) : (
+              <>
+                <Cloud className="w-3.5 h-3.5 mr-1.5" />
+                Synchroniser tout
+              </>
+            )}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleDownloadAll}
+            disabled={syncingAll}
+            className="flex-1"
+          >
+            {syncingAll ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                Téléchargement...
+              </>
+            ) : (
+              <>
+                <Database className="w-3.5 h-3.5 mr-1.5" />
+                Télécharger tout
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {/* Info dernière synchronisation */}
+      {lastFullSync && (
+        <p className="text-xs text-muted-foreground text-center">
+          Dernière synchronisation: {new Date(lastFullSync).toLocaleString('fr-FR')}
+        </p>
       )}
 
       {/* Bouton d'installation PWA */}

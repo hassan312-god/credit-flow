@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Search, Phone, Mail, AlertTriangle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useLocalCache } from '@/hooks/useLocalCache';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface Client {
@@ -21,9 +21,14 @@ interface Client {
 export default function Clients() {
   const { role } = useAuth();
   const navigate = useNavigate();
-  const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
+  
+  // Utiliser le cache local avec synchronisation automatique
+  const { data: clients, loading, isOnline, refresh } = useLocalCache<Client>({
+    table: 'clients',
+    autoSync: true,
+    syncInterval: 5 * 60 * 1000, // Synchroniser toutes les 5 minutes
+  });
 
   // Vérifier si l'utilisateur a accès aux clients
   const canAccessClients = role === 'admin' || role === 'directeur' || role === 'agent_credit';
@@ -34,18 +39,6 @@ export default function Clients() {
       return;
     }
   }, [canAccessClients, navigate]);
-
-  useEffect(() => {
-    const fetchClients = async () => {
-      const { data } = await supabase
-        .from('clients')
-        .select('*')
-        .order('created_at', { ascending: false });
-      setClients(data || []);
-      setLoading(false);
-    };
-    fetchClients();
-  }, []);
 
   const filteredClients = clients.filter(c =>
     c.full_name.toLowerCase().includes(search.toLowerCase()) ||
