@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +38,32 @@ export default function WorkSchedule() {
 
     fetchSchedules();
   }, [role]);
+
+  // S'assurer que tous les jours sont dans l'état après le chargement
+  useEffect(() => {
+    if (loading || schedules.length === 0) return;
+    
+    // Vérifier si tous les jours sont présents
+    const missingDays = DAYS.filter(day => 
+      !schedules.find(s => s.day_of_week === day.value)
+    );
+    
+    if (missingDays.length > 0) {
+      // Ajouter les jours manquants avec is_active: false
+      const newSchedules = missingDays.map(day => ({
+        id: '',
+        day_of_week: day.value,
+        start_time: '08:00:00',
+        end_time: '17:00:00',
+        is_active: false,
+        created_by: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }));
+      
+      setSchedules(prev => [...prev, ...newSchedules]);
+    }
+  }, [loading, schedules.length]);
 
   const fetchSchedules = async () => {
     try {
@@ -110,7 +136,7 @@ export default function WorkSchedule() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Calculer allSchedules avec les données actuelles
+      // Utiliser allSchedules calculé dans le render pour avoir les valeurs à jour
       const allSchedulesToSave = DAYS.map(day => {
         const existing = schedules.find(s => s.day_of_week === day.value);
         return existing || {
@@ -131,7 +157,7 @@ export default function WorkSchedule() {
           day_of_week: schedule.day_of_week,
           start_time: schedule.start_time,
           end_time: schedule.end_time,
-          is_active: schedule.is_active !== undefined ? schedule.is_active : false,
+          is_active: Boolean(schedule.is_active), // S'assurer que c'est un boolean
           updated_at: new Date().toISOString(),
         };
 
@@ -144,7 +170,10 @@ export default function WorkSchedule() {
           .from('work_schedule')
           .upsert(scheduleData, { onConflict: 'day_of_week' });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error saving schedule:', scheduleData, error);
+          throw error;
+        }
       }
 
       toast.success('Horaires sauvegardés avec succès !');
@@ -183,20 +212,26 @@ export default function WorkSchedule() {
   }
 
   // Initialize schedules for all days if empty
-  // Utiliser l'état local (schedules) qui peut contenir des modifications non sauvegardées
-  const allSchedules = DAYS.map(day => {
-    const existing = schedules.find(s => s.day_of_week === day.value);
-    return existing || {
-      id: '',
-      day_of_week: day.value,
-      start_time: '08:00:00',
-      end_time: '17:00:00',
-      is_active: false, // Par défaut désactivé pour les nouveaux jours
-      created_by: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-  });
+  // Utiliser useMemo pour éviter les recalculs inutiles
+  const allSchedules = useMemo(() => {
+    return DAYS.map(day => {
+      const existing = schedules.find(s => s.day_of_week === day.value);
+      if (existing) {
+        return existing;
+      }
+      // Pour les jours qui n'existent pas, créer un schedule par défaut désactivé
+      return {
+        id: '',
+        day_of_week: day.value,
+        start_time: '08:00:00',
+        end_time: '17:00:00',
+        is_active: false, // Par défaut désactivé pour les nouveaux jours
+        created_by: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    });
+  }, [schedules]);
 
   return (
     <MainLayout>
@@ -240,7 +275,7 @@ export default function WorkSchedule() {
                       </Label>
                       <Switch
                         id={`active-${schedule.day_of_week}`}
-                        checked={schedule.is_active ?? true}
+                        checked={Boolean(schedule.is_active)}
                         onCheckedChange={(checked) => handleActiveToggle(schedule.day_of_week, checked)}
                       />
                     </div>
