@@ -60,10 +60,7 @@ export function useAttendanceAlerts() {
         // Get all users who should have started but haven't or are late
         const { data: sessions, error: sessionsError } = await supabase
           .from('work_sessions')
-          .select(`
-            *,
-            profile:profiles!work_sessions_user_id_fkey(full_name, email)
-          `)
+          .select('*')
           .eq('work_date', today);
 
         if (!sessionsError && sessions) {

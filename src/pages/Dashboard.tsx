@@ -155,7 +155,7 @@ export default function Dashboard() {
                 Installer l'app
               </Button>
             )}
-            {(role === 'admin' || role === 'directeur' || role === 'agent_credit') && (
+            {(role === 'directeur' || role === 'agent_credit') && (
               <Link to="/loans/new">
                 <Button className="gap-2">
                   <Plus className="w-4 h-4" />

@@ -36,14 +36,15 @@ export default function ClientForm() {
   const { isOnline, addToQueue } = useOfflineQueue();
   const [loading, setLoading] = useState(false);
 
-  // Vérifier si l'utilisateur a accès aux clients
-  const canAccessClients = role === 'admin' || role === 'directeur' || role === 'agent_credit';
+  // Vérifier si l'utilisateur peut créer des clients (Admin ne peut pas créer)
+  const canCreateClients = role === 'directeur' || role === 'agent_credit';
 
   useEffect(() => {
-    if (!canAccessClients) {
-      navigate('/dashboard');
+    if (!canCreateClients) {
+      toast.error('Les administrateurs ne peuvent pas créer de clients. Accès réservé aux opérations métier.');
+      navigate('/clients');
     }
-  }, [canAccessClients, navigate]);
+  }, [canCreateClients, navigate]);
   const [errors, setErrors] = useState<Partial<Record<keyof ClientFormData, string>>>({});
   const [formData, setFormData] = useState<ClientFormData>({
     full_name: '',
@@ -98,12 +99,20 @@ export default function ClientForm() {
       }
 
       // Si en ligne, créer directement
-      const { error } = await supabase.from('clients').insert(clientData);
+      const { data: newClient, error } = await supabase
+        .from('clients')
+        .insert(clientData)
+        .select()
+        .single();
 
       if (error) throw error;
 
+      if (!newClient) {
+        throw new Error('Client créé mais aucune donnée retournée');
+      }
+
       toast.success('Client créé avec succès');
-      navigate('/clients');
+      navigate(`/clients/${newClient.id}`);
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Partial<Record<keyof ClientFormData, string>> = {};
@@ -122,14 +131,14 @@ export default function ClientForm() {
     }
   };
 
-  if (!canAccessClients) {
+  if (!canCreateClients) {
     return (
       <MainLayout>
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Accès refusé</AlertTitle>
           <AlertDescription>
-            Vous n'avez pas les permissions nécessaires pour créer un client.
+            Les administrateurs ne peuvent pas créer de clients. Cette fonctionnalité est réservée aux opérations métier.
           </AlertDescription>
         </Alert>
       </MainLayout>

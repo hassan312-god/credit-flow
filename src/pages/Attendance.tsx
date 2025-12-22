@@ -52,10 +52,7 @@ export default function Attendance() {
     try {
       let query = supabase
         .from('work_sessions')
-        .select(`
-          *,
-          profile:profiles!work_sessions_user_id_fkey(full_name, email)
-        `)
+        .select('*')
         .order('work_date', { ascending: false })
         .order('opened_at', { ascending: false });
 
@@ -69,10 +66,24 @@ export default function Attendance() {
         query = query.gte('work_date', startOfMonth).lt('work_date', endOfMonth);
       }
 
-      const { data, error } = await query;
+      const { data: sessions, error } = await query;
 
       if (error) throw error;
-      setAttendance((data || []) as any);
+
+      // Fetch profiles separately
+      const userIds = [...new Set((sessions || []).map((s: any) => s.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', userIds);
+
+      // Combine data
+      const attendanceWithProfiles = (sessions || []).map((session: any) => ({
+        ...session,
+        profile: profiles?.find((p: any) => p.id === session.user_id) || null,
+      }));
+
+      setAttendance(attendanceWithProfiles as any);
     } catch (error: any) {
       console.error('Error fetching attendance:', error);
       toast.error('Erreur lors du chargement des présences');

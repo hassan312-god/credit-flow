@@ -49,25 +49,30 @@ export default function AttendanceReports() {
       // Fetch all work sessions for the month
       const { data: sessions, error: sessionsError } = await supabase
         .from('work_sessions')
-        .select(`
-          *,
-          profile:profiles!work_sessions_user_id_fkey(full_name, email)
-        `)
+        .select('*')
         .gte('work_date', startDate)
         .lte('work_date', endDate);
 
       if (sessionsError) throw sessionsError;
+
+      // Fetch profiles separately
+      const userIds = [...new Set((sessions || []).map((s: any) => s.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', userIds);
 
       // Group by user and calculate statistics
       const userMap = new Map<string, MonthlyReport>();
 
       sessions?.forEach((session: any) => {
         const userId = session.user_id;
+        const profile = profiles?.find((p: any) => p.id === userId);
         if (!userMap.has(userId)) {
           userMap.set(userId, {
             user_id: userId,
-            full_name: session.profile?.full_name || 'Utilisateur inconnu',
-            email: session.profile?.email || '',
+            full_name: profile?.full_name || 'Utilisateur inconnu',
+            email: profile?.email || '',
             days_worked: 0,
             days_late: 0,
             days_absent: 0,

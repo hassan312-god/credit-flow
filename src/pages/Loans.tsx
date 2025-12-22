@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Loan {
   id: string;
@@ -19,9 +20,11 @@ interface Loan {
 
 export default function Loans() {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const [loans, setLoans] = useState<Loan[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const canCreateLoans = role === 'directeur' || role === 'agent_credit';
 
   useEffect(() => {
     const fetchLoans = async () => {
@@ -54,12 +57,14 @@ export default function Loans() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="font-display text-3xl font-bold">Prêts</h1>
-          <Link to="/loans/new">
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" />
-              Nouveau prêt
-            </Button>
-          </Link>
+          {canCreateLoans && (
+            <Link to="/loans/new">
+              <Button className="gap-2">
+                <Plus className="w-4 h-4" />
+                Nouveau prêt
+              </Button>
+            </Link>
+          )}
         </div>
 
         <div className="relative max-w-md">

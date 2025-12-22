@@ -16,6 +16,9 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { OperationBlocked } from '@/components/OperationBlocked';
 import { useWorkSession } from '@/hooks/useWorkSession';
+import { useAuth } from '@/hooks/useAuth';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 
 interface PaymentSchedule {
   id: string;
@@ -42,7 +45,9 @@ interface Payment {
 }
 
 export default function Payments() {
+  const { role } = useAuth();
   const { canPerformOperations } = useWorkSession();
+  const canRecordPayments = role === 'directeur' || role === 'caissier';
   const [schedules, setSchedules] = useState<PaymentSchedule[]>([]);
   const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
   const [search, setSearch] = useState('');
@@ -108,6 +113,12 @@ export default function Payments() {
     format(new Date(date), 'dd MMM yyyy', { locale: fr });
 
   const handleOpenPayment = (schedule: PaymentSchedule) => {
+    // Admin ne peut pas enregistrer de paiements
+    if (role === 'admin') {
+      toast.error('Les administrateurs ne peuvent pas enregistrer de paiements. Cette fonctionnalité est réservée aux opérations métier.');
+      return;
+    }
+    
     setSelectedSchedule(schedule);
     setPaymentForm({
       amount: Number(schedule.amount_due) - Number(schedule.amount_paid || 0),
@@ -120,6 +131,12 @@ export default function Payments() {
 
   const handleSubmitPayment = async () => {
     if (!selectedSchedule || paymentForm.amount <= 0) return;
+    
+    // Admin ne peut pas enregistrer de paiements
+    if (role === 'admin') {
+      toast.error('Les administrateurs ne peuvent pas enregistrer de paiements. Cette fonctionnalité est réservée aux opérations métier.');
+      return;
+    }
     
     setSubmitting(true);
     try {
@@ -167,7 +184,18 @@ export default function Payments() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <OperationBlocked operation="enregistrer un paiement" />
+        {!canRecordPayments && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Action non autorisée</AlertTitle>
+            <AlertDescription>
+              Les administrateurs ne peuvent pas enregistrer de paiements. Cette fonctionnalité est réservée aux opérations métier.
+            </AlertDescription>
+          </Alert>
+        )}
+        {!canPerformOperations && canRecordPayments && (
+          <OperationBlocked operation="enregistrer un paiement" />
+        )}
         <div className="flex items-center justify-between">
           <h1 className="font-display text-3xl font-bold">Paiements</h1>
         </div>
@@ -236,7 +264,11 @@ export default function Payments() {
                             <StatusBadge status={schedule.status as any} />
                           </TableCell>
                           <TableCell>
-                            <Button size="sm" onClick={() => handleOpenPayment(schedule)}>
+                            <Button 
+                              size="sm" 
+                              onClick={() => handleOpenPayment(schedule)}
+                              disabled={!canRecordPayments || !canPerformOperations}
+                            >
                               <Plus className="w-4 h-4 mr-1" />
                               Payer
                             </Button>

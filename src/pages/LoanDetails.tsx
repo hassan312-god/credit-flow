@@ -132,8 +132,8 @@ export default function LoanDetails() {
     fetchLoanData();
   }, [id]);
 
-  const canValidate = role === 'admin' || role === 'directeur';
-  const canReject = role === 'admin' || role === 'directeur';
+  const canValidate = role === 'directeur';
+  const canReject = role === 'directeur';
 
   const generatePaymentSchedule = async (loanId: string, loanData: Loan) => {
     // Vérifier si un échéancier existe déjà

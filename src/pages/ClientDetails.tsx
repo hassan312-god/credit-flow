@@ -220,12 +220,14 @@ export default function ClientDetails() {
                 <p className="text-3xl font-bold mt-1">{activeLoans}</p>
               </CardContent>
             </Card>
-            <Link to={`/loans/new?client=${id}`}>
-              <Button className="w-full gap-2">
-                <Plus className="w-4 h-4" />
-                Nouveau prêt
-              </Button>
-            </Link>
+            {(role === 'directeur' || role === 'agent_credit') && (
+              <Link to={`/loans/new?client=${id}`}>
+                <Button className="w-full gap-2">
+                  <Plus className="w-4 h-4" />
+                  Nouveau prêt
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 

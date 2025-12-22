@@ -15,8 +15,21 @@ export function OperationBlocked({ operation }: OperationBlockedProps) {
   const { isOpen, canPerformOperations } = useWorkSession();
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Les administrateurs peuvent toujours effectuer des opérations
-  if (role === 'admin' || canPerformOperations) {
+  // Les administrateurs ne peuvent pas effectuer d'opérations métier (supervision uniquement)
+  // Seuls les autres rôles avec journée ouverte peuvent effectuer des opérations
+  if (role === 'admin') {
+    return (
+      <Alert variant="destructive" className="mb-6">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Action non autorisée</AlertTitle>
+        <AlertDescription>
+          Les administrateurs ne peuvent pas effectuer d'opérations métier. Votre rôle est limité à la supervision et au contrôle.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  
+  if (canPerformOperations) {
     return null;
   }
 

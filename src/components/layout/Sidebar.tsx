@@ -12,7 +12,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Calendar
+  Calendar,
+  Activity,
+  Cloud,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
@@ -67,16 +70,17 @@ const menuItems = [
     label: 'Paramètres',
     roles: ['admin']
   },
+  // Section Temps de travail / Présence
   { 
     path: '/work-schedule', 
     icon: Clock, 
-    label: 'Horaires de travail',
+    label: 'Paramètres horaires',
     roles: ['admin', 'directeur']
   },
   { 
     path: '/attendance', 
     icon: Calendar, 
-    label: 'Présences',
+    label: 'Présence / Temps de travail',
     roles: ['admin', 'directeur']
   },
   { 
@@ -84,6 +88,19 @@ const menuItems = [
     icon: BarChart3, 
     label: 'Rapports présence',
     roles: ['admin', 'directeur']
+  },
+  // Section Administration
+  { 
+    path: '/activity-logs', 
+    icon: Activity, 
+    label: 'Journal d\'activité',
+    roles: ['admin']
+  },
+  { 
+    path: '/sync-status', 
+    icon: Cloud, 
+    label: 'Synchronisation hors ligne',
+    roles: ['admin']
   },
 ];
 

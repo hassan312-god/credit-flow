@@ -21,6 +21,8 @@ import Settings from "./pages/Settings";
 import WorkSchedule from "./pages/WorkSchedule";
 import Attendance from "./pages/Attendance";
 import AttendanceReports from "./pages/AttendanceReports";
+import ActivityLogs from "./pages/ActivityLogs";
+import SyncStatus from "./pages/SyncStatus";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +52,8 @@ const App = () => (
             <Route path="/work-schedule" element={<WorkSchedule />} />
             <Route path="/attendance" element={<Attendance />} />
             <Route path="/attendance-reports" element={<AttendanceReports />} />
+            <Route path="/activity-logs" element={<ActivityLogs />} />
+            <Route path="/sync-status" element={<SyncStatus />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

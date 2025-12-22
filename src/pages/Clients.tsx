@@ -64,12 +64,14 @@ export default function Clients() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="font-display text-3xl font-bold">Clients</h1>
-          <Link to="/clients/new">
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" />
-              Nouveau client
-            </Button>
-          </Link>
+          {(role === 'directeur' || role === 'agent_credit') && (
+            <Link to="/clients/new">
+              <Button className="gap-2">
+                <Plus className="w-4 h-4" />
+                Nouveau client
+              </Button>
+            </Link>
+          )}
         </div>
 
         <div className="relative max-w-md">

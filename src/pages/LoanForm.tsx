@@ -32,8 +32,19 @@ interface Client {
 
 export default function LoanForm() {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const { canPerformOperations } = useWorkSession();
   const [loading, setLoading] = useState(false);
+  
+  // Admin ne peut pas créer de prêts
+  const canCreateLoans = role === 'directeur' || role === 'agent_credit';
+  
+  useEffect(() => {
+    if (role === 'admin') {
+      toast.error('Les administrateurs ne peuvent pas créer de prêts. Accès réservé aux opérations métier.');
+      navigate('/loans');
+    }
+  }, [role, navigate]);
   const [clients, setClients] = useState<Client[]>([]);
   const [errors, setErrors] = useState<Partial<Record<keyof LoanFormData, string>>>({});
   const [formData, setFormData] = useState<LoanFormData>({
@@ -108,6 +119,20 @@ export default function LoanForm() {
       setLoading(false);
     }
   };
+
+  if (!canCreateLoans) {
+    return (
+      <MainLayout>
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Accès refusé</AlertTitle>
+          <AlertDescription>
+            Les administrateurs ne peuvent pas créer de prêts. Cette fonctionnalité est réservée aux opérations métier.
+          </AlertDescription>
+        </Alert>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>

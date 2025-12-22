@@ -24,10 +24,16 @@ export function useWorkSession() {
   const today = format(new Date(), 'yyyy-MM-dd');
 
   useEffect(() => {
-    if (!user || role === 'admin') {
-      // Les administrateurs n'ont pas besoin d'ouvrir une journée
+    if (!user) {
       setLoading(false);
-      setIsOpen(true);
+      setIsOpen(false);
+      return;
+    }
+    
+    if (role === 'admin') {
+      // Les administrateurs ne peuvent pas ouvrir/fermer une journée (rôle de supervision uniquement)
+      setLoading(false);
+      setIsOpen(false);
       return;
     }
 
@@ -112,7 +118,8 @@ export function useWorkSession() {
     }
   };
 
-  const canPerformOperations = role === 'admin' || isOpen;
+  // Admin ne peut pas effectuer d'opérations métier (supervision uniquement)
+  const canPerformOperations = role !== 'admin' && isOpen;
 
   return {
     workSession,
