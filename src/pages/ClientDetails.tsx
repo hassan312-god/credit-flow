@@ -1,0 +1,243 @@
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { MainLayout } from '@/components/layout/MainLayout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { ArrowLeft, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, Plus } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+interface Client {
+  id: string;
+  full_name: string;
+  email: string | null;
+  phone: string;
+  id_type: string;
+  id_number: string;
+  address: string | null;
+  profession: string | null;
+  monthly_income: number | null;
+  created_at: string;
+}
+
+interface Loan {
+  id: string;
+  amount: number;
+  status: string;
+  duration_months: number;
+  created_at: string;
+}
+
+export default function ClientDetails() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [client, setClient] = useState<Client | null>(null);
+  const [loans, setLoans] = useState<Loan[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchClientData = async () => {
+      if (!id) return;
+
+      try {
+        const { data: clientData } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+
+        const { data: loansData } = await supabase
+          .from('loans')
+          .select('id, amount, status, duration_months, created_at')
+          .eq('client_id', id)
+          .order('created_at', { ascending: false });
+
+        setClient(clientData);
+        setLoans(loansData || []);
+      } catch (error) {
+        console.error('Error fetching client:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClientData();
+  }, [id]);
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount);
+
+  const formatDate = (date: string) =>
+    format(new Date(date), 'dd MMM yyyy', { locale: fr });
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-muted rounded w-1/3" />
+          <div className="h-64 bg-muted rounded" />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!client) {
+    return (
+      <MainLayout>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Client non trouvé</p>
+          <Button className="mt-4" onClick={() => navigate('/clients')}>
+            Retour aux clients
+          </Button>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  const totalLoans = loans.reduce((sum, l) => sum + Number(l.amount), 0);
+  const activeLoans = loans.filter(l => ['en_cours', 'decaisse'].includes(l.status)).length;
+
+  return (
+    <MainLayout>
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h1 className="font-display text-3xl font-bold">{client.full_name}</h1>
+            <p className="text-muted-foreground">Client depuis le {formatDate(client.created_at)}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Client Info */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Informations personnelles</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <Phone className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Téléphone</p>
+                    <p className="font-medium">{client.phone}</p>
+                  </div>
+                </div>
+
+                {client.email && (
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <Mail className="w-5 h-5 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Email</p>
+                      <p className="font-medium">{client.email}</p>
+                    </div>
+                  </div>
+                )}
+
+                {client.address && (
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <MapPin className="w-5 h-5 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Adresse</p>
+                      <p className="font-medium">{client.address}</p>
+                    </div>
+                  </div>
+                )}
+
+                {client.profession && (
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <Briefcase className="w-5 h-5 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Profession</p>
+                      <p className="font-medium">{client.profession}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <CreditCard className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">{client.id_type}</p>
+                    <p className="font-medium">{client.id_number}</p>
+                  </div>
+                </div>
+
+                {client.monthly_income && (
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <FileText className="w-5 h-5 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Revenu mensuel</p>
+                      <p className="font-medium">{formatCurrency(client.monthly_income)}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Stats */}
+          <div className="space-y-6">
+            <Card>
+              <CardContent className="p-6">
+                <p className="text-sm text-muted-foreground">Total emprunté</p>
+                <p className="text-3xl font-bold mt-1">{formatCurrency(totalLoans)}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <p className="text-sm text-muted-foreground">Prêts actifs</p>
+                <p className="text-3xl font-bold mt-1">{activeLoans}</p>
+              </CardContent>
+            </Card>
+            <Link to={`/loans/new?client=${id}`}>
+              <Button className="w-full gap-2">
+                <Plus className="w-4 h-4" />
+                Nouveau prêt
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Loans History */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Historique des prêts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loans.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow className="table-header">
+                    <TableHead>Montant</TableHead>
+                    <TableHead>Durée</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead>Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loans.map((loan) => (
+                    <TableRow key={loan.id} className="cursor-pointer hover:bg-muted/50">
+                      <TableCell className="font-medium">{formatCurrency(loan.amount)}</TableCell>
+                      <TableCell>{loan.duration_months} mois</TableCell>
+                      <TableCell><StatusBadge status={loan.status as any} /></TableCell>
+                      <TableCell className="text-muted-foreground">{formatDate(loan.created_at)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-center py-8 text-muted-foreground">
+                Aucun prêt enregistré pour ce client
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </MainLayout>
+  );
+}
