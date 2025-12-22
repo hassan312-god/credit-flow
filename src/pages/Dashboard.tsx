@@ -17,6 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 import { usePaymentNotifications } from '@/hooks/usePaymentNotifications';
+import { NotificationBell } from '@/components/NotificationBell';
 
 interface DashboardStats {
   totalClients: number;
@@ -131,14 +132,17 @@ export default function Dashboard() {
               Voici un aperçu de votre activité aujourd'hui
             </p>
           </div>
-          {(role === 'admin' || role === 'directeur' || role === 'agent_credit') && (
-            <Link to="/loans/new">
-              <Button className="gap-2">
-                <Plus className="w-4 h-4" />
-                Nouveau prêt
-              </Button>
-            </Link>
-          )}
+          <div className="flex items-center gap-3">
+            <NotificationBell />
+            {(role === 'admin' || role === 'directeur' || role === 'agent_credit') && (
+              <Link to="/loans/new">
+                <Button className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Nouveau prêt
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Stats Grid */}

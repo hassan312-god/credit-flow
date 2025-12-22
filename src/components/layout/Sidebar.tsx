@@ -55,7 +55,7 @@ const menuItems = [
     path: '/users', 
     icon: Shield, 
     label: 'Utilisateurs',
-    roles: ['admin']
+    roles: ['admin', 'directeur']
   },
   { 
     path: '/settings', 

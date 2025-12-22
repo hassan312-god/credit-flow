@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,11 +7,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Shield, UserPlus, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Shield, UserPlus, Loader2, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useAuth } from '@/hooks/useAuth';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -42,12 +45,23 @@ const roleColors: Record<AppRole, string> = {
 };
 
 export default function Users() {
+  const { role } = useAuth();
+  const navigate = useNavigate();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [selectedRole, setSelectedRole] = useState<AppRole | ''>('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Vérifier si l'utilisateur a accès à la gestion des utilisateurs
+  const canManageUsers = role === 'admin' || role === 'directeur';
+
+  useEffect(() => {
+    if (!canManageUsers) {
+      navigate('/dashboard');
+    }
+  }, [canManageUsers, navigate]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -93,6 +107,10 @@ export default function Users() {
 
   const handleSaveRole = async () => {
     if (!selectedUser || !selectedRole) return;
+    if (!canManageUsers) {
+      toast.error('Vous n\'avez pas les permissions nécessaires pour modifier les rôles');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -126,6 +144,10 @@ export default function Users() {
 
   const handleRemoveRole = async () => {
     if (!selectedUser?.role_id) return;
+    if (!canManageUsers) {
+      toast.error('Vous n\'avez pas les permissions nécessaires pour supprimer les rôles');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -149,6 +171,21 @@ export default function Users() {
 
   const formatDate = (date: string) =>
     format(new Date(date), 'dd MMM yyyy', { locale: fr });
+
+  if (!canManageUsers) {
+    return (
+      <MainLayout>
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Accès refusé</AlertTitle>
+          <AlertDescription>
+            Vous n'avez pas les permissions nécessaires pour accéder à la gestion des utilisateurs.
+            Seuls les Administrateurs et Directeurs peuvent gérer les utilisateurs.
+          </AlertDescription>
+        </Alert>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -215,14 +252,16 @@ export default function Users() {
                         {formatDate(user.created_at)}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleOpenRoleDialog(user)}
-                        >
-                          <UserPlus className="w-4 h-4 mr-1" />
-                          Modifier
-                        </Button>
+                        {canManageUsers && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleOpenRoleDialog(user)}
+                          >
+                            <UserPlus className="w-4 h-4 mr-1" />
+                            Modifier
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
