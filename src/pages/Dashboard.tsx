@@ -18,6 +18,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 import { usePaymentNotifications } from '@/hooks/usePaymentNotifications';
 import { NotificationBell } from '@/components/NotificationBell';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { Download } from 'lucide-react';
 
 interface DashboardStats {
   totalClients: number;
@@ -39,6 +41,7 @@ interface RecentLoan {
 export default function Dashboard() {
   const { profile, role } = useAuth();
   const { notifications } = usePaymentNotifications();
+  const { isInstallable, isInstalled, install } = usePWAInstall();
   const [stats, setStats] = useState<DashboardStats>({
     totalClients: 0,
     totalLoans: 0,
@@ -134,6 +137,21 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-3">
             <NotificationBell />
+            {isInstallable && !isInstalled && (
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                onClick={async () => {
+                  const result = await install();
+                  if (result.success) {
+                    // Installation réussie
+                  }
+                }}
+              >
+                <Download className="w-4 h-4" />
+                Installer l'app
+              </Button>
+            )}
             {(role === 'admin' || role === 'directeur' || role === 'agent_credit') && (
               <Link to="/loans/new">
                 <Button className="gap-2">

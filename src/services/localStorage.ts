@@ -101,13 +101,31 @@ export const initLocalDB = (): Promise<IDBDatabase> => {
       if (allStoresExist) {
         resolve(db);
       } else {
-        // Si des stores manquent, fermer et rouvrir avec une version supérieure
+        // Si des stores manquent, rouvrir avec une version supérieure pour forcer onupgradeneeded
+        console.warn('Some stores are missing. Upgrading database...');
         db.close();
         db = null;
         
         // Rouvrir avec une version supérieure pour forcer onupgradeneeded
         const upgradeRequest = indexedDB.open(DB_NAME, DB_VERSION + 1);
-        upgradeRequest.onerror = () => reject(upgradeRequest.error);
+        upgradeRequest.onerror = () => {
+          // Si l'upgrade échoue, essayer de supprimer et recréer
+          console.warn('Upgrade failed. Recreating database...');
+          const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
+          deleteRequest.onsuccess = () => {
+            const recreateRequest = indexedDB.open(DB_NAME, DB_VERSION);
+            recreateRequest.onerror = () => reject(recreateRequest.error);
+            recreateRequest.onsuccess = () => {
+              db = recreateRequest.result;
+              resolve(db);
+            };
+            recreateRequest.onupgradeneeded = (event) => {
+              const database = (event.target as IDBOpenDBRequest).result;
+              createAllStores(database);
+            };
+          };
+          deleteRequest.onerror = () => reject(deleteRequest.error);
+        };
         upgradeRequest.onsuccess = () => {
           db = upgradeRequest.result;
           resolve(db);
@@ -135,6 +153,12 @@ export const saveToLocal = async <T extends { id: string }>(
   synced: boolean = true
 ): Promise<void> => {
   const database = await initLocalDB();
+  
+  // Vérifier que le store existe
+  if (!database.objectStoreNames.contains(storeName)) {
+    throw new Error(`Store ${storeName} does not exist. Please refresh the page to initialize the database.`);
+  }
+  
   const transaction = database.transaction([storeName], 'readwrite');
   const store = transaction.objectStore(storeName);
 
@@ -164,6 +188,13 @@ export const getFromLocal = async <T>(
   id?: string
 ): Promise<T[]> => {
   const database = await initLocalDB();
+  
+  // Vérifier que le store existe
+  if (!database.objectStoreNames.contains(storeName)) {
+    console.warn(`Store ${storeName} does not exist. Returning empty array.`);
+    return [];
+  }
+  
   const transaction = database.transaction([storeName], 'readonly');
   const store = transaction.objectStore(storeName);
 

@@ -27,6 +27,9 @@ export interface SyncResult {
  * Synchronise les données d'une table spécifique
  */
 export const syncTable = async (tableName: string): Promise<SyncResult> => {
+  // S'assurer que la base de données est initialisée
+  const database = await initLocalDB();
+  
   const storeName = STORES[tableName as keyof typeof STORES];
   if (!storeName) {
     return {
@@ -34,6 +37,16 @@ export const syncTable = async (tableName: string): Promise<SyncResult> => {
       synced: 0,
       errors: 0,
       message: `Table ${tableName} non supportée`,
+    };
+  }
+  
+  // Vérifier que le store existe
+  if (!database.objectStoreNames.contains(storeName)) {
+    return {
+      success: false,
+      synced: 0,
+      errors: 0,
+      message: `Store ${storeName} n'existe pas. Veuillez rafraîchir la page.`,
     };
   }
 
@@ -119,6 +132,9 @@ export const syncTable = async (tableName: string): Promise<SyncResult> => {
  * Synchronise toutes les tables
  */
 export const syncAll = async (): Promise<SyncResult> => {
+  // S'assurer que la base de données est initialisée
+  await initLocalDB();
+  
   let totalSynced = 0;
   let totalErrors = 0;
   const errors: string[] = [];
@@ -151,6 +167,23 @@ export const syncAll = async (): Promise<SyncResult> => {
  * Télécharge toutes les données depuis Supabase et les sauvegarde localement
  */
 export const downloadAllData = async (): Promise<SyncResult> => {
+  // S'assurer que la base de données est initialisée
+  const database = await initLocalDB();
+  
+  // Vérifier que tous les stores existent
+  const missingStores = Object.values(STORES).filter(
+    storeName => !database.objectStoreNames.contains(storeName)
+  );
+  
+  if (missingStores.length > 0) {
+    return {
+      success: false,
+      synced: 0,
+      errors: 1,
+      message: `Stores manquants: ${missingStores.join(', ')}. Veuillez rafraîchir la page.`,
+    };
+  }
+  
   let totalSynced = 0;
   let totalErrors = 0;
 
