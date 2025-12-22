@@ -57,47 +57,102 @@ export default function WorkSchedule() {
   };
 
   const handleTimeChange = (dayOfWeek: number, field: 'start_time' | 'end_time', value: string) => {
-    setSchedules(prev =>
-      prev.map(schedule =>
-        schedule.day_of_week === dayOfWeek
-          ? { ...schedule, [field]: value }
-          : schedule
-      )
-    );
+    setSchedules(prev => {
+      const existing = prev.find(s => s.day_of_week === dayOfWeek);
+      if (existing) {
+        return prev.map(schedule =>
+          schedule.day_of_week === dayOfWeek
+            ? { ...schedule, [field]: value }
+            : schedule
+        );
+      } else {
+        // Ajouter un nouveau schedule si il n'existe pas
+        return [...prev, {
+          id: '',
+          day_of_week: dayOfWeek,
+          start_time: field === 'start_time' ? value : '08:00:00',
+          end_time: field === 'end_time' ? value : '17:00:00',
+          is_active: true,
+          created_by: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }];
+      }
+    });
   };
 
   const handleActiveToggle = (dayOfWeek: number, isActive: boolean) => {
-    setSchedules(prev =>
-      prev.map(schedule =>
-        schedule.day_of_week === dayOfWeek
-          ? { ...schedule, is_active: isActive }
-          : schedule
-      )
-    );
+    setSchedules(prev => {
+      const existing = prev.find(s => s.day_of_week === dayOfWeek);
+      if (existing) {
+        // Mettre à jour le schedule existant
+        return prev.map(schedule =>
+          schedule.day_of_week === dayOfWeek
+            ? { ...schedule, is_active: isActive }
+            : schedule
+        );
+      } else {
+        // Ajouter un nouveau schedule si il n'existe pas
+        return [...prev, {
+          id: '',
+          day_of_week: dayOfWeek,
+          start_time: '08:00:00',
+          end_time: '17:00:00',
+          is_active: isActive,
+          created_by: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }];
+      }
+    });
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      for (const schedule of schedules) {
+      // Calculer allSchedules avec les données actuelles
+      const allSchedulesToSave = DAYS.map(day => {
+        const existing = schedules.find(s => s.day_of_week === day.value);
+        return existing || {
+          id: '',
+          day_of_week: day.value,
+          start_time: '08:00:00',
+          end_time: '17:00:00',
+          is_active: false,
+          created_by: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+      });
+
+      // Sauvegarder tous les jours (y compris ceux qui n'existent pas encore)
+      for (const schedule of allSchedulesToSave) {
+        const scheduleData: any = {
+          day_of_week: schedule.day_of_week,
+          start_time: schedule.start_time,
+          end_time: schedule.end_time,
+          is_active: schedule.is_active !== undefined ? schedule.is_active : false,
+          updated_at: new Date().toISOString(),
+        };
+
+        // Inclure l'ID seulement s'il existe (pour les jours existants)
+        if (schedule.id) {
+          scheduleData.id = schedule.id;
+        }
+
         const { error } = await supabase
           .from('work_schedule')
-          .upsert({
-            id: schedule.id,
-            day_of_week: schedule.day_of_week,
-            start_time: schedule.start_time,
-            end_time: schedule.end_time,
-            is_active: schedule.is_active ?? true,
-            updated_at: new Date().toISOString(),
-          }, { onConflict: 'day_of_week' });
+          .upsert(scheduleData, { onConflict: 'day_of_week' });
 
         if (error) throw error;
       }
 
       toast.success('Horaires sauvegardés avec succès !');
+      // Recharger les données pour avoir les IDs à jour
+      await fetchSchedules();
     } catch (error: any) {
       console.error('Error saving schedules:', error);
-      toast.error('Erreur lors de la sauvegarde des horaires');
+      toast.error(error.message || 'Erreur lors de la sauvegarde des horaires');
     } finally {
       setSaving(false);
     }
@@ -128,6 +183,7 @@ export default function WorkSchedule() {
   }
 
   // Initialize schedules for all days if empty
+  // Utiliser l'état local (schedules) qui peut contenir des modifications non sauvegardées
   const allSchedules = DAYS.map(day => {
     const existing = schedules.find(s => s.day_of_week === day.value);
     return existing || {
@@ -135,7 +191,7 @@ export default function WorkSchedule() {
       day_of_week: day.value,
       start_time: '08:00:00',
       end_time: '17:00:00',
-      is_active: true,
+      is_active: false, // Par défaut désactivé pour les nouveaux jours
       created_by: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
