@@ -1,73 +1,226 @@
-# Welcome to your Lovable project
+# Credit Flow
 
-## Project info
+Une application web moderne de gestion de crédit et de prêts, conçue pour les institutions financières et les entreprises de microfinance. L'application offre une gestion complète des clients, des prêts, des paiements et du recouvrement, avec un support hors ligne et une synchronisation automatique.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🚀 Fonctionnalités Principales
 
-## How can I edit this code?
+### 📊 Tableau de Bord
+- Vue d'ensemble des statistiques clés (clients, prêts, paiements)
+- Prêts en attente et en retard
+- Notifications de paiements
+- Graphiques et visualisations de données
 
-There are several ways of editing your application.
+### 👥 Gestion des Clients
+- Création et gestion des profils clients
+- Informations détaillées (coordonnées, revenus, profession)
+- Historique des prêts et paiements par client
+- Recherche et filtrage avancés
 
-**Use Lovable**
+### 💰 Gestion des Prêts
+- Création et validation de prêts
+- Suivi des statuts (en attente, approuvé, rejeté, en cours, remboursé, en retard)
+- Calcul automatique des échéances
+- Planification des remboursements
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### 💳 Gestion des Paiements
+- Enregistrement des paiements
+- Suivi des paiements partiels et en retard
+- Notifications automatiques
+- Historique complet des transactions
 
-Changes made via Lovable will be committed automatically to this repo.
+### 🔄 Recouvrement
+- Gestion des prêts en défaut
+- Suivi des actions de recouvrement
+- Alertes pour les prêts en retard
 
-**Use your preferred IDE**
+### 📈 Rapports
+- Rapports financiers détaillés
+- Export de données (PDF, Excel)
+- Analyses de performance
+- Rapports de présence et temps de travail
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 👤 Gestion des Utilisateurs
+- Système de rôles et permissions :
+  - **Admin** : Accès complet
+  - **Directeur** : Gestion et supervision
+  - **Agent de crédit** : Gestion des clients et prêts
+  - **Caissier** : Gestion des paiements
+  - **Recouvrement** : Gestion du recouvrement
+- Contrôle d'accès basé sur les rôles
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### ⏰ Présence et Temps de Travail
+- Gestion des horaires de travail
+- Suivi de la présence des employés
+- Rapports de présence
+- Sessions de travail
 
-Follow these steps:
+### 💼 Fonds de l'Entreprise
+- Suivi des fonds de l'entreprise
+- Gestion des entrées et sorties
+- Historique des transactions
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### 📱 Mode Hors Ligne (PWA)
+- Fonctionnement hors ligne complet
+- Synchronisation automatique avec Supabase
+- Stockage local sécurisé (IndexedDB)
+- Queue des actions hors ligne
+- Installation en tant qu'application mobile
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 🛠️ Technologies Utilisées
 
-# Step 3: Install the necessary dependencies.
-npm i
+- **Frontend** :
+  - React 18.3
+  - TypeScript
+  - Vite
+  - React Router DOM
+  - TanStack Query (React Query)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+- **UI/UX** :
+  - shadcn/ui
+  - Tailwind CSS
+  - Radix UI
+  - Lucide React (icônes)
+  - Recharts (graphiques)
+
+- **Backend & Base de données** :
+  - Supabase (PostgreSQL)
+  - Authentification Supabase
+
+- **Fonctionnalités** :
+  - PWA (Progressive Web App)
+  - Workbox (Service Worker)
+  - IndexedDB (stockage local)
+  - React Hook Form + Zod (validation)
+  - date-fns (gestion des dates)
+  - jsPDF & xlsx (export de données)
+
+## 📋 Prérequis
+
+- Node.js 18+ et npm (ou bun)
+- Compte Supabase configuré
+- Git
+
+## 🚀 Installation
+
+1. **Cloner le dépôt** :
+```bash
+git clone https://github.com/hassan312-god/credit-flow.git
+cd credit-flow
 ```
 
-**Edit a file directly in GitHub**
+2. **Installer les dépendances** :
+```bash
+npm install
+# ou
+bun install
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+3. **Configurer les variables d'environnement** :
+Créez un fichier `.env` à la racine du projet avec :
+```env
+VITE_SUPABASE_URL=votre_url_supabase
+VITE_SUPABASE_ANON_KEY=votre_clé_anon_supabase
+```
 
-**Use GitHub Codespaces**
+4. **Configurer Supabase** :
+- Créez un projet Supabase
+- Exécutez les migrations SQL dans le dossier `supabase/migrations/`
+- Configurez les politiques RLS (Row Level Security)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+5. **Lancer le serveur de développement** :
+```bash
+npm run dev
+# ou
+bun run dev
+```
 
-## What technologies are used for this project?
+L'application sera accessible sur `http://localhost:5173`
 
-This project is built with:
+## 📦 Scripts Disponibles
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- `npm run dev` : Lance le serveur de développement
+- `npm run build` : Construit l'application pour la production
+- `npm run build:dev` : Construit en mode développement
+- `npm run preview` : Prévisualise le build de production
+- `npm run lint` : Vérifie le code avec ESLint
 
-## How can I deploy this project?
+## 🏗️ Structure du Projet
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+```
+credit-flow/
+├── src/
+│   ├── components/       # Composants React réutilisables
+│   │   ├── layout/      # Composants de mise en page
+│   │   └── ui/          # Composants UI (shadcn/ui)
+│   ├── pages/           # Pages de l'application
+│   ├── hooks/           # Hooks React personnalisés
+│   ├── services/        # Services (localStorage, sync)
+│   ├── integrations/    # Intégrations (Supabase)
+│   ├── lib/             # Utilitaires
+│   └── utils/           # Fonctions utilitaires
+├── supabase/
+│   ├── migrations/      # Migrations SQL
+│   └── config.toml      # Configuration Supabase
+├── public/              # Fichiers statiques
+└── package.json
+```
 
-## Can I connect a custom domain to my Lovable project?
+## 🔐 Sécurité
 
-Yes, you can!
+- Authentification sécurisée via Supabase
+- Row Level Security (RLS) activé sur toutes les tables
+- Contrôle d'accès basé sur les rôles
+- Validation des données côté client et serveur
+- Stockage local sécurisé pour le mode hors ligne
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 📱 Mode Hors Ligne
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+L'application supporte un fonctionnement complet hors ligne grâce à :
+- IndexedDB pour le stockage local
+- Service Worker pour la mise en cache
+- Synchronisation automatique au retour de la connexion
+- Queue des actions hors ligne
+
+Pour plus de détails, consultez [OFFLINE_STORAGE.md](./OFFLINE_STORAGE.md)
+
+## 🌐 Déploiement
+
+### Déploiement sur Vercel/Netlify
+
+1. Connectez votre dépôt GitHub
+2. Configurez les variables d'environnement
+3. Déployez automatiquement
+
+### Build de production
+
+```bash
+npm run build
+```
+
+Les fichiers optimisés seront dans le dossier `dist/`
+
+## 🤝 Contribution
+
+Les contributions sont les bienvenues ! N'hésitez pas à :
+1. Fork le projet
+2. Créer une branche pour votre fonctionnalité (`git checkout -b feature/AmazingFeature`)
+3. Commit vos changements (`git commit -m 'Add some AmazingFeature'`)
+4. Push vers la branche (`git push origin feature/AmazingFeature`)
+5. Ouvrir une Pull Request
+
+## 📄 Licence
+
+Ce projet est sous licence MIT.
+
+## 👨‍💻 Auteur
+
+**Hassan**
+- GitHub: [@hassan312-god](https://github.com/hassan312-god)
+
+## 📞 Support
+
+Pour toute question ou problème, veuillez ouvrir une [issue](https://github.com/hassan312-god/credit-flow/issues) sur GitHub.
+
+---
+
+**Note** : Cette application est en développement actif. Certaines fonctionnalités peuvent être sujettes à des modifications.
