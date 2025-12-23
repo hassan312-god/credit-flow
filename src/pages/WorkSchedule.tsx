@@ -3,7 +3,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, Save, Clock, AlertCircle } from 'lucide-react';
@@ -38,26 +38,42 @@ export default function WorkSchedule() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // IMPORTANT: Tous les hooks doivent être AVANT les returns conditionnels
+  const allSchedules = useMemo(() => {
+    return DAYS.map(day => {
+      const existing = schedules.find(s => s.day_of_week === day.value);
+      if (existing) {
+        return existing;
+      }
+      return {
+        id: '',
+        day_of_week: day.value,
+        start_time: '08:00:00',
+        end_time: '17:00:00',
+        is_active: false,
+        created_by: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    });
+  }, [schedules]);
+
   useEffect(() => {
     if (role !== 'admin' && role !== 'directeur') {
       setLoading(false);
       return;
     }
-
     fetchSchedules();
   }, [role]);
 
-  // S'assurer que tous les jours sont dans l'état après le chargement
   useEffect(() => {
     if (loading || schedules.length === 0) return;
     
-    // Vérifier si tous les jours sont présents
     const missingDays = DAYS.filter(day => 
       !schedules.find(s => s.day_of_week === day.value)
     );
     
     if (missingDays.length > 0) {
-      // Ajouter les jours manquants avec is_active: false
       const newSchedules = missingDays.map(day => ({
         id: '',
         day_of_week: day.value,
@@ -100,7 +116,6 @@ export default function WorkSchedule() {
             : schedule
         );
       } else {
-        // Ajouter un nouveau schedule si il n'existe pas
         return [...prev, {
           id: '',
           day_of_week: dayOfWeek,
@@ -119,14 +134,12 @@ export default function WorkSchedule() {
     setSchedules(prev => {
       const existing = prev.find(s => s.day_of_week === dayOfWeek);
       if (existing) {
-        // Mettre à jour le schedule existant
         return prev.map(schedule =>
           schedule.day_of_week === dayOfWeek
             ? { ...schedule, is_active: isActive }
             : schedule
         );
       } else {
-        // Ajouter un nouveau schedule si il n'existe pas
         return [...prev, {
           id: '',
           day_of_week: dayOfWeek,
@@ -144,32 +157,15 @@ export default function WorkSchedule() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Utiliser allSchedules calculé dans le render pour avoir les valeurs à jour
-      const allSchedulesToSave = DAYS.map(day => {
-        const existing = schedules.find(s => s.day_of_week === day.value);
-        return existing || {
-          id: '',
-          day_of_week: day.value,
-          start_time: '08:00:00',
-          end_time: '17:00:00',
-          is_active: false,
-          created_by: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-      });
-
-      // Sauvegarder tous les jours (y compris ceux qui n'existent pas encore)
-      for (const schedule of allSchedulesToSave) {
+      for (const schedule of allSchedules) {
         const scheduleData: any = {
           day_of_week: schedule.day_of_week,
           start_time: schedule.start_time,
           end_time: schedule.end_time,
-          is_active: Boolean(schedule.is_active), // S'assurer que c'est un boolean
+          is_active: Boolean(schedule.is_active),
           updated_at: new Date().toISOString(),
         };
 
-        // Inclure l'ID seulement s'il existe (pour les jours existants)
         if (schedule.id) {
           scheduleData.id = schedule.id;
         }
@@ -185,7 +181,6 @@ export default function WorkSchedule() {
       }
 
       toast.success('Horaires sauvegardés avec succès !');
-      // Recharger les données pour avoir les IDs à jour
       await fetchSchedules();
     } catch (error: any) {
       console.error('Error saving schedules:', error);
@@ -195,6 +190,7 @@ export default function WorkSchedule() {
     }
   };
 
+  // Les returns conditionnels sont APRÈS tous les hooks
   if (loading) {
     return (
       <MainLayout>
@@ -218,28 +214,6 @@ export default function WorkSchedule() {
       </MainLayout>
     );
   }
-
-  // Initialize schedules for all days if empty
-  // Utiliser useMemo pour éviter les recalculs inutiles
-  const allSchedules = useMemo(() => {
-    return DAYS.map(day => {
-      const existing = schedules.find(s => s.day_of_week === day.value);
-      if (existing) {
-        return existing;
-      }
-      // Pour les jours qui n'existent pas, créer un schedule par défaut désactivé
-      return {
-        id: '',
-        day_of_week: day.value,
-        start_time: '08:00:00',
-        end_time: '17:00:00',
-        is_active: false, // Par défaut désactivé pour les nouveaux jours
-        created_by: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-    });
-  }, [schedules]);
 
   return (
     <MainLayout>
@@ -321,4 +295,3 @@ export default function WorkSchedule() {
     </MainLayout>
   );
 }
-
