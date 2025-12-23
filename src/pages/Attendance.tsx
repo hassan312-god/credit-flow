@@ -51,7 +51,7 @@ export default function Attendance() {
     setLoading(true);
     try {
       let query = supabase
-        .from('work_sessions')
+        .from('work_sessions' as any)
         .select('*')
         .order('work_date', { ascending: false })
         .order('opened_at', { ascending: false });

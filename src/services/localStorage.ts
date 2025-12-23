@@ -275,8 +275,8 @@ export const markAsSynced = async (
   
   for (const itemId of ids) {
     const item = await getFromLocal(storeName, itemId);
-    if (item.length > 0) {
-      const updated = { ...item[0], synced: true, updated_at: Date.now() };
+    if (item.length > 0 && typeof item[0] === 'object' && item[0] !== null) {
+      const updated = { ...(item[0] as object), synced: true, updated_at: Date.now() };
       await new Promise<void>((resolve, reject) => {
         const request = store.put(updated);
         request.onsuccess = () => resolve();
@@ -296,7 +296,7 @@ export const getUnsyncedData = async (storeName: string): Promise<any[]> => {
   const index = store.index('synced');
 
   return new Promise((resolve, reject) => {
-    const request = index.getAll(false);
+    const request = index.getAll(IDBKeyRange.only(false));
     request.onsuccess = () => {
       const results = request.result || [];
       // Retirer les métadonnées internes avant de retourner

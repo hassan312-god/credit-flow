@@ -16,6 +16,7 @@ import {
 import { useState, useEffect } from 'react';
 import { syncAll, downloadAllData } from '@/services/syncService';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 export function ConnectionStatus() {
   const { isOnline, isSyncing, pendingCount, syncQueue } = useOfflineQueue();

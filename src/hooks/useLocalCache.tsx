@@ -91,8 +91,8 @@ export function useLocalCache<T extends { id: string }>(options: UseLocalCacheOp
 
         if (remoteData) {
           // Sauvegarder dans le cache local
-          await saveToLocal(storeName, remoteData as T[], true);
-          setData(remoteData as T[]);
+          await saveToLocal(storeName, remoteData as unknown as T[], true);
+          setData(remoteData as unknown as T[]);
           setLastSync(Date.now());
         }
       } else {
@@ -110,8 +110,8 @@ export function useLocalCache<T extends { id: string }>(options: UseLocalCacheOp
               .limit(1000);
 
             if (!error && remoteData && remoteData.length > 0) {
-              await saveToLocal(storeName, remoteData as T[], true);
-              setData(remoteData as T[]);
+              await saveToLocal(storeName, remoteData as unknown as T[], true);
+              setData(remoteData as unknown as T[]);
               setLastSync(Date.now());
             }
           } catch (fetchError) {

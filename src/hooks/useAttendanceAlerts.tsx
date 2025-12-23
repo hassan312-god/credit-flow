@@ -40,7 +40,7 @@ export function useAttendanceAlerts() {
       // Get all active work schedules for today
       const dayOfWeek = new Date().getDay();
       const { data: schedule, error: scheduleError } = await supabase
-        .from('work_schedule')
+        .from('work_schedule' as any)
         .select('*')
         .eq('day_of_week', dayOfWeek)
         .eq('is_active', true)
@@ -52,14 +52,15 @@ export function useAttendanceAlerts() {
 
       // Check for late employees (15 minutes after scheduled start)
       const lateThreshold = new Date();
-      lateThreshold.setHours(parseInt(schedule.start_time.split(':')[0]));
-      lateThreshold.setMinutes(parseInt(schedule.start_time.split(':')[1]) + 15);
+      const scheduleAny = schedule as any;
+      lateThreshold.setHours(parseInt(scheduleAny.start_time.split(':')[0]));
+      lateThreshold.setMinutes(parseInt(scheduleAny.start_time.split(':')[1]) + 15);
       lateThreshold.setSeconds(0);
 
       if (new Date() >= lateThreshold) {
         // Get all users who should have started but haven't or are late
         const { data: sessions, error: sessionsError } = await supabase
-          .from('work_sessions')
+          .from('work_sessions' as any)
           .select('*')
           .eq('work_date', today);
 
@@ -98,13 +99,13 @@ export function useAttendanceAlerts() {
                   message: `${user.full_name || user.email} est absent aujourd'hui`,
                   timestamp: new Date().toISOString(),
                 });
-              } else if (session.is_late && session.status === 'open') {
+              } else if ((session as any).is_late && (session as any).status === 'open') {
                 // Late
                 newAlerts.push({
                   type: 'late',
                   userId: user.id,
                   userName: user.full_name || user.email,
-                  message: `${user.full_name || user.email} est en retard de ${session.late_minutes || 0} minutes`,
+                  message: `${user.full_name || user.email} est en retard de ${(session as any).late_minutes || 0} minutes`,
                   timestamp: new Date().toISOString(),
                 });
               }

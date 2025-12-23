@@ -10,9 +10,17 @@ import { Loader2, Save, Clock, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { Database } from '@/integrations/supabase/types';
 
-type WorkSchedule = Database['public']['Tables']['work_schedule']['Row'];
+interface WorkScheduleType {
+  id: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 const DAYS = [
   { value: 0, label: 'Dimanche' },
@@ -26,7 +34,7 @@ const DAYS = [
 
 export default function WorkSchedule() {
   const { role } = useAuth();
-  const [schedules, setSchedules] = useState<WorkSchedule[]>([]);
+  const [schedules, setSchedules] = useState<WorkScheduleType[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -68,12 +76,12 @@ export default function WorkSchedule() {
   const fetchSchedules = async () => {
     try {
       const { data, error } = await supabase
-        .from('work_schedule')
+        .from('work_schedule' as any)
         .select('*')
         .order('day_of_week');
 
       if (error) throw error;
-      setSchedules(data || []);
+      setSchedules((data || []) as unknown as WorkScheduleType[]);
     } catch (error: any) {
       console.error('Error fetching schedules:', error);
       toast.error('Erreur lors du chargement des horaires');
@@ -167,8 +175,8 @@ export default function WorkSchedule() {
         }
 
         const { error } = await supabase
-          .from('work_schedule')
-          .upsert(scheduleData, { onConflict: 'day_of_week' });
+          .from('work_schedule' as any)
+          .upsert(scheduleData as any, { onConflict: 'day_of_week' });
 
         if (error) {
           console.error('Error saving schedule:', scheduleData, error);

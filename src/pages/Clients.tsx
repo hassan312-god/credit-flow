@@ -82,7 +82,7 @@ export default function Clients() {
         .from('loans')
         .select('id')
         .eq('client_id', clientToDelete.id)
-        .in('status', ['en_cours', 'decaisse', 'en_attente', 'approuve']);
+        .in('status', ['en_cours', 'en_attente', 'approuve'] as any);
 
       if (activeLoans && activeLoans.length > 0) {
         toast.error(`Ce client a ${activeLoans.length} prêt(s) actif(s). Vous devez d'abord clôturer tous les prêts.`);
