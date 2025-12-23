@@ -50,7 +50,7 @@ export function useWorkSession() {
         if (error) throw error;
 
         if (data) {
-          setWorkSession(data as WorkSession);
+          setWorkSession(data as unknown as WorkSession);
           setIsOpen(true);
         } else {
           setIsOpen(false);
@@ -83,7 +83,7 @@ export function useWorkSession() {
 
       if (error) throw error;
 
-      setWorkSession(data as WorkSession);
+      setWorkSession(data as unknown as WorkSession);
       setIsOpen(true);
       return { error: null };
     } catch (error: any) {
@@ -109,7 +109,7 @@ export function useWorkSession() {
 
       if (error) throw error;
 
-      setWorkSession(data as WorkSession);
+      setWorkSession(data as unknown as WorkSession);
       setIsOpen(false);
       return { error: null };
     } catch (error: any) {

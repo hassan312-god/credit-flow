@@ -50,7 +50,7 @@ export default function AttendanceReports() {
 
       // Fetch all work sessions for the month
       const { data: sessions, error: sessionsError } = await supabase
-        .from('work_sessions')
+        .from('work_sessions' as any)
         .select('*')
         .gte('work_date', startDate)
         .lte('work_date', endDate);

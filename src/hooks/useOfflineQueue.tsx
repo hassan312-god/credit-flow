@@ -96,7 +96,7 @@ export function useOfflineQueue() {
             case 'create_loan':
             case 'create_payment':
               const { data: insertData, error: insertError } = await supabase
-                .from(action.table)
+                .from(action.table as any)
                 .insert(action.data)
                 .select()
                 .single();
@@ -108,7 +108,7 @@ export function useOfflineQueue() {
             case 'update_client':
             case 'update_loan':
               const { data: updateData, error: updateError } = await supabase
-                .from(action.table)
+                .from(action.table as any)
                 .update(action.data)
                 .eq('id', action.data.id)
                 .select()

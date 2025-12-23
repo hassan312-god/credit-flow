@@ -26,6 +26,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { format } from 'date-fns';
 
 export default function Settings() {
   const { role } = useAuth();
@@ -60,14 +61,14 @@ export default function Settings() {
       
       try {
         const { data, error } = await supabase
-          .from('app_settings')
+          .from('app_settings' as any)
           .select('key, value')
           .order('key');
 
         if (error) throw error;
 
         if (data) {
-          const settingsMap = new Map(data.map(s => [s.key, s.value]));
+          const settingsMap = new Map((data as any[]).map((s: any) => [s.key, s.value]));
           
           // Charger les valeurs
           if (settingsMap.has('company_name')) setCompanyName(settingsMap.get('company_name') as string);
@@ -141,9 +142,9 @@ export default function Settings() {
       // Sauvegarder chaque paramètre (upsert)
       for (const setting of settings) {
         const { error } = await supabase
-          .from('app_settings')
+          .from('app_settings' as any)
           .upsert(
-            { key: setting.key, value: setting.value },
+            { key: setting.key, value: setting.value } as any,
             { onConflict: 'key' }
           );
 

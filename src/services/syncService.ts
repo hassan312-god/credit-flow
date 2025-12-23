@@ -62,7 +62,7 @@ export const syncTable = async (tableName: string): Promise<SyncResult> => {
       try {
         // Vérifier si l'item existe déjà (pour les updates)
         const { data: existing } = await supabase
-          .from(tableName)
+          .from(tableName as any)
           .select('id')
           .eq('id', item.id)
           .maybeSingle();
@@ -70,7 +70,7 @@ export const syncTable = async (tableName: string): Promise<SyncResult> => {
         if (existing) {
           // Update
           const { error } = await supabase
-            .from(tableName)
+            .from(tableName as any)
             .update(item)
             .eq('id', item.id);
 
@@ -78,7 +78,7 @@ export const syncTable = async (tableName: string): Promise<SyncResult> => {
         } else {
           // Insert
           const { error } = await supabase
-            .from(tableName)
+            .from(tableName as any)
             .insert(item);
 
           if (error) throw error;
@@ -97,7 +97,7 @@ export const syncTable = async (tableName: string): Promise<SyncResult> => {
     const lastSync = await getMetadata(`last_sync_${tableName}`) || 0;
     
     const { data: remoteData, error: fetchError } = await supabase
-      .from(tableName)
+      .from(tableName as any)
       .select('*')
       .gt('updated_at', new Date(lastSync).toISOString())
       .order('updated_at', { ascending: false })
@@ -107,7 +107,7 @@ export const syncTable = async (tableName: string): Promise<SyncResult> => {
       console.error(`Error fetching remote data for ${tableName}:`, fetchError);
     } else if (remoteData) {
       // Sauvegarder les nouvelles données dans le local
-      await saveToLocal(storeName, remoteData, true);
+      await saveToLocal(storeName, remoteData as unknown as { id: string }[], true);
       
       // Mettre à jour le timestamp de dernière synchronisation
       await saveMetadata(`last_sync_${tableName}`, Date.now());

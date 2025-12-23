@@ -59,7 +59,7 @@ export default function SyncStatus() {
           if (isOnline) {
             const { supabase } = await import('@/integrations/supabase/client');
             const { count } = await supabase
-              .from(table)
+              .from(table as any)
               .select('*', { count: 'exact', head: true });
             remoteCount = count || 0;
           }

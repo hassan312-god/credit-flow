@@ -73,7 +73,7 @@ export default function CompanyFunds() {
     try {
       // Charger le fond actuel
       const { data: fundData, error: fundError } = await supabase
-        .from('company_funds')
+        .from('company_funds' as any)
         .select('*')
         .order('created_at', { ascending: false })
         .limit(1)
@@ -82,14 +82,14 @@ export default function CompanyFunds() {
       if (fundError) throw fundError;
 
       if (fundData) {
-        setFund(fundData);
-        setInitialCapital(fundData.initial_capital.toString());
-        setCurrentBalance(fundData.current_balance.toString());
-        setNotes(fundData.notes || '');
+        setFund(fundData as unknown as CompanyFund);
+        setInitialCapital((fundData as any).initial_capital.toString());
+        setCurrentBalance((fundData as any).current_balance.toString());
+        setNotes((fundData as any).notes || '');
       } else {
         // Créer un fond initial si aucun n'existe
         const { data: newFund, error: createError } = await supabase
-          .from('company_funds')
+          .from('company_funds' as any)
           .insert({
             initial_capital: 0,
             current_balance: 0,
@@ -101,7 +101,7 @@ export default function CompanyFunds() {
 
         if (createError) throw createError;
         if (newFund) {
-          setFund(newFund);
+          setFund(newFund as unknown as CompanyFund);
           setInitialCapital('0');
           setCurrentBalance('0');
           setNotes('Fond initial de l\'entreprise');
@@ -111,14 +111,14 @@ export default function CompanyFunds() {
       // Charger l'historique
       if (fundData) {
         const { data: historyData, error: historyError } = await supabase
-          .from('company_funds_history')
+          .from('company_funds_history' as any)
           .select('*')
-          .eq('fund_id', fundData.id)
+          .eq('fund_id', (fundData as any).id)
           .order('created_at', { ascending: false })
           .limit(50);
 
         if (historyError) throw historyError;
-        setHistory(historyData || []);
+        setHistory((historyData || []) as unknown as FundHistory[]);
       }
     } catch (error: any) {
       console.error('Error loading fund data:', error);
@@ -152,7 +152,7 @@ export default function CompanyFunds() {
 
       // Mettre à jour le fond
       const { data: updatedFund, error: updateError } = await supabase
-        .from('company_funds')
+        .from('company_funds' as any)
         .update({
           initial_capital: initialCapitalNum,
           current_balance: currentBalanceNum,
@@ -168,7 +168,7 @@ export default function CompanyFunds() {
       // Enregistrer dans l'historique si le solde a changé
       if (changeAmount !== 0) {
         const { error: historyError } = await supabase
-          .from('company_funds_history')
+          .from('company_funds_history' as any)
           .insert({
             fund_id: fund.id,
             previous_balance: previousBalance,
@@ -185,7 +185,7 @@ export default function CompanyFunds() {
         }
       }
 
-      setFund(updatedFund);
+      setFund(updatedFund as unknown as CompanyFund);
       toast.success('Fond de l\'entreprise mis à jour avec succès');
       loadFundData(); // Recharger pour avoir l'historique à jour
     } catch (error: any) {

@@ -7,12 +7,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Save, Loader2, Calculator } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ArrowLeft, Save, Loader2, Calculator, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { OperationBlocked } from '@/components/OperationBlocked';
 import { useWorkSession } from '@/hooks/useWorkSession';
+import { useAuth } from '@/hooks/useAuth';
 
 const loanSchema = z.object({
   client_id: z.string().uuid('Veuillez sélectionner un client'),

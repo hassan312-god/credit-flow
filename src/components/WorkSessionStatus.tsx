@@ -20,7 +20,7 @@ export function WorkSessionStatus() {
     const fetchWorkHours = async () => {
       const dayOfWeek = new Date().getDay();
       const { data } = await supabase
-        .from('work_schedule')
+        .from('work_schedule' as any)
         .select('start_time, end_time')
         .eq('day_of_week', dayOfWeek)
         .eq('is_active', true)
@@ -32,8 +32,8 @@ export function WorkSessionStatus() {
           return `${hours}h${minutes}`;
         };
         setWorkHours({
-          start: formatTime(data.start_time),
-          end: formatTime(data.end_time),
+          start: formatTime((data as any).start_time),
+          end: formatTime((data as any).end_time),
         });
       }
     };

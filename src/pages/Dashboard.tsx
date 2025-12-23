@@ -4,6 +4,7 @@ import { StatCard } from '@/components/ui/stat-card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { 
   FileText, 
   Users, 
@@ -12,7 +13,8 @@ import {
   Plus,
   ArrowRight,
   Clock,
-  Search
+  Search,
+  Download
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,7 +22,6 @@ import { Link } from 'react-router-dom';
 import { usePaymentNotifications } from '@/hooks/usePaymentNotifications';
 import { NotificationBell } from '@/components/NotificationBell';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
-import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface DashboardStats {
