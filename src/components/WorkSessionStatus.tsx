@@ -24,7 +24,7 @@ export function WorkSessionStatus() {
         .select('start_time, end_time')
         .eq('day_of_week', dayOfWeek)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
       if (data) {
         const formatTime = (time: string) => {
