@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          updated_at: string
+          value: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -94,6 +118,80 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      company_funds: {
+        Row: {
+          created_at: string
+          current_balance: number
+          id: string
+          initial_capital: number
+          notes: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          current_balance?: number
+          id?: string
+          initial_capital?: number
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          current_balance?: number
+          id?: string
+          initial_capital?: number
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      company_funds_history: {
+        Row: {
+          change_amount: number
+          change_type: string
+          created_at: string
+          fund_id: string
+          id: string
+          new_balance: number
+          notes: string | null
+          previous_balance: number
+          updated_by: string | null
+        }
+        Insert: {
+          change_amount: number
+          change_type: string
+          created_at?: string
+          fund_id: string
+          id?: string
+          new_balance: number
+          notes?: string | null
+          previous_balance: number
+          updated_by?: string | null
+        }
+        Update: {
+          change_amount?: number
+          change_type?: string
+          created_at?: string
+          fund_id?: string
+          id?: string
+          new_balance?: number
+          notes?: string | null
+          previous_balance?: number
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_funds_history_fund_id_fkey"
+            columns: ["fund_id"]
+            isOneToOne: false
+            referencedRelation: "company_funds"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       loans: {
         Row: {
@@ -306,6 +404,87 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      work_schedule: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          day_of_week: number
+          end_time: string
+          id: string
+          is_active: boolean
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          day_of_week: number
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          start_time?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      work_sessions: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          final_cash: number | null
+          id: string
+          initial_cash: number | null
+          is_late: boolean | null
+          late_minutes: number | null
+          notes: string | null
+          opened_at: string
+          status: string
+          updated_at: string
+          user_id: string
+          work_date: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          final_cash?: number | null
+          id?: string
+          initial_cash?: number | null
+          is_late?: boolean | null
+          late_minutes?: number | null
+          notes?: string | null
+          opened_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          work_date?: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          final_cash?: number | null
+          id?: string
+          initial_cash?: number | null
+          is_late?: boolean | null
+          late_minutes?: number | null
+          notes?: string | null
+          opened_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          work_date?: string
         }
         Relationships: []
       }
