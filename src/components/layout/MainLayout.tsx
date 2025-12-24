@@ -36,15 +36,15 @@ function MainLayoutContent({ children }: MainLayoutProps) {
       
       <main 
         className={cn(
-          "transition-all duration-300",
+          "transition-all duration-300 min-h-screen",
           // Desktop: marge selon l'état de la sidebar
           isCollapsed ? "md:ml-20" : "md:ml-64",
           // Mobile: pas de marge, la sidebar est en overlay
           "ml-0",
-          // Padding bottom pour la navigation mobile
-          isMobile && "pb-20",
+          // Padding bottom pour la navigation mobile (safe area)
+          isMobile && "pb-24",
           // Padding top pour le header mobile
-          isMobile && "pt-16"
+          isMobile && "pt-[72px]"
         )}
       >
         <div className={cn(

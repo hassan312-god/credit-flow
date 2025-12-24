@@ -69,9 +69,9 @@ export function MobileBottomNav() {
   const canCreate = role === 'directeur' || role === 'agent_credit';
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-border md:hidden shadow-lg">
-      <div className="flex items-center justify-around h-16 px-2 safe-area-bottom">
-        {filteredItems.slice(0, 4).map((item) => {
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border md:hidden shadow-lg">
+      <div className="flex items-center justify-around h-16 px-1 pb-safe">
+        {filteredItems.slice(0, canCreate ? 4 : 5).map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path || 
                           (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
@@ -81,24 +81,21 @@ export function MobileBottomNav() {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex flex-col items-center justify-center flex-1 h-full transition-all duration-200",
+                "flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 touch-manipulation",
                 isActive 
                   ? "text-primary" 
                   : "text-muted-foreground active:text-primary"
               )}
             >
               <div className={cn(
-                "p-2 rounded-lg transition-colors",
-                isActive && "bg-primary/10"
+                "p-1.5 rounded-xl transition-all duration-200",
+                isActive && "bg-primary/10 scale-110"
               )}>
-                <Icon className={cn(
-                  "w-5 h-5",
-                  isActive && "scale-110"
-                )} />
+                <Icon className="w-5 h-5" />
               </div>
               <span className={cn(
-                "text-[10px] font-medium mt-0.5",
-                isActive && "font-semibold"
+                "text-[10px] font-medium mt-0.5 leading-tight",
+                isActive && "font-semibold text-primary"
               )}>
                 {item.label}
               </span>
@@ -110,12 +107,12 @@ export function MobileBottomNav() {
         {canCreate && newItemPath && (
           <NavLink
             to={newItemPath}
-            className="flex flex-col items-center justify-center -mt-6 relative"
+            className="flex flex-col items-center justify-center -mt-5 relative touch-manipulation"
           >
-            <div className="w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95">
-              <Plus className="w-6 h-6" />
+            <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg active:scale-95 transition-transform">
+              <Plus className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-medium text-muted-foreground mt-1">Nouveau</span>
+            <span className="text-[9px] font-medium text-muted-foreground mt-0.5">Nouveau</span>
           </NavLink>
         )}
       </div>
