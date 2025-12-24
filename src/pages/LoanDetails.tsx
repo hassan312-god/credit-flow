@@ -446,6 +446,65 @@ export default function LoanDetails() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Récapitulatif financier */}
+            {loan.status !== 'en_attente' && loan.status !== 'rejete' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="w-5 h-5" />
+                    Récapitulatif
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {(() => {
+                    const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+                    const totalDue = loan.total_amount || loan.amount;
+                    const remaining = totalDue - totalPaid;
+                    const progressPercent = totalDue > 0 ? Math.min((totalPaid / totalDue) * 100, 100) : 0;
+
+                    return (
+                      <>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Progression</span>
+                            <span className="font-medium">{progressPercent.toFixed(1)}%</span>
+                          </div>
+                          <div className="h-2 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-primary transition-all duration-500"
+                              style={{ width: `${progressPercent}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-3 pt-2">
+                          <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
+                            <span className="text-sm text-muted-foreground">Total à rembourser</span>
+                            <span className="font-medium">{formatCurrency(totalDue)}</span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                            <span className="text-sm text-green-700 dark:text-green-400">Total payé</span>
+                            <span className="font-bold text-green-700 dark:text-green-400">{formatCurrency(totalPaid)}</span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                            <span className="text-sm text-orange-700 dark:text-orange-400">Reste à payer</span>
+                            <span className="font-bold text-orange-700 dark:text-orange-400">{formatCurrency(remaining)}</span>
+                          </div>
+
+                          <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
+                            <span className="text-sm text-muted-foreground">Paiements effectués</span>
+                            <span className="font-medium">{payments.length}</span>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Actions Sidebar */}
