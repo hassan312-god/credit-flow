@@ -51,32 +51,32 @@ export function MobileHeader() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-border md:hidden shadow-sm">
-      <div className="px-4 py-3 safe-area-top">
+    <header className="fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md border-b border-border md:hidden shadow-sm">
+      <div className="px-4 py-3 pt-safe">
         {/* Top bar */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsMobileOpen(true)}
-            className="h-9 w-9 -ml-2"
+            className="h-10 w-10 -ml-2 touch-manipulation"
             aria-label="Ouvrir le menu"
           >
             <Menu className="w-5 h-5" />
           </Button>
           
-          <h1 className="font-display text-base font-bold text-foreground flex-1 text-center">
+          <h1 className="font-display text-base font-bold text-foreground flex-1 text-center truncate">
             {getPageTitle()}
           </h1>
           
-          <div className="flex items-center gap-1 w-9 justify-end">
+          <div className="flex items-center w-10 justify-end">
             <NotificationBell />
           </div>
         </div>
 
         {/* Greeting (only on dashboard) */}
         {location.pathname === '/dashboard' && (
-          <div className="mt-3">
+          <div className="mt-3 pb-1">
             <p className="text-base font-semibold text-foreground">
               {getGreeting()}, {firstName} 👋
             </p>
