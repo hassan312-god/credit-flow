@@ -13,6 +13,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { deleteFromLocal, STORES } from '@/services/localStorage';
+import { DataScopeIndicator } from '@/components/DataScopeIndicator';
+import { EmployeeFilter } from '@/components/EmployeeFilter';
 
 interface Client {
   id: string;
@@ -21,12 +23,14 @@ interface Client {
   phone: string;
   profession: string | null;
   created_at: string;
+  created_by: string | null;
 }
 
 export default function Clients() {
   const { role } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
+  const [employeeFilter, setEmployeeFilter] = useState('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -55,10 +59,12 @@ export default function Clients() {
     }
   }, [canAccessClients, isOnline, loading, clients.length, refresh]);
 
-  const filteredClients = clients.filter(c =>
-    c.full_name.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone.includes(search)
-  );
+  const filteredClients = clients.filter(c => {
+    const matchesSearch = c.full_name.toLowerCase().includes(search.toLowerCase()) ||
+      c.phone.includes(search);
+    const matchesEmployee = employeeFilter === 'all' || c.created_by === employeeFilter;
+    return matchesSearch && matchesEmployee;
+  });
 
   const canDeleteClient = (client: Client) => {
     // Seuls admin et directeur peuvent supprimer
@@ -142,25 +148,33 @@ export default function Clients() {
     <MainLayout>
       <div className="space-y-4 md:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-          <h1 className="font-display text-2xl md:text-3xl font-bold">Clients</h1>
-          {(role === 'directeur' || role === 'agent_credit') && (
-            <Link to="/clients/new">
-              <Button className="gap-2 w-full sm:w-auto" size="sm">
-                <Plus className="w-4 h-4" />
-                Nouveau client
-              </Button>
-            </Link>
-          )}
+          <div className="flex items-center gap-3">
+            <h1 className="font-display text-2xl md:text-3xl font-bold">Clients</h1>
+            <DataScopeIndicator />
+          </div>
+          <div className="flex items-center gap-2">
+            {(role === 'directeur' || role === 'agent_credit') && (
+              <Link to="/clients/new">
+                <Button className="gap-2 w-full sm:w-auto" size="sm">
+                  <Plus className="w-4 h-4" />
+                  Nouveau client
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
 
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher un client..."
-            className="pl-10"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher un client..."
+              className="pl-10"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <EmployeeFilter value={employeeFilter} onChange={setEmployeeFilter} />
         </div>
 
         {loading ? (

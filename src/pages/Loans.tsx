@@ -8,6 +8,8 @@ import { Plus, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { DataScopeIndicator } from '@/components/DataScopeIndicator';
+import { EmployeeFilter } from '@/components/EmployeeFilter';
 
 interface Loan {
   id: string;
@@ -15,6 +17,7 @@ interface Loan {
   duration_months: number;
   status: string;
   created_at: string;
+  created_by: string | null;
   client: { full_name: string } | null;
 }
 
@@ -23,6 +26,7 @@ export default function Loans() {
   const { role } = useAuth();
   const [loans, setLoans] = useState<Loan[]>([]);
   const [search, setSearch] = useState('');
+  const [employeeFilter, setEmployeeFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const canCreateLoans = role === 'directeur' || role === 'agent_credit';
 
@@ -30,7 +34,7 @@ export default function Loans() {
     const fetchLoans = async () => {
       const { data } = await supabase
         .from('loans')
-        .select('id, amount, duration_months, status, created_at, client:clients(full_name)')
+        .select('id, amount, duration_months, status, created_at, created_by, client:clients(full_name)')
         .order('created_at', { ascending: false });
       
       setLoans(data?.map(loan => ({
@@ -48,16 +52,21 @@ export default function Loans() {
   const formatDate = (date: string) => 
     new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 
-  const filteredLoans = loans.filter(l =>
-    l.client?.full_name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredLoans = loans.filter(l => {
+    const matchesSearch = l.client?.full_name?.toLowerCase().includes(search.toLowerCase());
+    const matchesEmployee = employeeFilter === 'all' || l.created_by === employeeFilter;
+    return matchesSearch && matchesEmployee;
+  });
 
   return (
     <MainLayout>
       <div className="space-y-4 md:space-y-6">
         {/* Header masqué sur mobile (déjà dans MobileHeader) */}
         <div className="hidden md:flex md:flex-row md:items-center md:justify-between gap-4">
-          <h1 className="font-display text-3xl font-bold">Prêts</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="font-display text-3xl font-bold">Prêts</h1>
+            <DataScopeIndicator />
+          </div>
           {canCreateLoans && (
             <Link to="/loans/new">
               <Button className="gap-2">
@@ -68,9 +77,12 @@ export default function Loans() {
           )}
         </div>
 
-        <div className="relative max-w-md w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Rechercher..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Rechercher..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <EmployeeFilter value={employeeFilter} onChange={setEmployeeFilter} />
         </div>
 
         <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
