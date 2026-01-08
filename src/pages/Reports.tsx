@@ -13,6 +13,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { supabase } from '@/integrations/supabase/client';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { DataScopeIndicator } from '@/components/DataScopeIndicator';
+import { EmployeeFilter } from '@/components/EmployeeFilter';
+import { EmployeeSummary } from '@/components/EmployeeSummary';
+import { useAuth } from '@/hooks/useAuth';
 
 interface MonthlyData {
   month: string;
@@ -30,7 +34,9 @@ interface StatusDistribution {
 const COLORS = ['hsl(160, 84%, 39%)', 'hsl(217, 91%, 60%)', 'hsl(38, 92%, 50%)', 'hsl(0, 72%, 51%)'];
 
 export default function Reports() {
+  const { role } = useAuth();
   const [period, setPeriod] = useState('6');
+  const [employeeFilter, setEmployeeFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [statusDistribution, setStatusDistribution] = useState<StatusDistribution[]>([]);
@@ -55,17 +61,29 @@ export default function Reports() {
           const monthStart = startOfMonth(subMonths(new Date(), i));
           const monthEnd = endOfMonth(monthStart);
           
-          const { data: loansData } = await supabase
+          let loansQuery = supabase
             .from('loans')
-            .select('amount')
+            .select('amount, created_by')
             .gte('created_at', monthStart.toISOString())
             .lte('created_at', monthEnd.toISOString());
+          
+          if (employeeFilter !== 'all') {
+            loansQuery = loansQuery.eq('created_by', employeeFilter);
+          }
+          
+          const { data: loansData } = await loansQuery;
 
-          const { data: paymentsData } = await supabase
+          let paymentsQuery = supabase
             .from('payments')
-            .select('amount')
+            .select('amount, recorded_by')
             .gte('created_at', monthStart.toISOString())
             .lte('created_at', monthEnd.toISOString());
+          
+          if (employeeFilter !== 'all') {
+            paymentsQuery = paymentsQuery.eq('recorded_by', employeeFilter);
+          }
+          
+          const { data: paymentsData } = await paymentsQuery;
 
           monthsData.push({
             month: format(monthStart, 'MMM yy', { locale: fr }),
@@ -78,9 +96,15 @@ export default function Reports() {
         setMonthlyData(monthsData);
 
         // Fetch status distribution
-        const { data: allLoans } = await supabase
+        let allLoansQuery = supabase
           .from('loans')
-          .select('status, amount');
+          .select('status, amount, created_by');
+        
+        if (employeeFilter !== 'all') {
+          allLoansQuery = allLoansQuery.eq('created_by', employeeFilter);
+        }
+        
+        const { data: allLoans } = await allLoansQuery;
 
         const statusCounts = allLoans?.reduce((acc, loan) => {
           acc[loan.status] = (acc[loan.status] || 0) + 1;
@@ -107,17 +131,29 @@ export default function Reports() {
         );
 
         // Calculate overall stats
-        const { count: clientsCount } = await supabase
+        let clientsQuery = supabase
           .from('clients')
           .select('*', { count: 'exact', head: true });
+        
+        if (employeeFilter !== 'all') {
+          clientsQuery = clientsQuery.eq('created_by', employeeFilter);
+        }
+        
+        const { count: clientsCount } = await clientsQuery;
 
         const totalDisbursed = allLoans
           ?.filter(l => ['decaisse', 'en_cours', 'rembourse', 'en_retard'].includes(l.status))
           .reduce((sum, l) => sum + Number(l.amount), 0) || 0;
 
-        const { data: allPayments } = await supabase
+        let paymentsQuery = supabase
           .from('payments')
-          .select('amount');
+          .select('amount, recorded_by');
+        
+        if (employeeFilter !== 'all') {
+          paymentsQuery = paymentsQuery.eq('recorded_by', employeeFilter);
+        }
+        
+        const { data: allPayments } = await paymentsQuery;
 
         const totalCollected = allPayments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
 
@@ -137,7 +173,7 @@ export default function Reports() {
     };
 
     fetchReportData();
-  }, [period]);
+  }, [period, employeeFilter]);
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount);
@@ -145,12 +181,16 @@ export default function Reports() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="font-display text-3xl font-bold">Rapports & Statistiques</h1>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
+            <h1 className="font-display text-2xl md:text-3xl font-bold">Rapports & Statistiques</h1>
+            <DataScopeIndicator />
+          </div>
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
+            <EmployeeFilter value={employeeFilter} onChange={setEmployeeFilter} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline">
+                <Button variant="outline" size="sm">
                   <Download className="w-4 h-4 mr-2" />
                   Exporter
                 </Button>
@@ -175,7 +215,7 @@ export default function Reports() {
               </DropdownMenuContent>
             </DropdownMenu>
             <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-36">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -359,6 +399,11 @@ export default function Reports() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Employee Summary - Only for admin/directeur */}
+        {(role === 'admin' || role === 'directeur') && (
+          <EmployeeSummary />
+        )}
 
         {/* Additional Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
