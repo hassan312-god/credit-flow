@@ -19,6 +19,8 @@ import { useWorkSession } from '@/hooks/useWorkSession';
 import { useAuth } from '@/hooks/useAuth';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
+import { DataScopeIndicator } from '@/components/DataScopeIndicator';
+import { EmployeeFilter } from '@/components/EmployeeFilter';
 
 interface PaymentSchedule {
   id: string;
@@ -29,6 +31,7 @@ interface PaymentSchedule {
   amount_paid: number;
   status: string;
   loan: {
+    created_by: string | null;
     client: { full_name: string } | null;
   } | null;
 }
@@ -39,6 +42,7 @@ interface Payment {
   payment_date: string;
   payment_method: string;
   reference: string | null;
+  recorded_by: string | null;
   loan: {
     client: { full_name: string } | null;
   } | null;
@@ -51,6 +55,7 @@ export default function Payments() {
   const [schedules, setSchedules] = useState<PaymentSchedule[]>([]);
   const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
   const [search, setSearch] = useState('');
+  const [employeeFilter, setEmployeeFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<PaymentSchedule | null>(null);
@@ -70,7 +75,7 @@ export default function Payments() {
         .from('payment_schedule')
         .select(`
           id, loan_id, installment_number, due_date, amount_due, amount_paid, status,
-          loan:loans(client:clients(full_name))
+          loan:loans(created_by, client:clients(full_name))
         `)
         .in('status', ['en_attente', 'partiel'])
         .order('due_date', { ascending: true })
@@ -80,7 +85,7 @@ export default function Payments() {
       const { data: paymentsData } = await supabase
         .from('payments')
         .select(`
-          id, amount, payment_date, payment_method, reference,
+          id, amount, payment_date, payment_method, reference, recorded_by,
           loan:loans(client:clients(full_name))
         `)
         .order('created_at', { ascending: false })
@@ -177,9 +182,11 @@ export default function Payments() {
     }
   };
 
-  const filteredSchedules = schedules.filter(s =>
-    s.loan?.client?.full_name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredSchedules = schedules.filter(s => {
+    const matchesSearch = s.loan?.client?.full_name?.toLowerCase().includes(search.toLowerCase());
+    const matchesEmployee = employeeFilter === 'all' || s.loan?.created_by === employeeFilter;
+    return matchesSearch && matchesEmployee;
+  });
 
   return (
     <MainLayout>
@@ -198,7 +205,10 @@ export default function Payments() {
         )}
         {/* Header masqué sur mobile (déjà dans MobileHeader) */}
         <div className="hidden md:flex md:flex-row md:items-center md:justify-between gap-4">
-          <h1 className="font-display text-3xl font-bold">Paiements</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="font-display text-3xl font-bold">Paiements</h1>
+            <DataScopeIndicator />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
@@ -211,14 +221,17 @@ export default function Payments() {
                     <Calendar className="w-4 h-4 md:w-5 md:h-5" />
                     Échéances à payer
                   </CardTitle>
-                  <div className="relative w-full sm:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Rechercher..."
-                      className="pl-10"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                    />
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="relative w-full sm:w-48">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Rechercher..."
+                        className="pl-10"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                      />
+                    </div>
+                    <EmployeeFilter value={employeeFilter} onChange={setEmployeeFilter} />
                   </div>
                 </div>
               </CardHeader>
