@@ -23,6 +23,7 @@ import { usePaymentNotifications } from '@/hooks/usePaymentNotifications';
 import { NotificationBell } from '@/components/NotificationBell';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { toast } from 'sonner';
+import { DataScopeIndicator } from '@/components/DataScopeIndicator';
 
 interface DashboardStats {
   totalClients: number;
@@ -128,15 +129,23 @@ export default function Dashboard() {
   return (
     <MainLayout>
       <div className="space-y-4 md:space-y-8">
+        {/* Data Scope Indicator - Mobile */}
+        <div className="md:hidden flex justify-end">
+          <DataScopeIndicator />
+        </div>
+
         {/* Header - Masqué sur mobile (déjà dans MobileHeader) */}
         <div className="hidden md:flex md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="font-display text-3xl font-bold text-foreground">
-              Bonjour, {profile?.full_name?.split(' ')[0] || 'Utilisateur'}
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Voici un aperçu de votre activité aujourd'hui
-            </p>
+          <div className="flex items-center gap-3">
+            <div>
+              <h1 className="font-display text-3xl font-bold text-foreground">
+                Bonjour, {profile?.full_name?.split(' ')[0] || 'Utilisateur'}
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Voici un aperçu de votre activité aujourd'hui
+              </p>
+            </div>
+            <DataScopeIndicator />
           </div>
           <div className="flex items-center gap-3">
             <NotificationBell />
