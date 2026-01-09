@@ -16,6 +16,7 @@ import { fr } from 'date-fns/locale';
 import { DataScopeIndicator } from '@/components/DataScopeIndicator';
 import { EmployeeFilter } from '@/components/EmployeeFilter';
 import { EmployeeSummary } from '@/components/EmployeeSummary';
+import { EmployeePerformanceChart } from '@/components/EmployeePerformanceChart';
 import { useAuth } from '@/hooks/useAuth';
 
 interface MonthlyData {
@@ -399,6 +400,13 @@ export default function Reports() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Employee Performance Chart - Only for admin/directeur */}
+        {(role === 'admin' || role === 'directeur') && (
+          <div className="grid grid-cols-1 gap-6">
+            <EmployeePerformanceChart />
+          </div>
+        )}
 
         {/* Employee Summary - Only for admin/directeur */}
         {(role === 'admin' || role === 'directeur') && (
