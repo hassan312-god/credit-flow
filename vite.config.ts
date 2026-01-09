@@ -28,22 +28,21 @@ export default defineConfig(({ mode }) => ({
         start_url: "/",
         icons: [
           {
-            src: "https://rrgbccnkkarwasrmfnmc.supabase.co/storage/v1/object/public/Logo/756de4a1-4384-4338-98e5-5812db0a8b40.png",
+            src: "/favicon.ico",
+            sizes: "48x48",
+            type: "image/x-icon"
+          },
+          {
+            src: "/favicon.ico",
             sizes: "192x192",
-            type: "image/png",
+            type: "image/x-icon",
             purpose: "any maskable"
           },
           {
-            src: "https://rrgbccnkkarwasrmfnmc.supabase.co/storage/v1/object/public/Logo/756de4a1-4384-4338-98e5-5812db0a8b40.png",
+            src: "/favicon.ico",
             sizes: "512x512",
-            type: "image/png",
+            type: "image/x-icon",
             purpose: "any maskable"
-          },
-          {
-            src: "https://rrgbccnkkarwasrmfnmc.supabase.co/storage/v1/object/public/Logo/756de4a1-4384-4338-98e5-5812db0a8b40.png",
-            sizes: "180x180",
-            type: "image/png",
-            purpose: "apple-touch-icon"
           }
         ]
       },
