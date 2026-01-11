@@ -111,9 +111,9 @@ export default function ActivityLogs() {
     exportToPDF(rows, headers, `logs-activite-${format(new Date(), 'yyyy-MM-dd')}`, 'Journal d\'activité');
   };
 
-  const handleExportXLSX = () => {
+  const handleExportXLSX = async () => {
     const { headers, rows } = prepareExportData();
-    exportToXLSX(rows, headers, `logs-activite-${format(new Date(), 'yyyy-MM-dd')}`, 'Journal d\'activité');
+    await exportToXLSX(rows, headers, `logs-activite-${format(new Date(), 'yyyy-MM-dd')}`, 'Journal d\'activité');
   };
 
   const handleExportCSV = () => {

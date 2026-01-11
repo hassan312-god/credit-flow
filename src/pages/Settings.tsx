@@ -499,7 +499,7 @@ export default function Settings() {
                         
                         const headers = ['Type', ...Object.keys(allData[0] || {}).filter(k => k !== 'Type')];
                         const rows = allData.map(item => headers.map(h => String(item[h as keyof typeof item] || '')));
-                        exportToXLSX(rows, headers, `export-donnees-${format(new Date(), 'yyyy-MM-dd')}`, 'Export');
+                        await exportToXLSX(rows, headers, `export-donnees-${format(new Date(), 'yyyy-MM-dd')}`, 'Export');
                         toast.success('Export Excel généré avec succès');
                       } catch (error) {
                         console.error('Error exporting data:', error);

@@ -205,10 +205,10 @@ export default function Reports() {
                   <FileText className="w-4 h-4 mr-2" />
                   Exporter en PDF
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {
+                <DropdownMenuItem onClick={async () => {
                   const headers = ['Mois', 'Prêts', 'Paiements', 'Montant'];
                   const rows = monthlyData.map(d => [d.month, d.loans.toString(), d.payments.toString(), formatCurrency(d.amount)]);
-                  exportToXLSX(rows, headers, `rapports-${period}-mois`, 'Rapports');
+                  await exportToXLSX(rows, headers, `rapports-${period}-mois`, 'Rapports');
                 }}>
                   <FileSpreadsheet className="w-4 h-4 mr-2" />
                   Exporter en Excel (XLSX)
