@@ -58,6 +58,52 @@ const ChartContainer = React.forwardRef<
 });
 ChartContainer.displayName = "Chart";
 
+/**
+ * Validates a color value to prevent CSS injection attacks.
+ * Only allows safe color formats: hex, rgb, rgba, hsl, hsla, and named colors.
+ */
+const isValidCSSColor = (color: string): boolean => {
+  if (!color || typeof color !== 'string') return false;
+  
+  // Sanitize: remove any characters that could be used for injection
+  const sanitized = color.trim();
+  
+  // Check for dangerous patterns (script, url, expression, import, etc.)
+  const dangerousPatterns = /[<>{}()\\;'"]/i;
+  if (dangerousPatterns.test(sanitized)) return false;
+  
+  // Allow hex colors: #fff, #ffffff, #ffffffff
+  if (/^#([0-9A-Fa-f]{3,4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(sanitized)) return true;
+  
+  // Allow rgb/rgba: rgb(0,0,0), rgba(0,0,0,0.5)
+  if (/^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d+))?\s*\)$/.test(sanitized)) return true;
+  
+  // Allow hsl/hsla: hsl(0,0%,0%), hsla(0,0%,0%,0.5)
+  if (/^hsla?\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*(,\s*(0|1|0?\.\d+))?\s*\)$/.test(sanitized)) return true;
+  
+  // Allow CSS custom properties: var(--color-name)
+  if (/^var\(--[a-zA-Z0-9-]+\)$/.test(sanitized)) return true;
+  
+  // Allow named colors (common ones)
+  const namedColors = [
+    'transparent', 'currentcolor', 'inherit',
+    'black', 'white', 'red', 'green', 'blue', 'yellow', 'orange', 'purple', 'pink',
+    'gray', 'grey', 'cyan', 'magenta', 'brown', 'navy', 'teal', 'olive', 'maroon',
+    'lime', 'aqua', 'fuchsia', 'silver', 'coral', 'salmon', 'gold', 'indigo', 'violet'
+  ];
+  if (namedColors.includes(sanitized.toLowerCase())) return true;
+  
+  return false;
+};
+
+/**
+ * Sanitizes a CSS key to prevent injection via property names.
+ */
+const sanitizeCSSKey = (key: string): string => {
+  // Only allow alphanumeric characters and hyphens
+  return key.replace(/[^a-zA-Z0-9-]/g, '');
+};
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
 
@@ -65,25 +111,34 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
+  // Build CSS rules safely without dangerouslySetInnerHTML
+  const cssRules = React.useMemo(() => {
+    return Object.entries(THEMES).map(([theme, prefix]) => {
+      const cssVariables = colorConfig
+        .map(([key, itemConfig]) => {
+          const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
+          if (color && isValidCSSColor(color)) {
+            const safeKey = sanitizeCSSKey(key);
+            return `--color-${safeKey}: ${color}`;
+          }
+          return null;
+        })
+        .filter(Boolean);
+      
+      return { prefix, cssVariables };
+    });
+  }, [colorConfig]);
+
+  // Use a style element with CSS custom properties applied via React style prop
+  // This avoids dangerouslySetInnerHTML entirely
   return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
-  })
-  .join("\n")}
-}
-`,
-          )
-          .join("\n"),
-      }}
-    />
+    <>
+      {cssRules.map(({ prefix, cssVariables }) => (
+        <style key={prefix || 'default'}>
+          {`${prefix} [data-chart=${id}] { ${cssVariables.join('; ')}${cssVariables.length ? ';' : ''} }`}
+        </style>
+      ))}
+    </>
   );
 };
 
