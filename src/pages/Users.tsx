@@ -76,6 +76,26 @@ export default function Users() {
 
   // Vérifier si l'utilisateur a accès à la gestion des utilisateurs
   const canManageUsers = role === 'admin' || role === 'directeur';
+  const isAdmin = role === 'admin';
+
+  // Les directeurs ne peuvent pas voir ou modifier les admins
+  const getVisibleRoles = (): AppRole[] => {
+    if (isAdmin) {
+      return ['admin', 'directeur', 'agent_credit', 'caissier', 'recouvrement'];
+    } else {
+      // Les directeurs ne voient pas le rôle admin
+      return ['directeur', 'agent_credit', 'caissier', 'recouvrement'];
+    }
+  };
+
+  const getSelectableRoles = (): AppRole[] => {
+    if (isAdmin) {
+      return ['admin', 'directeur', 'agent_credit', 'caissier', 'recouvrement'];
+    } else {
+      // Les directeurs ne peuvent pas assigner le rôle admin
+      return ['directeur', 'agent_credit', 'caissier', 'recouvrement'];
+    }
+  };
 
   useEffect(() => {
     if (!canManageUsers) {
@@ -97,15 +117,23 @@ export default function Users() {
         .from('user_roles')
         .select('id, user_id, role');
 
-      // Combine data
-      const usersWithRoles: UserWithRole[] = (profiles || []).map(profile => {
-        const userRole = roles?.find(r => r.user_id === profile.id);
-        return {
-          ...profile,
-          role: userRole?.role || null,
-          role_id: userRole?.id || null,
-        };
-      });
+      // Combine data - filter out admins for directors
+      const usersWithRoles: UserWithRole[] = (profiles || [])
+        .map(profile => {
+          const userRole = roles?.find(r => r.user_id === profile.id);
+          return {
+            ...profile,
+            role: userRole?.role || null,
+            role_id: userRole?.id || null,
+          };
+        })
+        .filter(user => {
+          // Si c'est un directeur, ne pas montrer les admins
+          if (!isAdmin && user.role === 'admin') {
+            return false;
+          }
+          return true;
+        });
 
       setUsers(usersWithRoles);
     } catch (error) {
@@ -130,6 +158,18 @@ export default function Users() {
     if (!canManageUsers) {
       toast.error('Vous n\'avez pas les permissions nécessaires pour modifier les rôles');
       return;
+    }
+
+    // Empêcher un directeur de modifier un admin ou d'assigner le rôle admin
+    if (!isAdmin) {
+      if (selectedUser.role === 'admin') {
+        toast.error('Vous n\'avez pas les permissions nécessaires pour modifier un administrateur');
+        return;
+      }
+      if (selectedRole === 'admin') {
+        toast.error('Seul un administrateur peut attribuer le rôle administrateur');
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -440,11 +480,9 @@ export default function Users() {
                     <SelectValue placeholder="Sélectionner un rôle" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="admin">Administrateur</SelectItem>
-                    <SelectItem value="directeur">Directeur</SelectItem>
-                    <SelectItem value="agent_credit">Agent de crédit</SelectItem>
-                    <SelectItem value="caissier">Caissier</SelectItem>
-                    <SelectItem value="recouvrement">Recouvrement</SelectItem>
+                    {getSelectableRoles().map((r) => (
+                      <SelectItem key={r} value={r}>{roleLabels[r]}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -498,11 +536,9 @@ export default function Users() {
                       <SelectValue placeholder="Sélectionner un rôle" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="admin">Administrateur</SelectItem>
-                      <SelectItem value="directeur">Directeur</SelectItem>
-                      <SelectItem value="agent_credit">Agent de crédit</SelectItem>
-                      <SelectItem value="caissier">Caissier</SelectItem>
-                      <SelectItem value="recouvrement">Recouvrement</SelectItem>
+                      {getSelectableRoles().map((r) => (
+                        <SelectItem key={r} value={r}>{roleLabels[r]}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

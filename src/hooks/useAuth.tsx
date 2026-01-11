@@ -44,10 +44,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (roleData) {
-        setRole(roleData.role as AppRole);
+        const userRole = roleData.role as AppRole;
+        setRole(userRole);
+
+        // Si c'est un directeur qui se connecte, notifier tous les admins
+        if (userRole === 'directeur' && profileData) {
+          notifyAdminsOfDirectorLogin(userId, profileData.full_name);
+        }
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
+    }
+  };
+
+  // Notifier les admins quand un directeur se connecte
+  const notifyAdminsOfDirectorLogin = async (directorId: string, directorName: string) => {
+    try {
+      // Trouver tous les admins
+      const { data: adminRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'admin');
+
+      if (adminRoles && adminRoles.length > 0) {
+        // Créer une notification pour chaque admin
+        const notifications = adminRoles.map(admin => ({
+          admin_user_id: admin.user_id,
+          notification_type: 'director_login',
+          message: `Le directeur ${directorName} s'est connecté`,
+          related_user_id: directorId,
+          related_user_name: directorName,
+          is_read: false,
+        }));
+
+        await supabase
+          .from('admin_notifications' as any)
+          .insert(notifications);
+      }
+    } catch (error) {
+      console.error('Error notifying admins:', error);
     }
   };
 

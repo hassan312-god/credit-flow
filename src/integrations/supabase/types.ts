@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_notifications: {
+        Row: {
+          admin_user_id: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          notification_type: string
+          related_user_id: string | null
+          related_user_name: string | null
+        }
+        Insert: {
+          admin_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          notification_type: string
+          related_user_id?: string | null
+          related_user_name?: string | null
+        }
+        Update: {
+          admin_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          notification_type?: string
+          related_user_id?: string | null
+          related_user_name?: string | null
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           created_at: string
@@ -126,6 +159,9 @@ export type Database = {
           id: string
           initial_capital: number
           notes: string | null
+          total_interest_earned: number | null
+          total_loans_disbursed: number | null
+          total_payments_received: number | null
           updated_at: string
           updated_by: string | null
         }
@@ -135,6 +171,9 @@ export type Database = {
           id?: string
           initial_capital?: number
           notes?: string | null
+          total_interest_earned?: number | null
+          total_loans_disbursed?: number | null
+          total_payments_received?: number | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -144,6 +183,9 @@ export type Database = {
           id?: string
           initial_capital?: number
           notes?: string | null
+          total_interest_earned?: number | null
+          total_loans_disbursed?: number | null
+          total_payments_received?: number | null
           updated_at?: string
           updated_by?: string | null
         }

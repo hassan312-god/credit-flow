@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSidebarContext } from './SidebarContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { NotificationBell } from '@/components/NotificationBell';
+import { AdminNotifications } from '@/components/AdminNotifications';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -26,7 +27,7 @@ const pageTitles: Record<string, string> = {
 
 export function MobileHeader() {
   const location = useLocation();
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
   const { setIsMobileOpen } = useSidebarContext();
   const isMobile = useIsMobile();
 
@@ -69,7 +70,8 @@ export function MobileHeader() {
             {getPageTitle()}
           </h1>
           
-          <div className="flex items-center w-10 justify-end">
+          <div className="flex items-center gap-1 justify-end">
+            {role === 'admin' && <AdminNotifications />}
             <NotificationBell />
           </div>
         </div>
