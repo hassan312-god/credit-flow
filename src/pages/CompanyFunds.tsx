@@ -17,7 +17,8 @@ import {
   DollarSign,
   Download,
   FileText,
-  FileSpreadsheet
+  FileSpreadsheet,
+  BarChart3
 } from 'lucide-react';
 import { exportToPDF, exportToXLSX } from '@/utils/exportUtils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -36,6 +37,18 @@ interface CompanyFund {
   updated_by: string | null;
   created_at: string;
   updated_at: string;
+  total_loans_disbursed: number;
+  total_interest_earned: number;
+  total_payments_received: number;
+}
+
+interface LoanStats {
+  totalLoansCount: number;
+  totalAmountDisbursed: number;
+  totalInterestExpected: number;
+  totalPaymentsReceived: number;
+  activeLoansCount: number;
+  availableBalance: number;
 }
 
 interface FundHistory {
@@ -55,6 +68,7 @@ export default function CompanyFunds() {
   const [loadingData, setLoadingData] = useState(true);
   const [fund, setFund] = useState<CompanyFund | null>(null);
   const [history, setHistory] = useState<FundHistory[]>([]);
+  const [loanStats, setLoanStats] = useState<LoanStats | null>(null);
   const [initialCapital, setInitialCapital] = useState<string>('0');
   const [currentBalance, setCurrentBalance] = useState<string>('0');
   const [notes, setNotes] = useState('');
@@ -66,6 +80,7 @@ export default function CompanyFunds() {
   useEffect(() => {
     if (!canManageFunds) return;
     loadFundData();
+    loadLoanStats();
   }, [canManageFunds]);
 
   const loadFundData = async () => {
@@ -125,6 +140,50 @@ export default function CompanyFunds() {
       toast.error('Erreur lors du chargement des données du fond');
     } finally {
       setLoadingData(false);
+    }
+  };
+
+  // Charger les statistiques des prêts
+  const loadLoanStats = async () => {
+    try {
+      // Prêts actifs (en_cours, en_retard)
+      const { data: loans, error: loansError } = await supabase
+        .from('loans')
+        .select('id, amount, total_amount, interest_rate, status');
+
+      if (loansError) throw loansError;
+
+      // Paiements reçus
+      const { data: payments, error: paymentsError } = await supabase
+        .from('payments')
+        .select('amount');
+
+      if (paymentsError) throw paymentsError;
+
+      const activeLoans = (loans || []).filter(l => 
+        l.status === 'en_cours' || l.status === 'en_retard'
+      );
+      const approvedLoans = (loans || []).filter(l => 
+        l.status !== 'en_attente' && l.status !== 'rejete' && l.status !== 'en_cours_validation'
+      );
+
+      const totalAmountDisbursed = approvedLoans.reduce((sum, l) => sum + (l.amount || 0), 0);
+      const totalInterestExpected = approvedLoans.reduce((sum, l) => {
+        const interest = (l.total_amount || 0) - (l.amount || 0);
+        return sum + interest;
+      }, 0);
+      const totalPaymentsReceived = (payments || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+
+      setLoanStats({
+        totalLoansCount: approvedLoans.length,
+        totalAmountDisbursed,
+        totalInterestExpected,
+        totalPaymentsReceived,
+        activeLoansCount: activeLoans.length,
+        availableBalance: (fund?.current_balance || 0) - totalAmountDisbursed + totalPaymentsReceived,
+      });
+    } catch (error) {
+      console.error('Error loading loan stats:', error);
     }
   };
 
@@ -259,24 +318,81 @@ export default function CompanyFunds() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Statistiques */}
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5" />
-                Solde actuel
+        {/* Statistiques principales */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                <DollarSign className="w-4 h-4 text-primary" />
+                Solde Disponible
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary">
+              <div className="text-2xl font-bold text-primary">
                 {fund ? formatCurrency(fund.current_balance) : formatCurrency(0)}
               </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Capital initial: {fund ? formatCurrency(fund.initial_capital) : formatCurrency(0)}
+              <p className="text-xs text-muted-foreground mt-1">
+                Capital: {fund ? formatCurrency(fund.initial_capital) : formatCurrency(0)}
               </p>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                <TrendingDown className="w-4 h-4 text-orange-500" />
+                Prêts Décaissés
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">
+                {loanStats ? formatCurrency(loanStats.totalAmountDisbursed) : formatCurrency(0)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {loanStats?.totalLoansCount || 0} prêts approuvés ({loanStats?.activeLoansCount || 0} en cours)
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                <TrendingUp className="w-4 h-4 text-green-500" />
+                Paiements Reçus
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                {loanStats ? formatCurrency(loanStats.totalPaymentsReceived) : formatCurrency(0)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Total des remboursements encaissés
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                <Wallet className="w-4 h-4 text-primary" />
+                Intérêts Gagnés
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary">
+                {loanStats ? formatCurrency(loanStats.totalInterestExpected) : formatCurrency(0)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {loanStats && loanStats.totalAmountDisbursed > 0 
+                  ? `${((loanStats.totalInterestExpected / loanStats.totalAmountDisbursed) * 100).toFixed(1)}% de rendement`
+                  : 'Aucun prêt actif'
+                }
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Formulaire de gestion */}
           <Card className="lg:col-span-2">
@@ -352,6 +468,69 @@ export default function CompanyFunds() {
                   </>
                 )}
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* Résumé financier */}
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-primary" />
+                Résumé Financier
+              </CardTitle>
+              <CardDescription>
+                Vue d'ensemble des finances
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
+                  <span className="text-sm text-muted-foreground">Capital initial</span>
+                  <span className="font-semibold">{fund ? formatCurrency(fund.initial_capital) : '0'}</span>
+                </div>
+                
+                <div className="flex justify-between items-center p-3 rounded-lg bg-orange-50 dark:bg-orange-950/20">
+                  <span className="text-sm text-orange-600">- Prêts décaissés</span>
+                  <span className="font-semibold text-orange-600">
+                    {loanStats ? formatCurrency(loanStats.totalAmountDisbursed) : '0'}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between items-center p-3 rounded-lg bg-green-50 dark:bg-green-950/20">
+                  <span className="text-sm text-green-600">+ Remboursements</span>
+                  <span className="font-semibold text-green-600">
+                    {loanStats ? formatCurrency(loanStats.totalPaymentsReceived) : '0'}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between items-center p-3 rounded-lg bg-primary/10">
+                  <span className="text-sm text-primary font-medium">+ Intérêts gagnés</span>
+                  <span className="font-semibold text-primary">
+                    {loanStats ? formatCurrency(loanStats.totalInterestExpected) : '0'}
+                  </span>
+                </div>
+                
+                <div className="border-t pt-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Solde théorique</span>
+                    <span className="text-lg font-bold text-primary">
+                      {loanStats && fund
+                        ? formatCurrency(
+                            fund.initial_capital 
+                            - loanStats.totalAmountDisbursed 
+                            + loanStats.totalPaymentsReceived
+                          )
+                        : formatCurrency(fund?.current_balance || 0)
+                      }
+                    </span>
+                  </div>
+                  {loanStats && loanStats.totalInterestExpected > 0 && (
+                    <p className="text-xs text-green-600 mt-2 text-right">
+                      Profit attendu: {formatCurrency(loanStats.totalInterestExpected)}
+                    </p>
+                  )}
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
