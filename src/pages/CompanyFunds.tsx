@@ -394,7 +394,7 @@ export default function CompanyFunds() {
                         <FileText className="w-4 h-4 mr-2" />
                         Exporter en PDF
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => {
+                      <DropdownMenuItem onClick={async () => {
                         const headers = ['Date', 'Type', 'Solde précédent', 'Nouveau solde', 'Variation', 'Notes'];
                         const rows = history.map(entry => [
                           formatDate(entry.created_at),
@@ -404,7 +404,7 @@ export default function CompanyFunds() {
                           formatCurrency(entry.change_amount),
                           entry.notes || '-',
                         ]);
-                        exportToXLSX(rows, headers, `historique-fond-${format(new Date(), 'yyyy-MM-dd')}`, 'Historique');
+                        await exportToXLSX(rows, headers, `historique-fond-${format(new Date(), 'yyyy-MM-dd')}`, 'Historique');
                       }}>
                         <FileSpreadsheet className="w-4 h-4 mr-2" />
                         Exporter en Excel (XLSX)

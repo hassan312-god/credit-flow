@@ -153,9 +153,9 @@ export default function AttendanceReports() {
     exportToPDF(rows, headers, `rapport-presence-${selectedMonth}`, `Rapport de présence - ${selectedMonth}`);
   };
 
-  const handleExportXLSX = () => {
+  const handleExportXLSX = async () => {
     const { headers, rows } = prepareExportData();
-    exportToXLSX(rows, headers, `rapport-presence-${selectedMonth}`, 'Rapport de présence');
+    await exportToXLSX(rows, headers, `rapport-presence-${selectedMonth}`, 'Rapport de présence');
   };
 
   const handleExportCSV = () => {

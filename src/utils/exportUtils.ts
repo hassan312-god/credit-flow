@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -78,59 +78,80 @@ export const exportToPDF = (
 };
 
 /**
- * Exporte des données en format XLSX (Excel)
+ * Exporte des données en format XLSX (Excel) using ExcelJS
  */
-export const exportToXLSX = (
+export const exportToXLSX = async (
   data: any[],
   headers: string[],
   filename: string,
   sheetName: string = 'Données'
 ) => {
-  // Préparer les données
-  const worksheetData = [
-    headers,
-    ...data.map(row => {
-      if (Array.isArray(row)) {
-        return row;
-      }
-      return headers.map(h => row[h] || '');
-    }),
-  ];
-
   // Créer le workbook
-  const workbook = XLSX.utils.book_new();
-  const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'N\'FA KA SÉRUM';
+  workbook.created = new Date();
+  
+  const worksheet = workbook.addWorksheet(sheetName);
+
+  // Ajouter les en-têtes
+  worksheet.addRow(headers);
+
+  // Ajouter les données
+  data.forEach(row => {
+    const rowData = Array.isArray(row) ? row : headers.map(h => row[h] || '');
+    worksheet.addRow(rowData);
+  });
+
+  // Style de l'en-tête (première ligne)
+  const headerRow = worksheet.getRow(1);
+  headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  headerRow.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FF1F3A5F' }
+  };
+  headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+  headerRow.height = 20;
 
   // Ajuster la largeur des colonnes
-  const colWidths = headers.map((_, i) => {
+  headers.forEach((header, i) => {
     const maxLength = Math.max(
-      headers[i].length,
+      header.length,
       ...data.map(row => {
-        const cell = Array.isArray(row) ? row[i] : row[headers[i]];
+        const cell = Array.isArray(row) ? row[i] : row[header];
         return String(cell || '').length;
       })
     );
-    return { wch: Math.min(Math.max(maxLength + 2, 10), 50) };
+    const column = worksheet.getColumn(i + 1);
+    column.width = Math.min(Math.max(maxLength + 2, 10), 50);
   });
-  worksheet['!cols'] = colWidths;
 
-  // Style de l'en-tête
-  const headerRange = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-  for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
-    const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
-    if (!worksheet[cellAddress]) continue;
-    worksheet[cellAddress].s = {
-      font: { bold: true, color: { rgb: 'FFFFFF' } },
-      fill: { fgColor: { rgb: '1F3A5F' } },
-      alignment: { horizontal: 'center', vertical: 'center' },
-    };
+  // Style alterné pour les lignes de données
+  for (let i = 2; i <= data.length + 1; i++) {
+    const row = worksheet.getRow(i);
+    if (i % 2 === 0) {
+      row.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFF5F5F5' }
+      };
+    }
+    row.alignment = { vertical: 'middle' };
   }
 
-  // Ajouter la feuille au workbook
-  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-
-  // Sauvegarder
-  XLSX.writeFile(workbook, `${filename}.xlsx`);
+  // Générer le fichier et télécharger
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { 
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+  });
+  
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${filename}.xlsx`;
+  link.click();
+  
+  // Nettoyer l'URL
+  URL.revokeObjectURL(link.href);
 };
 
 /**
@@ -159,4 +180,3 @@ export const exportToCSV = (
   link.download = `${filename}.csv`;
   link.click();
 };
-
