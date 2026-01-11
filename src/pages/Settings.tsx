@@ -21,6 +21,7 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 import { exportToPDF, exportToXLSX } from '@/utils/exportUtils';
+import { maskSensitiveData, logExportActivity, SENSITIVE_FIELDS } from '@/utils/dataExportUtils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -446,11 +447,21 @@ export default function Settings() {
                         const { data: loans } = await supabase.from('loans').select('*');
                         const { data: payments } = await supabase.from('payments').select('*');
                         
+                        // Mask sensitive data before export
+                        const maskedClients = maskSensitiveData(clients || [], SENSITIVE_FIELDS);
+                        const maskedLoans = loans || [];
+                        const maskedPayments = payments || [];
+                        
                         const allData = [
-                          ...(clients || []).map(c => ({ Type: 'Client', ...c })),
-                          ...(loans || []).map(l => ({ Type: 'Prêt', ...l })),
-                          ...(payments || []).map(p => ({ Type: 'Paiement', ...p })),
+                          ...maskedClients.map(c => ({ Type: 'Client', ...c })),
+                          ...maskedLoans.map(l => ({ Type: 'Prêt', ...l })),
+                          ...maskedPayments.map(p => ({ Type: 'Paiement', ...p })),
                         ];
+                        
+                        const totalRecords = (clients?.length || 0) + (loans?.length || 0) + (payments?.length || 0);
+                        
+                        // Log export activity for audit trail
+                        await logExportActivity('PDF', 'clients,loans,payments', totalRecords);
                         
                         const headers = ['Type', ...Object.keys(allData[0] || {}).filter(k => k !== 'Type')];
                         const rows = allData.map(item => headers.map(h => String(item[h as keyof typeof item] || '')));
@@ -470,11 +481,21 @@ export default function Settings() {
                         const { data: loans } = await supabase.from('loans').select('*');
                         const { data: payments } = await supabase.from('payments').select('*');
                         
+                        // Mask sensitive data before export
+                        const maskedClients = maskSensitiveData(clients || [], SENSITIVE_FIELDS);
+                        const maskedLoans = loans || [];
+                        const maskedPayments = payments || [];
+                        
                         const allData = [
-                          ...(clients || []).map(c => ({ Type: 'Client', ...c })),
-                          ...(loans || []).map(l => ({ Type: 'Prêt', ...l })),
-                          ...(payments || []).map(p => ({ Type: 'Paiement', ...p })),
+                          ...maskedClients.map(c => ({ Type: 'Client', ...c })),
+                          ...maskedLoans.map(l => ({ Type: 'Prêt', ...l })),
+                          ...maskedPayments.map(p => ({ Type: 'Paiement', ...p })),
                         ];
+                        
+                        const totalRecords = (clients?.length || 0) + (loans?.length || 0) + (payments?.length || 0);
+                        
+                        // Log export activity for audit trail
+                        await logExportActivity('XLSX', 'clients,loans,payments', totalRecords);
                         
                         const headers = ['Type', ...Object.keys(allData[0] || {}).filter(k => k !== 'Type')];
                         const rows = allData.map(item => headers.map(h => String(item[h as keyof typeof item] || '')));
