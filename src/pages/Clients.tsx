@@ -83,21 +83,49 @@ export default function Clients() {
     
     setDeleting(true);
     try {
-      // Vérifier s'il y a des prêts actifs
+      // Vérifier s'il y a des prêts actifs (en cours de remboursement)
       const { data: activeLoans } = await supabase
         .from('loans')
         .select('id')
         .eq('client_id', clientToDelete.id)
-        .in('status', ['en_cours', 'en_attente', 'approuve'] as any);
+        .in('status', ['en_cours', 'en_retard'] as any);
 
       if (activeLoans && activeLoans.length > 0) {
-        toast.error(`Ce client a ${activeLoans.length} prêt(s) actif(s). Vous devez d'abord clôturer tous les prêts.`);
+        toast.error(`Ce client a ${activeLoans.length} prêt(s) en cours de remboursement. Clôturez-les d'abord.`);
         setDeleteDialogOpen(false);
         setDeleting(false);
         return;
       }
 
-      // Supprimer de Supabase
+      // Récupérer tous les prêts du client
+      const { data: clientLoans } = await supabase
+        .from('loans')
+        .select('id')
+        .eq('client_id', clientToDelete.id);
+
+      if (clientLoans && clientLoans.length > 0) {
+        const loanIds = clientLoans.map(l => l.id);
+
+        // Supprimer les paiements associés
+        await supabase
+          .from('payments')
+          .delete()
+          .in('loan_id', loanIds);
+
+        // Supprimer les échéanciers
+        await supabase
+          .from('payment_schedule')
+          .delete()
+          .in('loan_id', loanIds);
+
+        // Supprimer les prêts
+        await supabase
+          .from('loans')
+          .delete()
+          .eq('client_id', clientToDelete.id);
+      }
+
+      // Supprimer le client
       const { error } = await supabase
         .from('clients')
         .delete()
@@ -110,7 +138,6 @@ export default function Clients() {
         await removeFromCache(clientToDelete.id);
       } catch (cacheError) {
         console.warn('Error deleting from local cache:', cacheError);
-        // Essayer avec deleteFromLocal directement
         try {
           await deleteFromLocal(STORES.clients, clientToDelete.id);
         } catch (e) {
@@ -118,7 +145,7 @@ export default function Clients() {
         }
       }
 
-      toast.success('Client supprimé avec succès');
+      toast.success('Client et données associées supprimés avec succès');
       setDeleteDialogOpen(false);
       setClientToDelete(null);
       refresh();

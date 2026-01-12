@@ -4,7 +4,8 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { ArrowLeft, CheckCircle, XCircle, Loader2, User, Calendar, DollarSign, Percent, Clock, FileText, List, History } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Loader2, User, Calendar, DollarSign, Percent, Clock, FileText, List, History, Ban } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -68,6 +69,7 @@ export default function LoanDetails() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false);
 
   const fetchLoanData = async (loanId?: string) => {
     const loanIdToFetch = loanId || id;
@@ -278,6 +280,51 @@ export default function LoanDetails() {
     } catch (error) {
       console.error('Error rejecting loan:', error);
       toast.error('Erreur lors du rejet du prêt');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleCloseLoan = async () => {
+    if (!loan || !user) return;
+    if (!canPerformOperations) {
+      toast.error('Vous devez ouvrir votre journée de travail avant de clôturer un prêt');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      // Mettre à jour le statut du prêt à "rembourse" ou "defaut"
+      const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+      const totalDue = loan.total_amount || loan.amount;
+      const newStatus = totalPaid >= totalDue * 0.9 ? 'rembourse' : 'defaut'; // Si payé à 90%, considéré comme remboursé
+
+      const { error } = await supabase
+        .from('loans')
+        .update({
+          status: newStatus,
+        })
+        .eq('id', loan.id);
+
+      if (error) throw error;
+
+      // Marquer toutes les échéances restantes comme terminées
+      const { error: scheduleError } = await supabase
+        .from('payment_schedule')
+        .update({ status: newStatus === 'rembourse' ? 'paye' : 'en_retard' })
+        .eq('loan_id', loan.id)
+        .eq('status', 'en_attente');
+
+      if (scheduleError) {
+        console.error('Error updating schedule:', scheduleError);
+      }
+
+      toast.success(newStatus === 'rembourse' ? 'Prêt clôturé avec succès (remboursé)' : 'Prêt clôturé (défaut de paiement)');
+      setCloseDialogOpen(false);
+      await fetchLoanData();
+    } catch (error) {
+      console.error('Error closing loan:', error);
+      toast.error('Erreur lors de la clôture du prêt');
     } finally {
       setProcessing(false);
     }
@@ -548,6 +595,29 @@ export default function LoanDetails() {
               </Card>
             )}
 
+            {/* Clôturer le prêt - visible si prêt en cours */}
+            {(loan.status === 'en_cours' || loan.status === 'en_retard' || loan.status === 'approuve') && (role === 'admin' || role === 'directeur') && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Clôturer le prêt</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Clôturer ce prêt marquera toutes les échéances restantes comme terminées.
+                  </p>
+                  <Button
+                    variant="destructive"
+                    className="w-full gap-2"
+                    onClick={() => setCloseDialogOpen(true)}
+                    disabled={processing}
+                  >
+                    <Ban className="w-4 h-4" />
+                    Clôturer le prêt
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
             {!showActions && isPending && (
               <Card>
                 <CardContent className="p-6">
@@ -679,6 +749,47 @@ export default function LoanDetails() {
             )}
           </CardContent>
         </Card>
+
+        {/* Close Loan Confirmation Dialog */}
+        <AlertDialog open={closeDialogOpen} onOpenChange={setCloseDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Clôturer le prêt</AlertDialogTitle>
+              <AlertDialogDescription>
+                Êtes-vous sûr de vouloir clôturer ce prêt ?
+                {(() => {
+                  const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+                  const totalDue = loan?.total_amount || loan?.amount || 0;
+                  const remaining = totalDue - totalPaid;
+                  const percentPaid = totalDue > 0 ? (totalPaid / totalDue) * 100 : 0;
+                  
+                  return (
+                    <div className="mt-4 space-y-2">
+                      <p>Montant payé: <strong>{formatCurrency(totalPaid)}</strong> ({percentPaid.toFixed(1)}%)</p>
+                      <p>Reste impayé: <strong>{formatCurrency(remaining)}</strong></p>
+                      {percentPaid >= 90 ? (
+                        <p className="text-green-600">Le prêt sera marqué comme "Remboursé"</p>
+                      ) : (
+                        <p className="text-orange-600">Le prêt sera marqué comme "Défaut" (moins de 90% payé)</p>
+                      )}
+                    </div>
+                  );
+                })()}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={processing}>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleCloseLoan}
+                disabled={processing}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {processing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Clôturer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </MainLayout>
   );

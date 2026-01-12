@@ -541,16 +541,45 @@ export default function CompanyFunds() {
         {history.length > 1 && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <LineChartIcon className="w-5 h-5 text-primary" />
-                Évolution du solde
-              </CardTitle>
-              <CardDescription>
-                Historique de l'évolution du fond de l'entreprise dans le temps
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <LineChartIcon className="w-5 h-5 text-primary" />
+                    Évolution du solde
+                  </CardTitle>
+                  <CardDescription>
+                    Historique de l'évolution du fond de l'entreprise dans le temps
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const chartElement = document.getElementById('funds-evolution-chart');
+                    if (chartElement) {
+                      import('html2canvas').then((html2canvas) => {
+                        html2canvas.default(chartElement, {
+                          backgroundColor: '#ffffff',
+                          scale: 2,
+                        }).then((canvas) => {
+                          const link = document.createElement('a');
+                          link.download = `evolution-fond-${format(new Date(), 'yyyy-MM-dd')}.png`;
+                          link.href = canvas.toDataURL('image/png');
+                          link.click();
+                          toast.success('Graphique exporté en PNG');
+                        });
+                      });
+                    }
+                  }}
+                  className="gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Exporter PNG
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="h-80">
+              <div id="funds-evolution-chart" className="h-80 bg-background p-4 rounded-lg">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={[...history]
