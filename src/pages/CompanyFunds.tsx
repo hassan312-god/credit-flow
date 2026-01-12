@@ -18,8 +18,10 @@ import {
   Download,
   FileText,
   FileSpreadsheet,
-  BarChart3
+  BarChart3,
+  LineChart as LineChartIcon
 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { exportToPDF, exportToXLSX } from '@/utils/exportUtils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
@@ -534,6 +536,74 @@ export default function CompanyFunds() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Graphique d'évolution */}
+        {history.length > 1 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LineChartIcon className="w-5 h-5 text-primary" />
+                Évolution du solde
+              </CardTitle>
+              <CardDescription>
+                Historique de l'évolution du fond de l'entreprise dans le temps
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={[...history]
+                      .reverse()
+                      .map((entry) => ({
+                        date: format(new Date(entry.created_at), 'dd/MM/yy', { locale: fr }),
+                        solde: entry.new_balance,
+                        variation: entry.change_amount,
+                      }))}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fontSize: 12 }}
+                      className="text-muted-foreground"
+                    />
+                    <YAxis 
+                      tickFormatter={(value) => 
+                        new Intl.NumberFormat('fr-FR', { 
+                          notation: 'compact',
+                          compactDisplay: 'short',
+                          maximumFractionDigits: 1 
+                        }).format(value)
+                      }
+                      tick={{ fontSize: 12 }}
+                      className="text-muted-foreground"
+                    />
+                    <Tooltip
+                      formatter={(value: number) => formatCurrency(value)}
+                      labelFormatter={(label) => `Date: ${label}`}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="solde"
+                      name="Solde"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2 }}
+                      activeDot={{ r: 6, fill: 'hsl(var(--primary))' }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Historique */}
         {showHistory && (
