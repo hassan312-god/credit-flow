@@ -10,7 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Shield, UserPlus, Loader2, AlertTriangle, Plus } from 'lucide-react';
+import { Shield, UserPlus, Loader2, AlertTriangle, Plus, Trash2, Key, MoreHorizontal } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -66,6 +68,13 @@ export default function Users() {
   const [selectedRole, setSelectedRole] = useState<AppRole | ''>('');
   const [submitting, setSubmitting] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
+  const [userToChangePassword, setUserToChangePassword] = useState<UserWithRole | null>(null);
+  const [newPassword, setNewPassword] = useState('');
   const [newUser, setNewUser] = useState({
     email: '',
     password: '',
@@ -305,6 +314,88 @@ export default function Users() {
     }
   };
 
+  const handleDeleteUser = async () => {
+    if (!userToDelete || !isAdmin) return;
+
+    setDeleting(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          },
+          body: JSON.stringify({
+            action: 'delete',
+            userId: userToDelete.id,
+          }),
+        }
+      );
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de la suppression');
+      }
+
+      toast.success('Utilisateur supprimé avec succès');
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      toast.error(error.message || 'Erreur lors de la suppression de l\'utilisateur');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!userToChangePassword || !isAdmin || !newPassword) return;
+
+    if (newPassword.length < 6) {
+      toast.error('Le mot de passe doit contenir au moins 6 caractères');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          },
+          body: JSON.stringify({
+            action: 'update_password',
+            userId: userToChangePassword.id,
+            newPassword: newPassword,
+          }),
+        }
+      );
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de la modification');
+      }
+
+      toast.success('Mot de passe modifié avec succès');
+      setPasswordDialogOpen(false);
+      setUserToChangePassword(null);
+      setNewPassword('');
+    } catch (error: any) {
+      console.error('Error changing password:', error);
+      toast.error(error.message || 'Erreur lors de la modification du mot de passe');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   const formatDate = (date: string) =>
     format(new Date(date), 'dd MMM yyyy', { locale: fr });
 
@@ -395,14 +486,48 @@ export default function Users() {
                       </TableCell>
                       <TableCell>
                         {canManageUsers && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleOpenRoleDialog(user)}
-                          >
-                            <UserPlus className="w-4 h-4 mr-1" />
-                            Modifier
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleOpenRoleDialog(user)}
+                            >
+                              <UserPlus className="w-4 h-4 mr-1" />
+                              Rôle
+                            </Button>
+                            {isAdmin && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button size="sm" variant="ghost">
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setUserToChangePassword(user);
+                                      setNewPassword('');
+                                      setPasswordDialogOpen(true);
+                                    }}
+                                  >
+                                    <Key className="w-4 h-4 mr-2" />
+                                    Modifier mot de passe
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() => {
+                                      setUserToDelete(user);
+                                      setDeleteDialogOpen(true);
+                                    }}
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Supprimer
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </div>
                         )}
                       </TableCell>
                     </TableRow>
@@ -562,6 +687,79 @@ export default function Users() {
                       Enregistrer
                     </Button>
                   </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer l'utilisateur</AlertDialogTitle>
+              <AlertDialogDescription>
+                Êtes-vous sûr de vouloir supprimer l'utilisateur{' '}
+                <strong>{userToDelete?.full_name}</strong> ({userToDelete?.email}) ?
+                Cette action est irréversible.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteUser}
+                disabled={deleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Supprimer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Password Change Dialog */}
+        <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Modifier le mot de passe</DialogTitle>
+            </DialogHeader>
+            {userToChangePassword && (
+              <div className="space-y-4">
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <p className="font-medium">{userToChangePassword.full_name}</p>
+                  <p className="text-sm text-muted-foreground">{userToChangePassword.email}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">Nouveau mot de passe</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    placeholder="Minimum 6 caractères"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setPasswordDialogOpen(false);
+                      setNewPassword('');
+                    }}
+                    disabled={changingPassword}
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    onClick={handleChangePassword}
+                    disabled={changingPassword || !newPassword || newPassword.length < 6}
+                  >
+                    {changingPassword && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    Modifier
+                  </Button>
                 </div>
               </div>
             )}
