@@ -7,13 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Activity, AlertCircle, Search, Download, Filter, FileText, FileSpreadsheet } from 'lucide-react';
+import { Loader2, Activity, AlertCircle, Search, Download, Filter, FileText, FileSpreadsheet, Users, LogIn, Edit, Trash2, UserPlus } from 'lucide-react';
 import { exportToPDF, exportToXLSX, exportToCSV } from '@/utils/exportUtils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -24,9 +24,19 @@ type AuditLog = Database['public']['Tables']['audit_logs']['Row'] & {
   } | null;
 };
 
+interface ActivityStats {
+  totalLogins: number;
+  totalCreations: number;
+  totalUpdates: number;
+  totalDeletions: number;
+  activeUsersToday: number;
+  recentLogins: { user_name: string; timestamp: string }[];
+}
+
 export default function ActivityLogs() {
   const { role } = useAuth();
   const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [stats, setStats] = useState<ActivityStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterAction, setFilterAction] = useState<string>('all');
@@ -42,7 +52,56 @@ export default function ActivityLogs() {
     }
 
     fetchLogs();
+    fetchStats();
   }, [role, page, filterAction, filterTable]);
+
+  const fetchStats = async () => {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString();
+
+      // Récupérer les statistiques
+      const { data: allLogs } = await supabase
+        .from('audit_logs')
+        .select('action, user_id, created_at')
+        .gte('created_at', subDays(new Date(), 30).toISOString());
+
+      const logins = (allLogs || []).filter(l => l.action === 'LOGIN');
+      const creations = (allLogs || []).filter(l => l.action === 'CREATE');
+      const updates = (allLogs || []).filter(l => l.action === 'UPDATE');
+      const deletions = (allLogs || []).filter(l => l.action === 'DELETE');
+      
+      // Utilisateurs actifs aujourd'hui
+      const todayLogs = (allLogs || []).filter(l => l.created_at >= todayStr);
+      const activeUsersToday = new Set(todayLogs.map(l => l.user_id).filter(Boolean)).size;
+
+      // Dernières connexions avec profils
+      const recentLoginLogs = logins.slice(0, 5);
+      const recentUserIds = [...new Set(recentLoginLogs.map(l => l.user_id).filter(Boolean))];
+      
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', recentUserIds);
+
+      const recentLogins = recentLoginLogs.map(l => ({
+        user_name: profiles?.find(p => p.id === l.user_id)?.full_name || 'Inconnu',
+        timestamp: l.created_at,
+      }));
+
+      setStats({
+        totalLogins: logins.length,
+        totalCreations: creations.length,
+        totalUpdates: updates.length,
+        totalDeletions: deletions.length,
+        activeUsersToday,
+        recentLogins,
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -204,6 +263,112 @@ export default function ActivityLogs() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
+        {/* Statistiques d'activité */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Users className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{stats.activeUsersToday}</p>
+                    <p className="text-xs text-muted-foreground">Utilisateurs actifs aujourd'hui</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-purple-500/10">
+                    <LogIn className="w-5 h-5 text-purple-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{stats.totalLogins}</p>
+                    <p className="text-xs text-muted-foreground">Connexions (30j)</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-green-500/10">
+                    <UserPlus className="w-5 h-5 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{stats.totalCreations}</p>
+                    <p className="text-xs text-muted-foreground">Créations (30j)</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-500/10">
+                    <Edit className="w-5 h-5 text-blue-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{stats.totalUpdates}</p>
+                    <p className="text-xs text-muted-foreground">Modifications (30j)</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-red-500/10">
+                    <Trash2 className="w-5 h-5 text-red-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{stats.totalDeletions}</p>
+                    <p className="text-xs text-muted-foreground">Suppressions (30j)</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Dernières connexions */}
+        {stats && stats.recentLogins.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <LogIn className="w-5 h-5" />
+                Dernières connexions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-3">
+                {stats.recentLogins.map((login, idx) => (
+                  <div key={idx} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-xs font-medium text-primary">
+                        {login.user_name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{login.user_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(login.timestamp), 'dd/MM HH:mm', { locale: fr })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Filters */}
         <Card>

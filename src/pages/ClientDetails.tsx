@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { ArrowLeft, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, Plus, AlertTriangle, Trash2 } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, Plus, AlertTriangle, Trash2, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -130,15 +130,44 @@ export default function ClientDetails() {
   }
 
   const totalLoans = loans.reduce((sum, l) => sum + Number(l.amount), 0);
-  const activeLoans = loans.filter(l => ['en_cours', 'decaisse', 'en_attente', 'approuve'].includes(l.status)).length;
-  const canDeleteClient = (role === 'admin' || role === 'directeur') && activeLoans === 0;
+  const activeLoans = loans.filter(l => ['en_cours', 'en_retard'].includes(l.status)).length;
+  const canDeleteClient = (role === 'admin' || role === 'directeur');
+  const hasActiveLoans = activeLoans > 0;
 
   const handleDeleteClient = async () => {
     if (!client || !id) return;
     
+    // Vérifier les prêts en cours
+    if (hasActiveLoans) {
+      toast.error(`Ce client a ${activeLoans} prêt(s) en cours. Clôturez-les d'abord.`);
+      setDeleteDialogOpen(false);
+      return;
+    }
+    
     setDeleting(true);
     try {
-      // Supprimer de Supabase
+      // Supprimer les paiements associés aux prêts
+      const loanIds = loans.map(l => l.id);
+      if (loanIds.length > 0) {
+        await supabase
+          .from('payments')
+          .delete()
+          .in('loan_id', loanIds);
+
+        // Supprimer les échéanciers
+        await supabase
+          .from('payment_schedule')
+          .delete()
+          .in('loan_id', loanIds);
+
+        // Supprimer les prêts
+        await supabase
+          .from('loans')
+          .delete()
+          .eq('client_id', id);
+      }
+
+      // Supprimer le client
       const { error } = await supabase
         .from('clients')
         .delete()
@@ -153,7 +182,7 @@ export default function ClientDetails() {
         console.warn('Error deleting from local cache:', cacheError);
       }
 
-      toast.success('Client supprimé avec succès');
+      toast.success('Client et données associées supprimés avec succès');
       navigate('/clients');
     } catch (error: any) {
       console.error('Error deleting client:', error);
@@ -189,12 +218,12 @@ export default function ClientDetails() {
               </Button>
             )}
           </div>
-          {activeLoans > 0 && (role === 'admin' || role === 'directeur') && (
+          {hasActiveLoans && canDeleteClient && (
             <Alert variant="destructive" className="max-w-2xl">
               <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Suppression impossible</AlertTitle>
+              <AlertTitle>Attention</AlertTitle>
               <AlertDescription>
-                Ce client a {activeLoans} prêt(s) actif(s) ou en attente. Vous devez d'abord clôturer ou annuler tous les prêts avant de pouvoir supprimer le client.
+                Ce client a {activeLoans} prêt(s) en cours de remboursement. Vous devez d'abord clôturer ces prêts avant de pouvoir supprimer le client.
               </AlertDescription>
             </Alert>
           )}
@@ -336,12 +365,20 @@ export default function ClientDetails() {
                 Êtes-vous sûr de vouloir supprimer le client <strong>{client.full_name}</strong> ?
                 <br />
                 <br />
-                Cette action est <strong>irréversible</strong> et supprimera également :
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>Tous les prêts associés à ce client</li>
-                  <li>Tous les échéanciers de paiement</li>
-                  <li>Tous les paiements enregistrés</li>
-                </ul>
+                {hasActiveLoans ? (
+                  <span className="text-destructive font-medium">
+                    ⚠️ Ce client a {activeLoans} prêt(s) en cours. Clôturez-les d'abord.
+                  </span>
+                ) : (
+                  <>
+                    Cette action est <strong>irréversible</strong> et supprimera également :
+                    <ul className="list-disc list-inside mt-2 space-y-1">
+                      <li>{loans.length} prêt(s) associé(s)</li>
+                      <li>Tous les échéanciers de paiement</li>
+                      <li>Tous les paiements enregistrés</li>
+                    </ul>
+                  </>
+                )}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -355,12 +392,12 @@ export default function ClientDetails() {
               <Button
                 variant="destructive"
                 onClick={handleDeleteClient}
-                disabled={deleting}
+                disabled={deleting || hasActiveLoans}
                 className="gap-2"
               >
                 {deleting ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     Suppression...
                   </>
                 ) : (
