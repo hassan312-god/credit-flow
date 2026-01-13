@@ -13,9 +13,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format, subDays } from 'date-fns';
+import { format, subDays, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { Database } from '@/integrations/supabase/types';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 type AuditLog = Database['public']['Tables']['audit_logs']['Row'] & {
   profile: {
@@ -24,6 +25,12 @@ type AuditLog = Database['public']['Tables']['audit_logs']['Row'] & {
   } | null;
 };
 
+interface DailyLoginData {
+  date: string;
+  label: string;
+  logins: number;
+}
+
 interface ActivityStats {
   totalLogins: number;
   totalCreations: number;
@@ -31,6 +38,7 @@ interface ActivityStats {
   totalDeletions: number;
   activeUsersToday: number;
   recentLogins: { user_name: string; timestamp: string }[];
+  dailyLogins: DailyLoginData[];
 }
 
 export default function ActivityLogs() {
@@ -60,12 +68,13 @@ export default function ActivityLogs() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const todayStr = today.toISOString();
+      const thirtyDaysAgo = subDays(new Date(), 30);
 
       // Récupérer les statistiques
       const { data: allLogs } = await supabase
         .from('audit_logs')
         .select('action, user_id, created_at')
-        .gte('created_at', subDays(new Date(), 30).toISOString());
+        .gte('created_at', thirtyDaysAgo.toISOString());
 
       const logins = (allLogs || []).filter(l => l.action === 'LOGIN');
       const creations = (allLogs || []).filter(l => l.action === 'CREATE');
@@ -90,6 +99,30 @@ export default function ActivityLogs() {
         timestamp: l.created_at,
       }));
 
+      // Calculer les connexions par jour pour les 14 derniers jours
+      const last14Days = eachDayOfInterval({
+        start: subDays(new Date(), 13),
+        end: new Date()
+      });
+
+      const dailyLogins: DailyLoginData[] = last14Days.map(day => {
+        const dayStart = new Date(day);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(day);
+        dayEnd.setHours(23, 59, 59, 999);
+        
+        const dayLogins = logins.filter(l => {
+          const logDate = new Date(l.created_at);
+          return logDate >= dayStart && logDate <= dayEnd;
+        });
+
+        return {
+          date: format(day, 'yyyy-MM-dd'),
+          label: format(day, 'dd/MM', { locale: fr }),
+          logins: dayLogins.length,
+        };
+      });
+
       setStats({
         totalLogins: logins.length,
         totalCreations: creations.length,
@@ -97,6 +130,7 @@ export default function ActivityLogs() {
         totalDeletions: deletions.length,
         activeUsersToday,
         recentLogins,
+        dailyLogins,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -337,6 +371,54 @@ export default function ActivityLogs() {
               </CardContent>
             </Card>
           </div>
+        )}
+
+        {/* Graphique des connexions par jour */}
+        {stats && stats.dailyLogins && stats.dailyLogins.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Activity className="w-5 h-5" />
+                Connexions par jour (14 derniers jours)
+              </CardTitle>
+              <CardDescription>
+                Évolution du nombre de connexions quotidiennes
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={stats.dailyLogins}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis 
+                      dataKey="label" 
+                      tick={{ fontSize: 12 }}
+                      className="text-muted-foreground"
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 12 }}
+                      className="text-muted-foreground"
+                      allowDecimals={false}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
+                      labelStyle={{ color: 'hsl(var(--foreground))' }}
+                      formatter={(value: number) => [`${value} connexion(s)`, 'Connexions']}
+                    />
+                    <Bar 
+                      dataKey="logins" 
+                      fill="hsl(var(--primary))" 
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Dernières connexions */}
