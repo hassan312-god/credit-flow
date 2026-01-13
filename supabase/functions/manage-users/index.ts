@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { action, userId, newPassword } = await req.json();
+    const { action, userId, newPassword, suspendUntil, suspendReason } = await req.json();
 
     // Cannot manage own account
     if (userId === user.id) {
@@ -81,6 +81,12 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'delete') {
+      // Delete user suspensions first
+      await supabaseAdmin
+        .from('user_suspensions')
+        .delete()
+        .eq('user_id', userId);
+
       // Delete user role first
       await supabaseAdmin
         .from('user_roles')
@@ -132,6 +138,93 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, message: 'Mot de passe modifié avec succès' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (action === 'suspend') {
+      if (!suspendUntil) {
+        return new Response(
+          JSON.stringify({ error: 'La date de fin de suspension est requise' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check if user is already suspended
+      const { data: existingSuspension } = await supabaseAdmin
+        .from('user_suspensions')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .single();
+
+      if (existingSuspension) {
+        // Update existing suspension
+        const { error: updateError } = await supabaseAdmin
+          .from('user_suspensions')
+          .update({
+            suspended_until: suspendUntil,
+            reason: suspendReason || null,
+            suspended_by: user.id,
+            suspended_at: new Date().toISOString(),
+          })
+          .eq('id', existingSuspension.id);
+
+        if (updateError) {
+          console.error('Error updating suspension:', updateError);
+          return new Response(
+            JSON.stringify({ error: 'Erreur lors de la mise à jour de la suspension' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      } else {
+        // Create new suspension
+        const { error: insertError } = await supabaseAdmin
+          .from('user_suspensions')
+          .insert({
+            user_id: userId,
+            suspended_by: user.id,
+            suspended_until: suspendUntil,
+            reason: suspendReason || null,
+            is_active: true,
+          });
+
+        if (insertError) {
+          console.error('Error creating suspension:', insertError);
+          return new Response(
+            JSON.stringify({ error: 'Erreur lors de la création de la suspension' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: 'Utilisateur suspendu avec succès' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (action === 'unsuspend') {
+      const { error: updateError } = await supabaseAdmin
+        .from('user_suspensions')
+        .update({
+          is_active: false,
+          lifted_at: new Date().toISOString(),
+          lifted_by: user.id,
+        })
+        .eq('user_id', userId)
+        .eq('is_active', true);
+
+      if (updateError) {
+        console.error('Error lifting suspension:', updateError);
+        return new Response(
+          JSON.stringify({ error: 'Erreur lors de la levée de la suspension' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: 'Suspension levée avec succès' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
