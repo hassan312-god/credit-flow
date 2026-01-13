@@ -449,6 +449,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_suspensions: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          lifted_at: string | null
+          lifted_by: string | null
+          reason: string | null
+          suspended_at: string
+          suspended_by: string
+          suspended_until: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          lifted_at?: string | null
+          lifted_by?: string | null
+          reason?: string | null
+          suspended_at?: string
+          suspended_by: string
+          suspended_until: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          lifted_at?: string | null
+          lifted_by?: string | null
+          reason?: string | null
+          suspended_at?: string
+          suspended_by?: string
+          suspended_until?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       work_schedule: {
         Row: {
           created_at: string
@@ -539,6 +578,13 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_user_suspension: {
+        Args: { _user_id: string }
+        Returns: {
+          reason: string
+          suspended_until: string
+        }[]
+      }
       has_any_role: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
@@ -547,6 +593,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_user_suspended: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
