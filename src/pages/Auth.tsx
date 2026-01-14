@@ -2,12 +2,16 @@ import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Mail, Lock } from 'lucide-react';
+import { PasswordInput } from '@/components/PasswordInput';
+import { Loader2, Mail, Lock, Ban } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 const loginSchema = z.object({
   email: z.string().email('Email invalide'),
@@ -18,6 +22,7 @@ export default function Auth() {
   const { user, loading, signIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const [suspensionInfo, setSuspensionInfo] = useState<{ suspended_until: string; reason: string | null } | null>(null);
 
   if (loading) {
     return (
@@ -41,18 +46,40 @@ export default function Auth() {
     }
 
     setIsLoading(true);
+    setSuspensionInfo(null);
+    
     const { error } = await signIn(loginData.email, loginData.password);
-    setIsLoading(false);
 
     if (error) {
+      setIsLoading(false);
       if (error.message.includes('Invalid login credentials')) {
         toast.error('Email ou mot de passe incorrect');
       } else {
         toast.error('Erreur de connexion. Veuillez réessayer.');
       }
-    } else {
-      toast.success('Connexion réussie !');
+      return;
     }
+
+    // Check if user is suspended
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData?.session?.user) {
+      const userId = sessionData.session.user.id;
+      
+      // Use the database function to check suspension
+      const { data: suspensionData, error: suspError } = await supabase
+        .rpc('get_user_suspension', { _user_id: userId });
+
+      if (!suspError && suspensionData && suspensionData.length > 0) {
+        // User is suspended - sign them out immediately
+        await supabase.auth.signOut();
+        setSuspensionInfo(suspensionData[0]);
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    setIsLoading(false);
+    toast.success('Connexion réussie !');
   };
 
   return (
@@ -110,6 +137,25 @@ export default function Auth() {
             <CardDescription>Connectez-vous pour accéder à votre espace</CardDescription>
           </CardHeader>
           <CardContent>
+            {suspensionInfo && (
+              <div className="mb-4 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                <div className="flex items-center gap-2 text-destructive mb-2">
+                  <Ban className="w-5 h-5" />
+                  <span className="font-semibold">Compte suspendu</span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-1">
+                  Votre compte est suspendu jusqu'au{' '}
+                  <span className="font-medium text-foreground">
+                    {format(new Date(suspensionInfo.suspended_until), 'dd MMMM yyyy à HH:mm', { locale: fr })}
+                  </span>
+                </p>
+                {suspensionInfo.reason && (
+                  <p className="text-sm text-muted-foreground">
+                    Raison : <span className="text-foreground">{suspensionInfo.reason}</span>
+                  </p>
+                )}
+              </div>
+            )}
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="login-email" className="input-label">Email</Label>
@@ -130,9 +176,8 @@ export default function Auth() {
                 <Label htmlFor="login-password" className="input-label">Mot de passe</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
+                  <PasswordInput
                     id="login-password"
-                    type="password"
                     placeholder="••••••••"
                     className="pl-10"
                     value={loginData.password}

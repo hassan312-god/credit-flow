@@ -11,7 +11,9 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
-import { Shield, UserPlus, Loader2, AlertTriangle, Plus, Trash2, Key, MoreHorizontal, Ban, CheckCircle } from 'lucide-react';
+import { PasswordInput } from '@/components/PasswordInput';
+import { SuspensionHistoryDialog } from '@/components/SuspensionHistoryDialog';
+import { Shield, UserPlus, Loader2, AlertTriangle, Plus, Trash2, Key, MoreHorizontal, Ban, CheckCircle, History } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -95,9 +97,11 @@ export default function Users() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
   const [userToChangePassword, setUserToChangePassword] = useState<UserWithRole | null>(null);
   const [userToSuspend, setUserToSuspend] = useState<UserWithRole | null>(null);
+  const [userToViewHistory, setUserToViewHistory] = useState<UserWithRole | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [suspensionDuration, setSuspensionDuration] = useState('');
   const [suspensionReason, setSuspensionReason] = useState('');
@@ -671,6 +675,15 @@ export default function Users() {
                                     <Key className="w-4 h-4 mr-2" />
                                     Modifier mot de passe
                                   </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setUserToViewHistory(user);
+                                      setHistoryDialogOpen(true);
+                                    }}
+                                  >
+                                    <History className="w-4 h-4 mr-2" />
+                                    Historique suspensions
+                                  </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
                                     className="text-destructive"
@@ -722,9 +735,8 @@ export default function Users() {
 
               <div className="space-y-2">
                 <Label htmlFor="password">Mot de passe *</Label>
-                <Input
+                <PasswordInput
                   id="password"
-                  type="password"
                   placeholder="Minimum 6 caractères"
                   value={newUser.password}
                   onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
@@ -891,9 +903,8 @@ export default function Users() {
 
                 <div className="space-y-2">
                   <Label htmlFor="new-password">Nouveau mot de passe</Label>
-                  <Input
+                  <PasswordInput
                     id="new-password"
-                    type="password"
                     placeholder="Minimum 6 caractères"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
@@ -988,6 +999,14 @@ export default function Users() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Suspension History Dialog */}
+        <SuspensionHistoryDialog
+          open={historyDialogOpen}
+          onOpenChange={setHistoryDialogOpen}
+          userId={userToViewHistory?.id || ''}
+          userName={userToViewHistory?.full_name || ''}
+        />
       </div>
     </MainLayout>
   );
