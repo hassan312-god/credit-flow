@@ -297,6 +297,30 @@ export type Database = {
           },
         ]
       }
+      login_attempts: {
+        Row: {
+          attempted_at: string
+          email: string
+          id: string
+          ip_address: string | null
+          was_successful: boolean
+        }
+        Insert: {
+          attempted_at?: string
+          email: string
+          id?: string
+          ip_address?: string | null
+          was_successful?: boolean
+        }
+        Update: {
+          attempted_at?: string
+          email?: string
+          id?: string
+          ip_address?: string | null
+          was_successful?: boolean
+        }
+        Relationships: []
+      }
       payment_schedule: {
         Row: {
           amount_due: number
@@ -574,6 +598,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_login_attempts: { Args: never; Returns: undefined }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -593,7 +618,23 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_account_locked: {
+        Args: { check_email: string }
+        Returns: {
+          failed_attempts: number
+          is_locked: boolean
+          locked_until: string
+        }[]
+      }
       is_user_suspended: { Args: { _user_id: string }; Returns: boolean }
+      record_login_attempt: {
+        Args: {
+          attempt_email: string
+          attempt_ip?: string
+          attempt_successful?: boolean
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role:
