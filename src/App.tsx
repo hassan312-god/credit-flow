@@ -24,6 +24,7 @@ import Attendance from "./pages/Attendance";
 import AttendanceReports from "./pages/AttendanceReports";
 import ActivityLogs from "./pages/ActivityLogs";
 import SyncStatus from "./pages/SyncStatus";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/attendance-reports" element={<AttendanceReports />} />
             <Route path="/activity-logs" element={<ActivityLogs />} />
             <Route path="/sync-status" element={<SyncStatus />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

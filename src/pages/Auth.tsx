@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PasswordInput } from '@/components/PasswordInput';
-import { Loader2, Mail, Lock, Ban } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Loader2, Mail, Lock, Ban, ArrowLeft, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,6 +24,10 @@ export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [suspensionInfo, setSuspensionInfo] = useState<{ suspended_until: string; reason: string | null } | null>(null);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   if (loading) {
     return (
@@ -80,6 +85,41 @@ export default function Auth() {
 
     setIsLoading(false);
     toast.success('Connexion réussie !');
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!resetEmail || !z.string().email().safeParse(resetEmail).success) {
+      toast.error('Veuillez entrer une adresse email valide');
+      return;
+    }
+
+    setIsResetting(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        toast.error('Erreur lors de l\'envoi de l\'email');
+        setIsResetting(false);
+        return;
+      }
+
+      setResetEmailSent(true);
+    } catch (error) {
+      toast.error('Une erreur est survenue');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const closeForgotPasswordDialog = () => {
+    setForgotPasswordOpen(false);
+    setResetEmail('');
+    setResetEmailSent(false);
   };
 
   return (
@@ -186,6 +226,16 @@ export default function Auth() {
                   />
                 </div>
               </div>
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  variant="link"
+                  className="px-0 text-sm text-muted-foreground hover:text-primary"
+                  onClick={() => setForgotPasswordOpen(true)}
+                >
+                  Mot de passe oublié ?
+                </Button>
+              </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
@@ -197,6 +247,79 @@ export default function Auth() {
                 )}
               </Button>
             </form>
+
+            {/* Forgot Password Dialog */}
+            <Dialog open={forgotPasswordOpen} onOpenChange={closeForgotPasswordDialog}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="font-display">
+                    {resetEmailSent ? 'Email envoyé !' : 'Réinitialiser le mot de passe'}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {resetEmailSent 
+                      ? 'Vérifiez votre boîte de réception pour le lien de réinitialisation.'
+                      : 'Entrez votre adresse email pour recevoir un lien de réinitialisation.'
+                    }
+                  </DialogDescription>
+                </DialogHeader>
+                
+                {resetEmailSent ? (
+                  <div className="space-y-4">
+                    <div className="flex justify-center py-4">
+                      <CheckCircle className="w-16 h-16 text-green-500" />
+                    </div>
+                    <p className="text-sm text-center text-muted-foreground">
+                      Un email a été envoyé à <span className="font-medium text-foreground">{resetEmail}</span>. 
+                      Cliquez sur le lien dans l'email pour réinitialiser votre mot de passe.
+                    </p>
+                    <Button 
+                      className="w-full" 
+                      onClick={closeForgotPasswordDialog}
+                    >
+                      Fermer
+                    </Button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="reset-email">Adresse email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          id="reset-email"
+                          type="email"
+                          placeholder="votre@email.com"
+                          className="pl-10"
+                          value={resetEmail}
+                          onChange={(e) => setResetEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={closeForgotPasswordDialog}
+                      >
+                        Annuler
+                      </Button>
+                      <Button type="submit" className="flex-1" disabled={isResetting}>
+                        {isResetting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Envoi...
+                          </>
+                        ) : (
+                          'Envoyer le lien'
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
       </div>
