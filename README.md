@@ -352,6 +352,31 @@ Génère les installateurs pour votre OS actuel.
 
 Pour automatiser les builds multi-plateformes, utilisez GitHub Actions ou un service CI/CD.
 
+#### Build avec GitHub Actions (Recommandé)
+
+Des workflows GitHub Actions sont configurés pour builder automatiquement l'application :
+
+**Builds automatiques** :
+- **Linux** : Se déclenche à chaque push sur `main`
+- **Windows, macOS, Linux** : Se déclenche lors de la création d'un tag `v*`
+
+**Utilisation** :
+```bash
+# Build Linux automatique
+git push origin main
+
+# Build tous les OS
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+**Télécharger les builds** :
+1. Allez sur GitHub → Onglet "Actions"
+2. Sélectionnez le workflow exécuté
+3. Téléchargez les artefacts
+
+Pour plus de détails, consultez [GITHUB_ACTIONS.md](./GITHUB_ACTIONS.md)
+
 ## 🤝 Contribution
 
 Les contributions sont les bienvenues ! N'hésitez pas à :
