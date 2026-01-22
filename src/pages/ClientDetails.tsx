@@ -100,6 +100,14 @@ export default function ClientDetails() {
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount);
 
+  const formatDuration = (months: number) => {
+    if (months < 1) {
+      const weeks = Math.round(months * 4);
+      return `${weeks} semaine${weeks > 1 ? 's' : ''}`;
+    }
+    return `${months} mois`;
+  };
+
   const formatDate = (date: string) =>
     format(new Date(date), 'dd MMM yyyy', { locale: fr });
 
@@ -369,7 +377,7 @@ export default function ClientDetails() {
                       onClick={() => navigate(`/loans/${loan.id}`)}
                     >
                       <TableCell className="font-medium">{formatCurrency(loan.amount)}</TableCell>
-                      <TableCell>{loan.duration_months} mois</TableCell>
+                      <TableCell>{formatDuration(loan.duration_months)}</TableCell>
                       <TableCell><StatusBadge status={loan.status as any} /></TableCell>
                       <TableCell className="text-muted-foreground">{formatDate(loan.created_at)}</TableCell>
                     </TableRow>

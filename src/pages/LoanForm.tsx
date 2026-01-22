@@ -20,7 +20,7 @@ const loanSchema = z.object({
   client_id: z.string().uuid('Veuillez sélectionner un client'),
   amount: z.number().min(10000, 'Le montant minimum est de 10 000 FCFA'),
   interest_rate: z.number().min(0).max(100),
-  duration_months: z.number().min(1).max(60),
+  duration_months: z.number().min(0.25).max(60), // Permet les semaines (0.25 = 1 semaine)
   purpose: z.string().max(500).optional(),
 });
 
@@ -53,7 +53,7 @@ export default function LoanForm() {
     client_id: '',
     amount: 0,
     interest_rate: 10,
-    duration_months: 12,
+    duration_months: 1, // Par défaut 1 mois au lieu de 12
     purpose: '',
   });
 
@@ -212,7 +212,7 @@ export default function LoanForm() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="duration_months">Durée (mois) *</Label>
+                      <Label htmlFor="duration_months">Durée *</Label>
                       <Select 
                         value={String(formData.duration_months)} 
                         onValueChange={(v) => handleChange('duration_months', Number(v))}
@@ -221,9 +221,19 @@ export default function LoanForm() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {[3, 6, 9, 12, 18, 24, 36, 48, 60].map(m => (
-                            <SelectItem key={m} value={String(m)}>{m} mois</SelectItem>
-                          ))}
+                          <SelectItem value="0.25">1 semaine (7 jours)</SelectItem>
+                          <SelectItem value="0.5">2 semaines (14 jours)</SelectItem>
+                          <SelectItem value="0.75">3 semaines (21 jours)</SelectItem>
+                          <SelectItem value="1">1 mois (30 jours)</SelectItem>
+                          <SelectItem value="3">3 mois</SelectItem>
+                          <SelectItem value="6">6 mois</SelectItem>
+                          <SelectItem value="9">9 mois</SelectItem>
+                          <SelectItem value="12">12 mois (1 an)</SelectItem>
+                          <SelectItem value="18">18 mois</SelectItem>
+                          <SelectItem value="24">24 mois (2 ans)</SelectItem>
+                          <SelectItem value="36">36 mois (3 ans)</SelectItem>
+                          <SelectItem value="48">48 mois (4 ans)</SelectItem>
+                          <SelectItem value="60">60 mois (5 ans)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -279,10 +289,14 @@ export default function LoanForm() {
               </div>
               
               <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                <p className="text-sm text-muted-foreground mb-1">Mensualité</p>
+                <p className="text-sm text-muted-foreground mb-1">
+                  {formData.duration_months < 1 ? 'Montant total' : 'Mensualité'}
+                </p>
                 <p className="text-2xl font-bold text-primary">{formatCurrency(monthlyPayment)}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  pendant {formData.duration_months} mois
+                  {formData.duration_months < 1 
+                    ? `pour ${Math.round(formData.duration_months * 4)} semaine${Math.round(formData.duration_months * 4) > 1 ? 's' : ''}`
+                    : `pendant ${formData.duration_months} mois`}
                 </p>
               </div>
             </CardContent>

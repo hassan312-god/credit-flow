@@ -65,6 +65,14 @@ export default function Loans() {
   const formatDate = (date: string) => 
     new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 
+  const formatDuration = (months: number) => {
+    if (months < 1) {
+      const weeks = Math.round(months * 4);
+      return `${weeks} semaine${weeks > 1 ? 's' : ''}`;
+    }
+    return `${months} mois`;
+  };
+
   const filteredLoans = loans.filter(l => {
     const matchesSearch = l.client?.full_name?.toLowerCase().includes(search.toLowerCase());
     const matchesEmployee = employeeFilter === 'all' || l.created_by === employeeFilter;
@@ -126,7 +134,7 @@ export default function Loans() {
                     >
                       <TableCell className="font-medium">{loan.client?.full_name || 'N/A'}</TableCell>
                       <TableCell>{formatCurrency(loan.amount)}</TableCell>
-                      <TableCell>{loan.duration_months} mois</TableCell>
+                      <TableCell>{formatDuration(loan.duration_months)}</TableCell>
                       <TableCell><StatusBadge status={loan.status as any} /></TableCell>
                       <TableCell className="text-muted-foreground">{formatDate(loan.created_at)}</TableCell>
                     </TableRow>

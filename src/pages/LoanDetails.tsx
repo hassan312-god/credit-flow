@@ -426,7 +426,11 @@ export default function LoanDetails() {
                     <Clock className="w-5 h-5 text-muted-foreground" />
                     <div>
                       <p className="text-sm text-muted-foreground">Durée</p>
-                      <p className="font-medium">{loan.duration_months} mois</p>
+                      <p className="font-medium">
+                        {loan.duration_months < 1 
+                          ? `${Math.round(loan.duration_months * 4)} semaine${Math.round(loan.duration_months * 4) > 1 ? 's' : ''}`
+                          : `${loan.duration_months} mois`}
+                      </p>
                     </div>
                   </div>
 
