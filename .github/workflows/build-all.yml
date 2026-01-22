@@ -43,17 +43,28 @@ jobs:
         with:
           lfs: true  # Activer Git LFS si les icônes sont stockées avec LFS
       
-      - name: Verify icons exist
+      - name: Verify icons exist (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: cmd
         run: |
-          if [ "${{ matrix.platform }}" = "windows-latest" ]; then
-            dir src-tauri\icons\ || exit 1
-            if not exist src-tauri\icons\32x32.png (echo Icons missing && exit 1)
-          else
-            ls -la src-tauri/icons/ || exit 1
-            test -f src-tauri/icons/32x32.png || (echo "32x32.png missing" && exit 1)
-            test -f src-tauri/icons/128x128.png || (echo "128x128.png missing" && exit 1)
-            file src-tauri/icons/*.png || echo "Warning: file command failed"
-          fi
+          dir src-tauri\icons\
+          if not exist src-tauri\icons\32x32.png (exit /b 1)
+      
+      - name: Verify icons exist (Linux)
+        if: matrix.platform == 'ubuntu-latest'
+        shell: bash
+        run: |
+          ls -la src-tauri/icons/
+          test -f src-tauri/icons/32x32.png || exit 1
+          test -f src-tauri/icons/128x128.png || exit 1
+      
+      - name: Verify icons exist (macOS)
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          ls -la src-tauri/icons/
+          test -f src-tauri/icons/32x32.png || exit 1
+          test -f src-tauri/icons/128x128.png || exit 1
       
       - name: Install system dependencies (Linux)
         if: matrix.platform == 'ubuntu-latest'
