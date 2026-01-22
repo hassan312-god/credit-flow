@@ -263,13 +263,94 @@ Les fichiers optimisés seront dans le dossier `dist/`
 
 ### Application Desktop
 
-Pour distribuer l'application desktop :
+#### Build pour tous les OS
 
+**Build pour Windows** (sur Windows) :
+```bash
+npm run tauri:build:windows
+```
+Génère : `.msi` (installateur) et `.exe` (portable) dans `src-tauri/target/x86_64-pc-windows-msvc/release/bundle/`
+
+**Build pour macOS** (sur macOS) :
+```bash
+# Pour Mac avec puce Apple Silicon (M1/M2/M3)
+npm run tauri:build:macos
+
+# Pour Mac avec processeur Intel
+npm run tauri:build:macos:intel
+```
+Génère : `.dmg` (installateur) et `.app` (application) dans `src-tauri/target/[arch]-apple-darwin/release/bundle/`
+
+**Build pour Linux** (sur Linux) :
+```bash
+npm run tauri:build:linux
+```
+Génère : `.deb`, `.AppImage` dans `src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/`
+
+**Build automatique pour la plateforme actuelle** :
 ```bash
 npm run tauri:build
 ```
+Génère les installateurs pour votre OS actuel.
 
-Les installateurs seront générés dans `src-tauri/target/release/bundle/` selon votre plateforme.
+#### Prérequis par OS
+
+**Windows** :
+- Rust (via rustup)
+- Microsoft C++ Build Tools
+- WebView2 (installé automatiquement)
+
+**macOS** :
+- Rust (via rustup)
+- Xcode Command Line Tools : `xcode-select --install`
+- Pour signer l'application (optionnel) : Certificat de développeur Apple
+
+**Linux** :
+- Rust (via rustup)
+- Dépendances système :
+  ```bash
+  # Ubuntu/Debian
+  sudo apt update
+  sudo apt install libwebkit2gtk-4.1-dev \
+    build-essential \
+    curl \
+    wget \
+    file \
+    libxdo-dev \
+    libssl-dev \
+    libayatana-appindicator3-dev \
+    librsvg2-dev
+
+  # Fedora
+  sudo dnf install webkit2gtk3-devel.x86_64 \
+    openssl-devel \
+    curl \
+    wget \
+    file \
+    libX11-devel \
+    libXdo-devel \
+    libindicator \
+    librsvg2-devel
+
+  # Arch Linux
+  sudo pacman -S webkit2gtk \
+    base-devel \
+    curl \
+    wget \
+    openssl \
+    libxdo \
+    libappindicator \
+    librsvg
+  ```
+
+#### Cross-compilation
+
+**Note importante** : Le cross-compilation (builder pour un OS différent) est complexe et nécessite souvent des outils supplémentaires. Il est recommandé de :
+- Builder Windows sur Windows
+- Builder macOS sur macOS (ou utiliser GitHub Actions)
+- Builder Linux sur Linux
+
+Pour automatiser les builds multi-plateformes, utilisez GitHub Actions ou un service CI/CD.
 
 ## 🤝 Contribution
 

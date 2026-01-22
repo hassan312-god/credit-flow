@@ -1,7 +1,7 @@
 {
   "productName": "N'FA KA SÉRUM",
   "version": "0.1.0",
-  "identifier": "com.nfakaserum.app",
+  "identifier": "com.nfakaserum.creditflow",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
@@ -27,7 +27,14 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": [
+      "app",
+      "dmg",
+      "appimage",
+      "deb",
+      "msi",
+      "nsis"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -37,14 +44,33 @@
     ],
     "resources": [],
     "externalBin": [],
-    "copyright": "",
+    "copyright": "© 2024 N'FA KA SÉRUM",
     "category": "Business",
     "shortDescription": "Application de gestion des crédits, suivi des remboursements et recouvrement",
-    "longDescription": "Application de gestion des crédits, suivi des remboursements et recouvrement",
+    "longDescription": "Application complète de gestion des crédits avec suivi des remboursements, paiements et recouvrement. Permet de gérer les clients, créer des prêts, enregistrer les paiements et suivre les échéances en retard.",
     "windows": {
       "webviewInstallMode": {
         "type": "embedBootstrapper",
         "silent": true
+      },
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    },
+    "macOS": {
+      "frameworks": [],
+      "minimumSystemVersion": "10.13",
+      "exceptionDomain": "",
+      "signingIdentity": null,
+      "providerShortName": null,
+      "entitlements": null
+    },
+    "linux": {
+      "deb": {
+        "depends": []
+      },
+      "appimage": {
+        "bundleMediaFramework": false
       }
     }
   },
