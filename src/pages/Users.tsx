@@ -146,21 +146,38 @@ export default function Users() {
     setLoading(true);
     try {
       // Fetch all profiles
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, email, full_name, phone, created_at')
         .order('created_at', { ascending: false });
 
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        toast.error('Erreur lors du chargement des profils');
+        return;
+      }
+
       // Fetch all roles
-      const { data: roles } = await supabase
+      const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
         .select('id, user_id, role');
 
+      if (rolesError) {
+        console.error('Error fetching roles:', rolesError);
+        toast.error('Erreur lors du chargement des rôles');
+        return;
+      }
+
       // Fetch active suspensions
-      const { data: suspensions } = await supabase
+      const { data: suspensions, error: suspensionsError } = await supabase
         .from('user_suspensions')
         .select('id, user_id, suspended_until, reason, is_active')
         .eq('is_active', true);
+
+      if (suspensionsError) {
+        console.error('Error fetching suspensions:', suspensionsError);
+        toast.error('Erreur lors du chargement des suspensions');
+      }
 
       // Combine data - filter out admins for directors
       const usersWithRoles: UserWithRole[] = (profiles || [])
@@ -190,6 +207,7 @@ export default function Users() {
       setUsers(usersWithRoles);
     } catch (error) {
       console.error('Error fetching users:', error);
+      toast.error('Erreur lors du chargement des utilisateurs');
     } finally {
       setLoading(false);
     }

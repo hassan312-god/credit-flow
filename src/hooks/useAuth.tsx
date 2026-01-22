@@ -26,22 +26,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUserData = async (userId: string) => {
     try {
       // Fetch profile
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('full_name, email')
         .eq('id', userId)
         .maybeSingle();
+
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        // Ne pas bloquer si le profil n'existe pas encore
+      }
 
       if (profileData) {
         setProfile(profileData);
       }
 
       // Fetch role
-      const { data: roleData } = await supabase
+      const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
         .maybeSingle();
+
+      if (roleError) {
+        console.error('Error fetching role:', roleError);
+        // Si pas de rôle, l'utilisateur ne peut pas utiliser l'application
+        return;
+      }
 
       if (roleData) {
         const userRole = roleData.role as AppRole;
@@ -51,6 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (userRole === 'directeur' && profileData) {
           notifyAdminsOfDirectorLogin(userId, profileData.full_name);
         }
+      } else {
+        console.warn('No role found for user:', userId);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);

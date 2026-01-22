@@ -89,10 +89,14 @@ export default function ActivityLogs() {
       const recentLoginLogs = logins.slice(0, 5);
       const recentUserIds = [...new Set(recentLoginLogs.map(l => l.user_id).filter(Boolean))];
       
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name')
         .in('id', recentUserIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles for activity logs:', profilesError);
+      }
 
       const recentLogins = recentLoginLogs.map(l => ({
         user_name: profiles?.find(p => p.id === l.user_id)?.full_name || 'Inconnu',
@@ -134,6 +138,7 @@ export default function ActivityLogs() {
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
+      toast.error('Erreur lors du chargement des statistiques');
     }
   };
 
@@ -160,14 +165,29 @@ export default function ActivityLogs() {
 
       const { data, error, count } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching logs:', error);
+        toast.error('Erreur lors du chargement des logs');
+        return;
+      }
 
       // Fetch profiles separately
       const userIds = [...new Set((data || []).map((log: any) => log.user_id).filter(Boolean))];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .in('id', userIds);
+      let profiles: any[] = [];
+      
+      if (userIds.length > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', userIds);
+        
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          toast.error('Erreur lors du chargement des profils');
+        } else {
+          profiles = profilesData || [];
+        }
+      }
 
       // Combine data
       const logsWithProfiles = (data || []).map((log: any) => ({

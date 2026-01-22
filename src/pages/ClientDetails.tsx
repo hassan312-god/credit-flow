@@ -61,22 +61,34 @@ export default function ClientDetails() {
       if (!id) return;
 
       try {
-        const { data: clientData } = await supabase
+        const { data: clientData, error: clientError } = await supabase
           .from('clients')
           .select('*')
           .eq('id', id)
           .maybeSingle();
 
-        const { data: loansData } = await supabase
+        if (clientError) {
+          console.error('Error fetching client:', clientError);
+          toast.error('Erreur lors du chargement du client');
+          return;
+        }
+
+        const { data: loansData, error: loansError } = await supabase
           .from('loans')
           .select('id, amount, status, duration_months, created_at')
           .eq('client_id', id)
           .order('created_at', { ascending: false });
 
+        if (loansError) {
+          console.error('Error fetching loans:', loansError);
+          toast.error('Erreur lors du chargement des prêts');
+        }
+
         setClient(clientData);
         setLoans(loansData || []);
       } catch (error) {
-        console.error('Error fetching client:', error);
+        console.error('Error fetching client data:', error);
+        toast.error('Erreur lors du chargement des données');
       } finally {
         setLoading(false);
       }
@@ -149,22 +161,34 @@ export default function ClientDetails() {
       // Supprimer les paiements associés aux prêts
       const loanIds = loans.map(l => l.id);
       if (loanIds.length > 0) {
-        await supabase
+        const { error: paymentsError } = await supabase
           .from('payments')
           .delete()
           .in('loan_id', loanIds);
+        
+        if (paymentsError) {
+          console.error('Error deleting payments:', paymentsError);
+        }
 
         // Supprimer les échéanciers
-        await supabase
+        const { error: scheduleError } = await supabase
           .from('payment_schedule')
           .delete()
           .in('loan_id', loanIds);
+        
+        if (scheduleError) {
+          console.error('Error deleting payment schedules:', scheduleError);
+        }
 
         // Supprimer les prêts
-        await supabase
+        const { error: loansError } = await supabase
           .from('loans')
           .delete()
           .eq('client_id', id);
+        
+        if (loansError) {
+          console.error('Error deleting loans:', loansError);
+        }
       }
 
       // Supprimer le client
@@ -339,7 +363,11 @@ export default function ClientDetails() {
                 </TableHeader>
                 <TableBody>
                   {loans.map((loan) => (
-                    <TableRow key={loan.id} className="cursor-pointer hover:bg-muted/50">
+                    <TableRow 
+                      key={loan.id} 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/loans/${loan.id}`)}
+                    >
                       <TableCell className="font-medium">{formatCurrency(loan.amount)}</TableCell>
                       <TableCell>{loan.duration_months} mois</TableCell>
                       <TableCell><StatusBadge status={loan.status as any} /></TableCell>

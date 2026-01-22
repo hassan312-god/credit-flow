@@ -84,11 +84,18 @@ export default function Clients() {
     setDeleting(true);
     try {
       // Vérifier s'il y a des prêts actifs (en cours de remboursement)
-      const { data: activeLoans } = await supabase
+      const { data: activeLoans, error: activeLoansError } = await supabase
         .from('loans')
         .select('id')
         .eq('client_id', clientToDelete.id)
-        .in('status', ['en_cours', 'en_retard'] as any);
+        .in('status', ['en_cours', 'en_retard']);
+      
+      if (activeLoansError) {
+        console.error('Error checking active loans:', activeLoansError);
+        toast.error('Erreur lors de la vérification des prêts actifs');
+        setDeleting(false);
+        return;
+      }
 
       if (activeLoans && activeLoans.length > 0) {
         toast.error(`Ce client a ${activeLoans.length} prêt(s) en cours de remboursement. Clôturez-les d'abord.`);
@@ -107,22 +114,34 @@ export default function Clients() {
         const loanIds = clientLoans.map(l => l.id);
 
         // Supprimer les paiements associés
-        await supabase
+        const { error: paymentsError } = await supabase
           .from('payments')
           .delete()
           .in('loan_id', loanIds);
+        
+        if (paymentsError) {
+          console.error('Error deleting payments:', paymentsError);
+        }
 
         // Supprimer les échéanciers
-        await supabase
+        const { error: scheduleError } = await supabase
           .from('payment_schedule')
           .delete()
           .in('loan_id', loanIds);
+        
+        if (scheduleError) {
+          console.error('Error deleting payment schedules:', scheduleError);
+        }
 
         // Supprimer les prêts
-        await supabase
+        const { error: loansError } = await supabase
           .from('loans')
           .delete()
           .eq('client_id', clientToDelete.id);
+        
+        if (loansError) {
+          console.error('Error deleting loans:', loansError);
+        }
       }
 
       // Supprimer le client

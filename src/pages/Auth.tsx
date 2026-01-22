@@ -66,21 +66,35 @@ export default function Auth() {
     }
 
     // Check if user is suspended
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (sessionData?.session?.user) {
-      const userId = sessionData.session.user.id;
+    try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
-      // Use the database function to check suspension
-      const { data: suspensionData, error: suspError } = await supabase
-        .rpc('get_user_suspension', { _user_id: userId });
-
-      if (!suspError && suspensionData && suspensionData.length > 0) {
-        // User is suspended - sign them out immediately
-        await supabase.auth.signOut();
-        setSuspensionInfo(suspensionData[0]);
-        setIsLoading(false);
-        return;
+      if (sessionError) {
+        console.error('Error getting session:', sessionError);
+        // Continue with login even if session check fails
       }
+      
+      if (sessionData?.session?.user) {
+        const userId = sessionData.session.user.id;
+        
+        // Use the database function to check suspension
+        const { data: suspensionData, error: suspError } = await supabase
+          .rpc('get_user_suspension', { _user_id: userId });
+
+        if (suspError) {
+          console.error('Error checking suspension:', suspError);
+          // Continue with login if suspension check fails
+        } else if (suspensionData && suspensionData.length > 0) {
+          // User is suspended - sign them out immediately
+          await supabase.auth.signOut();
+          setSuspensionInfo(suspensionData[0]);
+          setIsLoading(false);
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Error checking user suspension:', error);
+      // Continue with login if suspension check fails
     }
 
     setIsLoading(false);

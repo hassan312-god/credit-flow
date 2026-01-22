@@ -89,12 +89,17 @@ export default function LoanDetails() {
 
       let validator = null;
       if (loanData?.validated_by) {
-        const { data: validatorData } = await supabase
+        const { data: validatorData, error: validatorError } = await supabase
           .from('profiles')
           .select('full_name')
           .eq('id', loanData.validated_by)
           .maybeSingle();
-        validator = validatorData;
+        
+        if (validatorError) {
+          console.error('Error fetching validator:', validatorError);
+        } else {
+          validator = validatorData;
+        }
       }
 
       if (loanData) {
@@ -105,22 +110,32 @@ export default function LoanDetails() {
         });
 
         // Fetch payment schedule
-        const { data: scheduleData } = await supabase
+        const { data: scheduleData, error: scheduleError } = await supabase
           .from('payment_schedule')
           .select('*')
           .eq('loan_id', loanIdToFetch)
           .order('installment_number', { ascending: true });
 
-        setPaymentSchedule(scheduleData || []);
+        if (scheduleError) {
+          console.error('Error fetching payment schedule:', scheduleError);
+          toast.error('Erreur lors du chargement de l\'échéancier');
+        } else {
+          setPaymentSchedule(scheduleData || []);
+        }
 
         // Fetch payments history
-        const { data: paymentsData } = await supabase
+        const { data: paymentsData, error: paymentsError } = await supabase
           .from('payments')
           .select('*')
           .eq('loan_id', loanIdToFetch)
           .order('created_at', { ascending: false });
 
-        setPayments(paymentsData || []);
+        if (paymentsError) {
+          console.error('Error fetching payments:', paymentsError);
+          toast.error('Erreur lors du chargement de l\'historique des paiements');
+        } else {
+          setPayments(paymentsData || []);
+        }
       }
     } catch (error) {
       console.error('Error fetching loan:', error);

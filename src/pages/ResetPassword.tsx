@@ -20,20 +20,28 @@ export default function ResetPassword() {
   useEffect(() => {
     // Check if user has a valid recovery session
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Check URL hash for recovery token
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const accessToken = hashParams.get('access_token');
-      const type = hashParams.get('type');
-      
-      if (type === 'recovery' && accessToken) {
-        setIsValidSession(true);
-      } else if (session) {
-        setIsValidSession(true);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+        }
+        
+        // Check URL hash for recovery token
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const type = hashParams.get('type');
+        
+        if (type === 'recovery' && accessToken) {
+          setIsValidSession(true);
+        } else if (session) {
+          setIsValidSession(true);
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+      } finally {
+        setIsCheckingSession(false);
       }
-      
-      setIsCheckingSession(false);
     };
 
     // Listen for auth state changes (for recovery flow)

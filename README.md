@@ -75,6 +75,10 @@ Une application web moderne de gestion de crédit et de prêts, conçue pour les
   - React Router DOM
   - TanStack Query (React Query)
 
+- **Desktop** :
+  - Tauri 2.0 (Application desktop native)
+  - Rust (Backend Tauri)
+
 - **UI/UX** :
   - shadcn/ui
   - Tailwind CSS
@@ -99,6 +103,9 @@ Une application web moderne de gestion de crédit et de prêts, conçue pour les
 - Node.js 18+ et npm (ou bun)
 - Compte Supabase configuré
 - Git
+- Rust et Cargo (pour l'application desktop Tauri)
+  - Installez Rust depuis [rustup.rs](https://rustup.rs/)
+  - Windows : Installez également [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
 
 ## 🚀 Installation
 
@@ -134,7 +141,58 @@ npm run dev
 bun run dev
 ```
 
-L'application sera accessible sur `http://localhost:5173`
+L'application sera accessible sur `http://localhost:8080`
+
+## 🖥️ Application Desktop (Tauri)
+
+Cette application peut également être exécutée en tant qu'application desktop native grâce à Tauri.
+
+### Prérequis pour Tauri
+
+1. **Installer Rust** :
+   - Téléchargez et installez Rust depuis [rustup.rs](https://rustup.rs/)
+   - Sur Windows, installez également [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+
+2. **Vérifier l'installation** :
+```bash
+rustc --version
+cargo --version
+```
+
+### Lancer l'application desktop
+
+**Mode développement** :
+```bash
+npm run tauri:dev
+```
+
+Cette commande va :
+- Lancer le serveur Vite de développement
+- Compiler l'application Rust
+- Ouvrir une fenêtre desktop avec votre application
+
+**Build de production** :
+```bash
+npm run tauri:build
+```
+
+Cette commande va créer un exécutable dans `src-tauri/target/release/bundle/` :
+- **Windows** : `.msi` (installateur) et `.exe` (portable)
+- **macOS** : `.dmg` (installateur) et `.app` (application)
+- **Linux** : `.deb`, `.AppImage`, etc.
+
+### Structure Tauri
+
+```
+credit-flow/
+├── src-tauri/
+│   ├── src/
+│   │   └── main.rs        # Code Rust de l'application
+│   ├── Cargo.toml         # Configuration Rust
+│   ├── tauri.conf.json    # Configuration Tauri
+│   ├── build.rs           # Script de build
+│   └── icons/             # Icônes de l'application
+```
 
 ## 📦 Scripts Disponibles
 
@@ -143,6 +201,8 @@ L'application sera accessible sur `http://localhost:5173`
 - `npm run build:dev` : Construit en mode développement
 - `npm run preview` : Prévisualise le build de production
 - `npm run lint` : Vérifie le code avec ESLint
+- `npm run tauri:dev` : Lance l'application desktop Tauri en mode développement
+- `npm run tauri:build` : Construit l'application desktop Tauri pour la production
 
 ## 🏗️ Structure du Projet
 
@@ -185,19 +245,31 @@ Pour plus de détails, consultez [OFFLINE_STORAGE.md](./OFFLINE_STORAGE.md)
 
 ## 🌐 Déploiement
 
-### Déploiement sur Vercel/Netlify
+### Application Web
+
+#### Déploiement sur Vercel/Netlify
 
 1. Connectez votre dépôt GitHub
 2. Configurez les variables d'environnement
 3. Déployez automatiquement
 
-### Build de production
+#### Build de production
 
 ```bash
 npm run build
 ```
 
 Les fichiers optimisés seront dans le dossier `dist/`
+
+### Application Desktop
+
+Pour distribuer l'application desktop :
+
+```bash
+npm run tauri:build
+```
+
+Les installateurs seront générés dans `src-tauri/target/release/bundle/` selon votre plateforme.
 
 ## 🤝 Contribution
 

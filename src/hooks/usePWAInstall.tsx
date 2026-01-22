@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
 
+// Détecter si on est dans Tauri
+function isTauri(): boolean {
+  return typeof window !== 'undefined' && '__TAURI__' in window;
+}
+
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
@@ -11,6 +16,13 @@ export function usePWAInstall() {
   const [isInstallable, setIsInstallable] = useState(false);
 
   useEffect(() => {
+    // Si on est dans Tauri, l'application est déjà "installée" (c'est un desktop app)
+    if (isTauri()) {
+      setIsInstalled(true);
+      setIsInstallable(false);
+      return;
+    }
+
     // Vérifier si l'app est déjà installée
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
@@ -23,7 +35,7 @@ export function usePWAInstall() {
       return;
     }
 
-    // Écouter l'événement beforeinstallprompt
+    // Écouter l'événement beforeinstallprompt (uniquement pour PWA web)
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -48,6 +60,11 @@ export function usePWAInstall() {
   }, []);
 
   const install = async () => {
+    // Dans Tauri, pas besoin d'installation
+    if (isTauri()) {
+      return { success: false, error: 'Application desktop déjà installée' };
+    }
+
     if (!deferredPrompt) {
       return { success: false, error: 'Installation non disponible' };
     }
@@ -70,8 +87,8 @@ export function usePWAInstall() {
   };
 
   return {
-    isInstallable,
-    isInstalled,
+    isInstallable: false, // Désactivé pour Tauri
+    isInstalled: isTauri() ? true : isInstalled,
     install,
   };
 }

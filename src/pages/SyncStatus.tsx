@@ -57,11 +57,20 @@ export default function SyncStatus() {
           // Get remote count
           let remoteCount = 0;
           if (isOnline) {
-            const { supabase } = await import('@/integrations/supabase/client');
-            const { count } = await supabase
-              .from(table as any)
-              .select('*', { count: 'exact', head: true });
-            remoteCount = count || 0;
+            try {
+              const { supabase } = await import('@/integrations/supabase/client');
+              const { count, error: countError } = await supabase
+                .from(table as any)
+                .select('*', { count: 'exact', head: true });
+              
+              if (countError) {
+                console.error(`Error fetching count for ${table}:`, countError);
+              } else {
+                remoteCount = count || 0;
+              }
+            } catch (error) {
+              console.error(`Error fetching remote count for ${table}:`, error);
+            }
           }
 
           const lastSync = await getMetadata(`last_sync_${table}`);

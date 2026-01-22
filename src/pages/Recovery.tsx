@@ -8,6 +8,7 @@ import { AlertTriangle, Phone, MessageSquare, Clock, TrendingDown } from 'lucide
 import { supabase } from '@/integrations/supabase/client';
 import { format, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 interface OverdueSchedule {
   id: string;
@@ -46,7 +47,7 @@ export default function Recovery() {
       try {
         const today = new Date().toISOString().split('T')[0];
         
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('payment_schedule')
           .select(`
             id, loan_id, installment_number, due_date, amount_due, amount_paid, status,
@@ -58,6 +59,12 @@ export default function Recovery() {
           .in('status', ['en_attente', 'partiel', 'en_retard'])
           .lt('due_date', today)
           .order('due_date', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching overdue data:', error);
+          toast.error('Erreur lors du chargement des données de recouvrement');
+          return;
+        }
 
         const processed = data?.map(s => ({
           ...s,
@@ -80,6 +87,7 @@ export default function Recovery() {
         });
       } catch (error) {
         console.error('Error fetching overdue data:', error);
+        toast.error('Erreur lors du chargement des données de recouvrement');
       } finally {
         setLoading(false);
       }

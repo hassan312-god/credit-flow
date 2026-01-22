@@ -8,6 +8,7 @@ import { Plus, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 import { DataScopeIndicator } from '@/components/DataScopeIndicator';
 import { EmployeeFilter } from '@/components/EmployeeFilter';
 
@@ -32,16 +33,28 @@ export default function Loans() {
 
   useEffect(() => {
     const fetchLoans = async () => {
-      const { data } = await supabase
-        .from('loans')
-        .select('id, amount, duration_months, status, created_at, created_by, client:clients(full_name)')
-        .order('created_at', { ascending: false });
-      
-      setLoans(data?.map(loan => ({
-        ...loan,
-        client: Array.isArray(loan.client) ? loan.client[0] : loan.client
-      })) || []);
-      setLoading(false);
+      try {
+        const { data, error } = await supabase
+          .from('loans')
+          .select('id, amount, duration_months, status, created_at, created_by, client:clients(full_name)')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('Error fetching loans:', error);
+          toast.error('Erreur lors du chargement des prêts');
+          return;
+        }
+        
+        setLoans(data?.map(loan => ({
+          ...loan,
+          client: Array.isArray(loan.client) ? loan.client[0] : loan.client
+        })) || []);
+      } catch (error) {
+        console.error('Error fetching loans:', error);
+        toast.error('Erreur lors du chargement des prêts');
+      } finally {
+        setLoading(false);
+      }
     };
     fetchLoans();
   }, []);

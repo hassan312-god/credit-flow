@@ -71,7 +71,7 @@ export default function Payments() {
     setLoading(true);
     try {
       // Fetch pending schedules
-      const { data: schedulesData } = await supabase
+      const { data: schedulesData, error: schedulesError } = await supabase
         .from('payment_schedule')
         .select(`
           id, loan_id, installment_number, due_date, amount_due, amount_paid, status,
@@ -81,8 +81,13 @@ export default function Payments() {
         .order('due_date', { ascending: true })
         .limit(50);
 
+      if (schedulesError) {
+        console.error('Error fetching schedules:', schedulesError);
+        toast.error('Erreur lors du chargement des échéances');
+      }
+
       // Fetch recent payments
-      const { data: paymentsData } = await supabase
+      const { data: paymentsData, error: paymentsError } = await supabase
         .from('payments')
         .select(`
           id, amount, payment_date, payment_method, reference, recorded_by,
@@ -90,6 +95,11 @@ export default function Payments() {
         `)
         .order('created_at', { ascending: false })
         .limit(10);
+
+      if (paymentsError) {
+        console.error('Error fetching payments:', paymentsError);
+        toast.error('Erreur lors du chargement des paiements');
+      }
 
       setSchedules(schedulesData?.map(s => ({
         ...s,
@@ -102,6 +112,7 @@ export default function Payments() {
       })) || []);
     } catch (error) {
       console.error('Error fetching data:', error);
+      toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }

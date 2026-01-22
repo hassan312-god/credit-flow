@@ -18,6 +18,7 @@ import { EmployeeFilter } from '@/components/EmployeeFilter';
 import { EmployeeSummary } from '@/components/EmployeeSummary';
 import { EmployeePerformanceChart } from '@/components/EmployeePerformanceChart';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface MonthlyData {
   month: string;
@@ -72,7 +73,11 @@ export default function Reports() {
             loansQuery = loansQuery.eq('created_by', employeeFilter);
           }
           
-          const { data: loansData } = await loansQuery;
+          const { data: loansData, error: loansError } = await loansQuery;
+          
+          if (loansError) {
+            console.error('Error fetching loans for report:', loansError);
+          }
 
           let paymentsQuery = supabase
             .from('payments')
@@ -84,7 +89,11 @@ export default function Reports() {
             paymentsQuery = paymentsQuery.eq('recorded_by', employeeFilter);
           }
           
-          const { data: paymentsData } = await paymentsQuery;
+          const { data: paymentsData, error: paymentsError } = await paymentsQuery;
+          
+          if (paymentsError) {
+            console.error('Error fetching payments for report:', paymentsError);
+          }
 
           monthsData.push({
             month: format(monthStart, 'MMM yy', { locale: fr }),
@@ -105,7 +114,12 @@ export default function Reports() {
           allLoansQuery = allLoansQuery.eq('created_by', employeeFilter);
         }
         
-        const { data: allLoans } = await allLoansQuery;
+        const { data: allLoans, error: allLoansError } = await allLoansQuery;
+        
+        if (allLoansError) {
+          console.error('Error fetching all loans:', allLoansError);
+          toast.error('Erreur lors du chargement des données de prêts');
+        }
 
         const statusCounts = allLoans?.reduce((acc, loan) => {
           acc[loan.status] = (acc[loan.status] || 0) + 1;
@@ -140,7 +154,12 @@ export default function Reports() {
           clientsQuery = clientsQuery.eq('created_by', employeeFilter);
         }
         
-        const { count: clientsCount } = await clientsQuery;
+        const { count: clientsCount, error: clientsError } = await clientsQuery;
+        
+        if (clientsError) {
+          console.error('Error fetching clients count:', clientsError);
+          toast.error('Erreur lors du chargement du nombre de clients');
+        }
 
         const totalDisbursed = allLoans
           ?.filter(l => ['decaisse', 'en_cours', 'rembourse', 'en_retard'].includes(l.status))

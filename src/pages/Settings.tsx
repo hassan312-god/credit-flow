@@ -301,7 +301,7 @@ export default function Settings() {
               </div>
               {paymentReminders && (
                 <div className="space-y-2 pt-2">
-                  <Label htmlFor="reminder-days">Jours avant échéance</Label>
+                  <Label htmlFor="reminder-days">Délai avant échéance</Label>
                   <Select value={reminderDays} onValueChange={setReminderDays}>
                     <SelectTrigger id="reminder-days">
                       <SelectValue />
@@ -309,8 +309,11 @@ export default function Settings() {
                     <SelectContent>
                       <SelectItem value="1">1 jour</SelectItem>
                       <SelectItem value="3">3 jours</SelectItem>
-                      <SelectItem value="7">7 jours</SelectItem>
+                      <SelectItem value="7">1 semaine (7 jours)</SelectItem>
+                      <SelectItem value="14">2 semaines (14 jours)</SelectItem>
                       <SelectItem value="15">15 jours</SelectItem>
+                      <SelectItem value="21">3 semaines (21 jours)</SelectItem>
+                      <SelectItem value="30">1 mois (30 jours)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -443,9 +446,14 @@ export default function Settings() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={async () => {
                       try {
-                        const { data: clients } = await supabase.from('clients').select('*');
-                        const { data: loans } = await supabase.from('loans').select('*');
-                        const { data: payments } = await supabase.from('payments').select('*');
+                        const { data: clients, error: clientsError } = await supabase.from('clients').select('*');
+                        if (clientsError) throw clientsError;
+                        
+                        const { data: loans, error: loansError } = await supabase.from('loans').select('*');
+                        if (loansError) throw loansError;
+                        
+                        const { data: payments, error: paymentsError } = await supabase.from('payments').select('*');
+                        if (paymentsError) throw paymentsError;
                         
                         // Mask sensitive data before export
                         const maskedClients = maskSensitiveData(clients || [], SENSITIVE_FIELDS);
@@ -477,9 +485,14 @@ export default function Settings() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={async () => {
                       try {
-                        const { data: clients } = await supabase.from('clients').select('*');
-                        const { data: loans } = await supabase.from('loans').select('*');
-                        const { data: payments } = await supabase.from('payments').select('*');
+                        const { data: clients, error: clientsError } = await supabase.from('clients').select('*');
+                        if (clientsError) throw clientsError;
+                        
+                        const { data: loans, error: loansError } = await supabase.from('loans').select('*');
+                        if (loansError) throw loansError;
+                        
+                        const { data: payments, error: paymentsError } = await supabase.from('payments').select('*');
+                        if (paymentsError) throw paymentsError;
                         
                         // Mask sensitive data before export
                         const maskedClients = maskSensitiveData(clients || [], SENSITIVE_FIELDS);

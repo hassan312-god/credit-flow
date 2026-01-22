@@ -14,14 +14,12 @@ import {
   ArrowRight,
   Clock,
   Search,
-  Download
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 import { usePaymentNotifications } from '@/hooks/usePaymentNotifications';
 import { NotificationBell } from '@/components/NotificationBell';
-import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { toast } from 'sonner';
 import { DataScopeIndicator } from '@/components/DataScopeIndicator';
 
@@ -45,7 +43,6 @@ interface RecentLoan {
 export default function Dashboard() {
   const { profile, role } = useAuth();
   const { notifications } = usePaymentNotifications();
-  const { isInstallable, isInstalled, install } = usePWAInstall();
   const [stats, setStats] = useState<DashboardStats>({
     totalClients: 0,
     totalLoans: 0,
@@ -61,21 +58,31 @@ export default function Dashboard() {
     const fetchDashboardData = async () => {
       try {
         // Fetch clients count
-        const { count: clientsCount } = await supabase
+        const { count: clientsCount, error: clientsError } = await supabase
           .from('clients')
           .select('*', { count: 'exact', head: true });
 
+        if (clientsError) {
+          console.error('Error fetching clients count:', clientsError);
+          toast.error('Erreur lors du chargement des statistiques');
+        }
+
         // Fetch loans data
-        const { data: loansData } = await supabase
+        const { data: loansData, error: loansError } = await supabase
           .from('loans')
           .select('id, amount, status, total_amount');
+
+        if (loansError) {
+          console.error('Error fetching loans:', loansError);
+          toast.error('Erreur lors du chargement des prêts');
+        }
 
         const pendingCount = loansData?.filter(l => l.status === 'en_attente').length || 0;
         const overdueCount = loansData?.filter(l => l.status === 'en_retard' || l.status === 'defaut').length || 0;
         const totalAmount = loansData?.reduce((sum, l) => sum + (Number(l.amount) || 0), 0) || 0;
 
         // Fetch recent loans with client info
-        const { data: recent } = await supabase
+        const { data: recent, error: recentError } = await supabase
           .from('loans')
           .select(`
             id,
@@ -86,6 +93,11 @@ export default function Dashboard() {
           `)
           .order('created_at', { ascending: false })
           .limit(5);
+
+        if (recentError) {
+          console.error('Error fetching recent loans:', recentError);
+          toast.error('Erreur lors du chargement des prêts récents');
+        }
 
         setStats({
           totalClients: clientsCount || 0,
@@ -102,6 +114,7 @@ export default function Dashboard() {
         })) || []);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
+        toast.error('Erreur lors du chargement des données du tableau de bord');
       } finally {
         setLoading(false);
       }
@@ -149,23 +162,6 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-3">
             <NotificationBell />
-            {isInstallable && !isInstalled && (
-              <Button 
-                variant="outline" 
-                className="gap-2"
-                onClick={async () => {
-                  const result = await install();
-                  if (result.success) {
-                    toast.success('Application installée avec succès !');
-                  } else if (result.error) {
-                    toast.error(result.error);
-                  }
-                }}
-              >
-                <Download className="w-4 h-4" />
-                Installer l'app
-              </Button>
-            )}
             {(role === 'directeur' || role === 'agent_credit') && (
               <Link to="/loans/new">
                 <Button className="gap-2">

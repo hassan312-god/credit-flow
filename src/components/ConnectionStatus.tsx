@@ -1,13 +1,10 @@
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
-import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   Wifi, 
   WifiOff, 
-  Download, 
-  CheckCircle2, 
   AlertCircle,
   RefreshCw,
   Database,
@@ -20,7 +17,6 @@ import { cn } from '@/lib/utils';
 
 export function ConnectionStatus() {
   const { isOnline, isSyncing, pendingCount, syncQueue } = useOfflineQueue();
-  const { isInstallable, isInstalled, install } = usePWAInstall();
   const [syncingAll, setSyncingAll] = useState(false);
   const [lastFullSync, setLastFullSync] = useState<number | null>(null);
 
@@ -35,13 +31,6 @@ export function ConnectionStatus() {
     };
     loadLastSync();
   }, []);
-
-  const handleInstall = async () => {
-    const result = await install();
-    if (result.success) {
-      // Installation réussie
-    }
-  };
 
   const handleFullSync = async () => {
     if (!isOnline) {
@@ -207,35 +196,7 @@ export function ConnectionStatus() {
         </p>
       )}
 
-      {/* Bouton d'installation PWA */}
-      {isInstallable && !isInstalled && (
-        <Alert variant="default" className="border-primary/50 bg-primary/5">
-          <Download className="h-4 w-4 text-primary" />
-          <AlertTitle>Installer l'application</AlertTitle>
-          <AlertDescription className="flex items-center justify-between">
-            <span>Installez l'application pour une meilleure expérience et un accès hors ligne</span>
-            <Button 
-              size="sm" 
-              onClick={handleInstall}
-              className="ml-4"
-            >
-              <Download className="w-3.5 h-3.5 mr-1.5" />
-              Installer
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Confirmation d'installation */}
-      {isInstalled && (
-        <Alert variant="default" className="border-success/50 bg-success/5">
-          <CheckCircle2 className="h-4 w-4 text-success" />
-          <AlertTitle>Application installée</AlertTitle>
-          <AlertDescription>
-            L'application est installée et fonctionne en mode hors ligne.
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Application desktop Tauri - pas besoin d'installation */}
     </div>
   );
 }

@@ -64,11 +64,23 @@ export default function LoanForm() {
 
   useEffect(() => {
     const fetchClients = async () => {
-      const { data } = await supabase
-        .from('clients')
-        .select('id, full_name, phone')
-        .order('full_name');
-      setClients(data || []);
+      try {
+        const { data, error } = await supabase
+          .from('clients')
+          .select('id, full_name, phone')
+          .order('full_name');
+        
+        if (error) {
+          console.error('Error fetching clients:', error);
+          toast.error('Erreur lors du chargement des clients');
+          return;
+        }
+        
+        setClients(data || []);
+      } catch (error) {
+        console.error('Error fetching clients:', error);
+        toast.error('Erreur lors du chargement des clients');
+      }
     };
     fetchClients();
   }, []);
