@@ -40,6 +40,20 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          lfs: true  # Activer Git LFS si les icônes sont stockées avec LFS
+      
+      - name: Verify icons exist
+        run: |
+          if [ "${{ matrix.platform }}" = "windows-latest" ]; then
+            dir src-tauri\icons\ || exit 1
+            if not exist src-tauri\icons\32x32.png (echo Icons missing && exit 1)
+          else
+            ls -la src-tauri/icons/ || exit 1
+            test -f src-tauri/icons/32x32.png || (echo "32x32.png missing" && exit 1)
+            test -f src-tauri/icons/128x128.png || (echo "128x128.png missing" && exit 1)
+            file src-tauri/icons/*.png || echo "Warning: file command failed"
+          fi
       
       - name: Install system dependencies (Linux)
         if: matrix.platform == 'ubuntu-latest'

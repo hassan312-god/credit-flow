@@ -19,6 +19,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
+      - name: Verify icons exist
+        run: |
+          ls -la src-tauri/icons/
+          file src-tauri/icons/*.png || true
+      
       - name: Install system dependencies
         run: |
           sudo apt-get update
