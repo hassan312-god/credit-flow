@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -162,20 +162,11 @@ export default function Horaires() {
 // ==================== ONGLET HISTORIQUE ====================
 function HistoriqueTab() {
   const [sessions, setSessions] = useState<WorkSession[]>([]);
-  const [filteredSessions, setFilteredSessions] = useState<WorkSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'summary' | 'completed' | 'cancelled' | 'open'>('all');
   const [startDate, setStartDate] = useState(format(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-
-  useEffect(() => {
-    fetchSessions();
-  }, [startDate, endDate]);
-
-  useEffect(() => {
-    filterSessions();
-  }, [sessions, activeTab, search]);
 
   const fetchSessions = async () => {
     setLoading(true);
@@ -201,6 +192,7 @@ function HistoriqueTab() {
       if (error) {
         console.error('Error fetching sessions:', error);
         toast.error('Erreur lors du chargement des horaires');
+        setSessions([]);
         return;
       }
 
@@ -215,6 +207,7 @@ function HistoriqueTab() {
         
         if (profilesError) {
           console.error('Error fetching profiles:', profilesError);
+          toast.error('Erreur lors du chargement des profils');
         } else {
           profiles = profilesData || [];
         }
@@ -229,12 +222,18 @@ function HistoriqueTab() {
     } catch (error) {
       console.error('Error fetching sessions:', error);
       toast.error('Erreur lors du chargement des horaires');
+      setSessions([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const filterSessions = () => {
+  useEffect(() => {
+    fetchSessions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startDate, endDate]);
+
+  const filteredSessions = useMemo(() => {
     let filtered = [...sessions];
 
     switch (activeTab) {
@@ -259,8 +258,8 @@ function HistoriqueTab() {
       );
     }
 
-    setFilteredSessions(filtered);
-  };
+    return filtered;
+  }, [sessions, activeTab, search]);
 
   const getStatusBadge = (session: WorkSession) => {
     switch (session.status) {
