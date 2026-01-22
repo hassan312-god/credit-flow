@@ -39,22 +39,10 @@ const menuItems = [
     roles: ['admin', 'directeur', 'agent_credit']
   },
   { 
-    path: '/loans', 
+    path: '/prets', 
     icon: FileText, 
     label: 'Prêts',
     roles: ['admin', 'directeur', 'agent_credit', 'caissier', 'recouvrement']
-  },
-  { 
-    path: '/payments', 
-    icon: CreditCard, 
-    label: 'Paiements',
-    roles: ['admin', 'directeur', 'caissier']
-  },
-  { 
-    path: '/recovery', 
-    icon: AlertTriangle, 
-    label: 'Recouvrement',
-    roles: ['admin', 'directeur', 'recouvrement']
   },
   { 
     path: '/reports', 
@@ -82,21 +70,9 @@ const menuItems = [
   },
   // Section Temps de travail / Présence
   { 
-    path: '/work-schedule', 
+    path: '/horaires', 
     icon: Clock, 
-    label: 'Paramètres horaires',
-    roles: ['admin', 'directeur']
-  },
-  { 
-    path: '/attendance', 
-    icon: Calendar, 
-    label: 'Présence / Temps de travail',
-    roles: ['admin', 'directeur']
-  },
-  { 
-    path: '/attendance-reports', 
-    icon: BarChart3, 
-    label: 'Rapports présence',
+    label: 'Horaires',
     roles: ['admin', 'directeur']
   },
   // Section Administration

@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import ClientForm from "./pages/ClientForm";
 import ClientDetails from "./pages/ClientDetails";
+import Prets from "./pages/Prets";
 import Loans from "./pages/Loans";
 import LoanForm from "./pages/LoanForm";
 import LoanDetails from "./pages/LoanDetails";
@@ -21,6 +22,7 @@ import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import CompanyFunds from "./pages/CompanyFunds";
 import WorkSchedule from "./pages/WorkSchedule";
+import Horaires from "./pages/Horaires";
 import Attendance from "./pages/Attendance";
 import AttendanceReports from "./pages/AttendanceReports";
 import ActivityLogs from "./pages/ActivityLogs";
@@ -45,6 +47,7 @@ const App = () => (
             <Route path="/clients" element={<Clients />} />
             <Route path="/clients/new" element={<ClientForm />} />
             <Route path="/clients/:id" element={<ClientDetails />} />
+            <Route path="/prets" element={<Prets />} />
             <Route path="/loans" element={<Loans />} />
             <Route path="/loans/new" element={<LoanForm />} />
             <Route path="/loans/:id" element={<LoanDetails />} />
@@ -55,6 +58,7 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/company-funds" element={<CompanyFunds />} />
             <Route path="/work-schedule" element={<WorkSchedule />} />
+            <Route path="/horaires" element={<Horaires />} />
             <Route path="/attendance" element={<Attendance />} />
             <Route path="/attendance-reports" element={<AttendanceReports />} />
             <Route path="/activity-logs" element={<ActivityLogs />} />
