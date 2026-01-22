@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PasswordInput } from '@/components/PasswordInput';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Loader2, Mail, Lock, Ban, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Loader2, Mail, Lock, Ban, ArrowLeft, CheckCircle, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +24,7 @@ export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [suspensionInfo, setSuspensionInfo] = useState<{ suspended_until: string; reason: string | null } | null>(null);
+  const [lockoutInfo, setLockoutInfo] = useState<{ locked_until: string; failed_attempts: number } | null>(null);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isResetting, setIsResetting] = useState(false);
@@ -52,17 +53,74 @@ export default function Auth() {
 
     setIsLoading(true);
     setSuspensionInfo(null);
+    setLockoutInfo(null);
+
+    // Check if account is locked before attempting login
+    try {
+      const { data: lockData, error: lockError } = await supabase
+        .rpc('is_account_locked', { check_email: loginData.email });
+
+      if (!lockError && lockData && lockData.length > 0 && lockData[0].is_locked) {
+        setLockoutInfo({
+          locked_until: lockData[0].locked_until,
+          failed_attempts: lockData[0].failed_attempts
+        });
+        setIsLoading(false);
+        return;
+      }
+    } catch (err) {
+      console.error('Error checking account lock:', err);
+    }
     
     const { error } = await signIn(loginData.email, loginData.password);
 
     if (error) {
-      setIsLoading(false);
-      if (error.message.includes('Invalid login credentials')) {
+      // Record failed login attempt
+      try {
+        await supabase.rpc('record_login_attempt', {
+          attempt_email: loginData.email,
+          attempt_ip: null,
+          attempt_successful: false
+        });
+
+        // Check if now locked after this attempt
+        const { data: lockData } = await supabase
+          .rpc('is_account_locked', { check_email: loginData.email });
+
+        if (lockData && lockData.length > 0 && lockData[0].is_locked) {
+          setLockoutInfo({
+            locked_until: lockData[0].locked_until,
+            failed_attempts: lockData[0].failed_attempts
+          });
+          setIsLoading(false);
+          return;
+        } else if (lockData && lockData.length > 0) {
+          const remaining = 5 - lockData[0].failed_attempts;
+          if (remaining <= 3 && remaining > 0) {
+            toast.error(`Email ou mot de passe incorrect. ${remaining} tentative(s) restante(s) avant verrouillage.`);
+          } else {
+            toast.error('Email ou mot de passe incorrect');
+          }
+        } else {
+          toast.error('Email ou mot de passe incorrect');
+        }
+      } catch (err) {
         toast.error('Email ou mot de passe incorrect');
-      } else {
-        toast.error('Erreur de connexion. Veuillez réessayer.');
       }
+
+      setIsLoading(false);
       return;
+    }
+
+    // Record successful login attempt
+    try {
+      await supabase.rpc('record_login_attempt', {
+        attempt_email: loginData.email,
+        attempt_ip: null,
+        attempt_successful: true
+      });
+    } catch (err) {
+      console.error('Error recording successful login:', err);
     }
 
     // Check if user is suspended
@@ -191,6 +249,24 @@ export default function Auth() {
             <CardDescription>Connectez-vous pour accéder à votre espace</CardDescription>
           </CardHeader>
           <CardContent>
+            {lockoutInfo && (
+              <div className="mb-4 p-4 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400 mb-2">
+                  <ShieldAlert className="w-5 h-5" />
+                  <span className="font-semibold">Compte temporairement verrouillé</span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-1">
+                  Trop de tentatives de connexion échouées ({lockoutInfo.failed_attempts} tentatives).
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Réessayez après{' '}
+                  <span className="font-medium text-foreground">
+                    {format(new Date(lockoutInfo.locked_until), 'HH:mm', { locale: fr })}
+                  </span>
+                  {' '}ou utilisez "Mot de passe oublié".
+                </p>
+              </div>
+            )}
             {suspensionInfo && (
               <div className="mb-4 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
                 <div className="flex items-center gap-2 text-destructive mb-2">
