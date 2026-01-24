@@ -171,6 +171,15 @@ function HistoriqueTab() {
   const fetchSessions = async () => {
     setLoading(true);
     try {
+      // Vérifier l'authentification
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Vous devez être connecté pour voir les horaires');
+        setSessions([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('work_sessions' as any)
         .select(`
@@ -182,7 +191,8 @@ function HistoriqueTab() {
           status,
           is_late,
           late_minutes,
-          total_work_minutes
+          actual_start_time,
+          actual_end_time
         `)
         .gte('work_date', startDate)
         .lte('work_date', endDate)
@@ -191,7 +201,13 @@ function HistoriqueTab() {
 
       if (error) {
         console.error('Error fetching sessions:', error);
-        toast.error('Erreur lors du chargement des horaires');
+        const errorMessage = error.message || 'Erreur inconnue';
+        // Vérifier si c'est un problème de permissions
+        if (error.code === 'PGRST301' || errorMessage.includes('permission') || errorMessage.includes('policy')) {
+          toast.error('Vous n\'avez pas les permissions nécessaires pour voir les horaires. Contactez un administrateur.');
+        } else {
+          toast.error(`Erreur lors du chargement des horaires: ${errorMessage}`);
+        }
         setSessions([]);
         return;
       }
@@ -213,15 +229,31 @@ function HistoriqueTab() {
         }
       }
 
-      const sessionsWithProfiles = (data || []).map((session: any) => ({
-        ...session,
-        profile: profiles.find((p: any) => p.id === session.user_id) || null,
-      }));
+      const sessionsWithProfiles = (data || []).map((session: any) => {
+        // Calculer total_work_minutes si manquant
+        let totalMinutes = session.total_work_minutes;
+        if (!totalMinutes && session.opened_at && session.closed_at) {
+          const opened = new Date(session.opened_at);
+          const closed = new Date(session.closed_at);
+          totalMinutes = Math.round((closed.getTime() - opened.getTime()) / (1000 * 60));
+        }
+        
+        return {
+          ...session,
+          total_work_minutes: totalMinutes,
+          profile: profiles.find((p: any) => p.id === session.user_id) || null,
+        };
+      });
 
       setSessions(sessionsWithProfiles as WorkSession[]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching sessions:', error);
-      toast.error('Erreur lors du chargement des horaires');
+      const errorMessage = error?.message || 'Erreur inconnue';
+      if (errorMessage.includes('permission') || errorMessage.includes('policy') || errorMessage.includes('RLS')) {
+        toast.error('Vous n\'avez pas les permissions nécessaires pour voir les horaires. Contactez un administrateur.');
+      } else {
+        toast.error(`Erreur lors du chargement des horaires: ${errorMessage}`);
+      }
       setSessions([]);
     } finally {
       setLoading(false);
@@ -450,6 +482,15 @@ function ParametresTab() {
   const fetchSchedules = async () => {
     setLoading(true);
     try {
+      // Vérifier l'authentification
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Vous devez être connecté pour voir les horaires');
+        setSchedules([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('work_schedule' as any)
         .select('*')
@@ -457,14 +498,24 @@ function ParametresTab() {
 
       if (error) {
         console.error('Error fetching schedules:', error);
-        toast.error(`Erreur lors du chargement des horaires: ${error.message}`);
+        // Vérifier si c'est un problème de permissions
+        if (error.code === 'PGRST301' || error.message?.includes('permission') || error.message?.includes('policy')) {
+          toast.error('Vous n\'avez pas les permissions nécessaires pour voir les horaires. Contactez un administrateur.');
+        } else {
+          toast.error(`Erreur lors du chargement des horaires: ${error.message || 'Erreur inconnue'}`);
+        }
         setSchedules([]);
         return;
       }
       setSchedules((data || []) as unknown as WorkScheduleType[]);
     } catch (error: any) {
       console.error('Error fetching schedules:', error);
-      toast.error(`Erreur lors du chargement des horaires: ${error.message || 'Erreur inconnue'}`);
+      const errorMessage = error?.message || 'Erreur inconnue';
+      if (errorMessage.includes('permission') || errorMessage.includes('policy') || errorMessage.includes('RLS')) {
+        toast.error('Vous n\'avez pas les permissions nécessaires pour voir les horaires. Contactez un administrateur.');
+      } else {
+        toast.error(`Erreur lors du chargement des horaires: ${errorMessage}`);
+      }
       setSchedules([]);
     } finally {
       setLoading(false);
@@ -656,6 +707,15 @@ function PresenceTab() {
   const fetchAttendance = async () => {
     setLoading(true);
     try {
+      // Vérifier l'authentification
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Vous devez être connecté pour voir les présences');
+        setAttendance([]);
+        setLoading(false);
+        return;
+      }
+
       let query = supabase
         .from('work_sessions' as any)
         .select('*')
@@ -676,7 +736,13 @@ function PresenceTab() {
 
       if (error) {
         console.error('Error fetching attendance:', error);
-        toast.error('Erreur lors du chargement des présences');
+        const errorMessage = error.message || 'Erreur inconnue';
+        if (error.code === 'PGRST301' || errorMessage.includes('permission') || errorMessage.includes('policy')) {
+          toast.error('Vous n\'avez pas les permissions nécessaires pour voir les présences. Contactez un administrateur.');
+        } else {
+          toast.error(`Erreur lors du chargement des présences: ${errorMessage}`);
+        }
+        setAttendance([]);
         return;
       }
 
@@ -698,15 +764,32 @@ function PresenceTab() {
         }
       }
 
-      const attendanceWithProfiles = (sessions || []).map((session: any) => ({
-        ...session,
-        profile: profiles?.find((p: any) => p.id === session.user_id) || null,
-      }));
+      const attendanceWithProfiles = (sessions || []).map((session: any) => {
+        // Calculer total_work_minutes si manquant
+        let totalMinutes = session.total_work_minutes;
+        if (!totalMinutes && session.opened_at && session.closed_at) {
+          const opened = new Date(session.opened_at);
+          const closed = new Date(session.closed_at);
+          totalMinutes = Math.round((closed.getTime() - opened.getTime()) / (1000 * 60));
+        }
+        
+        return {
+          ...session,
+          total_work_minutes: totalMinutes,
+          profile: profiles?.find((p: any) => p.id === session.user_id) || null,
+        };
+      });
 
       setAttendance(attendanceWithProfiles as any);
     } catch (error: any) {
       console.error('Error fetching attendance:', error);
-      toast.error('Erreur lors du chargement des présences');
+      const errorMessage = error?.message || 'Erreur inconnue';
+      if (errorMessage.includes('permission') || errorMessage.includes('policy') || errorMessage.includes('RLS')) {
+        toast.error('Vous n\'avez pas les permissions nécessaires pour voir les présences. Contactez un administrateur.');
+      } else {
+        toast.error(`Erreur lors du chargement des présences: ${errorMessage}`);
+      }
+      setAttendance([]);
     } finally {
       setLoading(false);
     }
@@ -898,6 +981,15 @@ function RapportsTab() {
   const fetchReports = async () => {
     setLoading(true);
     try {
+      // Vérifier l'authentification
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Vous devez être connecté pour voir les rapports');
+        setReports([]);
+        setLoading(false);
+        return;
+      }
+
       const [year, month] = selectedMonth.split('-');
       const startDate = format(startOfMonth(new Date(parseInt(year), parseInt(month) - 1)), 'yyyy-MM-dd');
       const endDate = format(endOfMonth(new Date(parseInt(year), parseInt(month) - 1)), 'yyyy-MM-dd');
@@ -910,7 +1002,13 @@ function RapportsTab() {
 
       if (sessionsError) {
         console.error('Error fetching sessions:', sessionsError);
-        toast.error('Erreur lors du chargement des rapports');
+        const errorMessage = sessionsError.message || 'Erreur inconnue';
+        if (sessionsError.code === 'PGRST301' || errorMessage.includes('permission') || errorMessage.includes('policy')) {
+          toast.error('Vous n\'avez pas les permissions nécessaires pour voir les rapports. Contactez un administrateur.');
+        } else {
+          toast.error(`Erreur lors du chargement des rapports: ${errorMessage}`);
+        }
+        setReports([]);
         return;
       }
 
@@ -937,6 +1035,15 @@ function RapportsTab() {
       sessions?.forEach((session: any) => {
         const userId = session.user_id;
         const profile = profiles?.find((p: any) => p.id === userId);
+        
+        // Calculer total_work_minutes si manquant
+        let totalMinutes = session.total_work_minutes;
+        if (!totalMinutes && session.opened_at && session.closed_at) {
+          const opened = new Date(session.opened_at);
+          const closed = new Date(session.closed_at);
+          totalMinutes = Math.round((closed.getTime() - opened.getTime()) / (1000 * 60));
+        }
+        
         if (!userMap.has(userId)) {
           userMap.set(userId, {
             user_id: userId,
@@ -962,7 +1069,7 @@ function RapportsTab() {
           report.days_absent++;
         }
         report.total_late_minutes += session.late_minutes || 0;
-        report.total_work_minutes += session.total_work_minutes || 0;
+        report.total_work_minutes += totalMinutes || 0;
       });
 
       userMap.forEach((report) => {
@@ -974,7 +1081,13 @@ function RapportsTab() {
       setReports(Array.from(userMap.values()));
     } catch (error: any) {
       console.error('Error fetching reports:', error);
-      toast.error('Erreur lors du chargement des rapports');
+      const errorMessage = error?.message || 'Erreur inconnue';
+      if (errorMessage.includes('permission') || errorMessage.includes('policy') || errorMessage.includes('RLS')) {
+        toast.error('Vous n\'avez pas les permissions nécessaires pour voir les rapports. Contactez un administrateur.');
+      } else {
+        toast.error(`Erreur lors du chargement des rapports: ${errorMessage}`);
+      }
+      setReports([]);
     } finally {
       setLoading(false);
     }
