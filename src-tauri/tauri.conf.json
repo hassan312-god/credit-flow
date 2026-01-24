@@ -27,6 +27,7 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": [
       "app",
       "dmg",
@@ -82,6 +83,14 @@
       "desktop": {
         "schemes": ["nfa-ka-serum"]
       }
+    },
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/hassan312-god/credit-flow/releases/latest/download/latest.json"
+      ],
+      "dialog": true,
+      "pubkey": "PASTE_PUBLIC_KEY_HERE"
     }
   }
 }

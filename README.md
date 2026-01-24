@@ -352,6 +352,18 @@ Génère les installateurs pour votre OS actuel.
 
 Pour automatiser les builds multi-plateformes, utilisez GitHub Actions ou un service CI/CD.
 
+#### Mises à jour automatiques
+
+L'application supporte les mises à jour automatiques via GitHub Releases. Consultez [AUTO_UPDATE_SETUP.md](./AUTO_UPDATE_SETUP.md) pour la configuration complète.
+
+**Configuration rapide** :
+1. Générer les clés : `npm run tauri signer generate -w ~/.tauri/myapp.key`
+2. Ajouter la clé publique dans `tauri.conf.json`
+3. Configurer les secrets GitHub (`TAURI_SIGNING_PRIVATE_KEY`)
+4. Créer un tag : `git tag v1.0.0 && git push origin v1.0.0`
+
+Le workflow créera automatiquement une release avec les builds pour tous les OS.
+
 #### Build avec GitHub Actions (Recommandé)
 
 Des workflows GitHub Actions sont configurés pour builder automatiquement l'application :

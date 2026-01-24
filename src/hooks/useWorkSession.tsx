@@ -70,13 +70,43 @@ export function useWorkSession() {
     if (!user) return { error: 'User not authenticated' };
 
     try {
+      // Vérifier d'abord si une session existe déjà pour aujourd'hui
+      const { data: existingSession, error: checkError } = await supabase
+        .from('work_sessions' as any)
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('work_date', today)
+        .maybeSingle();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
+        throw checkError;
+      }
+
+      // Si une session existe déjà et est fermée, on ne peut pas la rouvrir
+      if (existingSession && existingSession.status === 'closed') {
+        return { error: 'Une session fermée existe déjà pour aujourd\'hui. Vous ne pouvez pas en créer une nouvelle.' };
+      }
+
+      // Si une session ouverte existe déjà, on la retourne
+      if (existingSession && existingSession.status === 'open') {
+        setWorkSession(existingSession as unknown as WorkSession);
+        setIsOpen(true);
+        return { error: null };
+      }
+
+      // Sinon, créer une nouvelle session avec upsert pour éviter les doublons
       const { data, error } = await supabase
         .from('work_sessions' as any)
-        .insert({
+        .upsert({
           user_id: user.id,
           work_date: today,
           initial_cash: initialCash,
           notes: notes || null,
+          status: 'open',
+          closed_at: null,
+        }, {
+          onConflict: 'user_id,work_date',
+          ignoreDuplicates: false
         })
         .select()
         .single();
@@ -88,6 +118,12 @@ export function useWorkSession() {
       return { error: null };
     } catch (error: any) {
       console.error('Error opening work session:', error);
+      
+      // Gérer spécifiquement l'erreur de contrainte unique
+      if (error.code === '23505' || error.message?.includes('unique constraint')) {
+        return { error: 'Une session existe déjà pour aujourd\'hui. Veuillez fermer la session existante avant d\'en créer une nouvelle.' };
+      }
+      
       return { error: error.message || 'Erreur lors de l\'ouverture de la journée' };
     }
   };

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { 
   Settings as SettingsIcon, 
   Building2, 
@@ -18,7 +19,9 @@ import {
   AlertCircle,
   Download,
   FileText,
-  FileSpreadsheet
+  FileSpreadsheet,
+  RefreshCw,
+  CheckCircle2
 } from 'lucide-react';
 import { exportToPDF, exportToXLSX } from '@/utils/exportUtils';
 import { maskSensitiveData, logExportActivity, SENSITIVE_FIELDS } from '@/utils/dataExportUtils';
@@ -33,6 +36,20 @@ export default function Settings() {
   const { role } = useAuth();
   const [loading, setLoading] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(true);
+  
+  // Updater hook (uniquement disponible dans l'app Tauri)
+  const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+  let updater: any = null;
+  
+  if (isTauri) {
+    try {
+      // Import dynamique pour éviter les erreurs en mode web
+      const updaterModule = require('@/hooks/useUpdater');
+      updater = updaterModule.useUpdater();
+    } catch (e) {
+      console.warn('Updater not available:', e);
+    }
+  }
   
   // Paramètres généraux
   const [companyName, setCompanyName] = useState('N\'FA KA SÉRUM');

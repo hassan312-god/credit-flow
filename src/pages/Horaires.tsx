@@ -448,6 +448,7 @@ function ParametresTab() {
   }, [loading, schedules.length]);
 
   const fetchSchedules = async () => {
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('work_schedule' as any)
@@ -456,13 +457,15 @@ function ParametresTab() {
 
       if (error) {
         console.error('Error fetching schedules:', error);
-        toast.error('Erreur lors du chargement des horaires');
+        toast.error(`Erreur lors du chargement des horaires: ${error.message}`);
+        setSchedules([]);
         return;
       }
       setSchedules((data || []) as unknown as WorkScheduleType[]);
     } catch (error: any) {
       console.error('Error fetching schedules:', error);
-      toast.error('Erreur lors du chargement des horaires');
+      toast.error(`Erreur lors du chargement des horaires: ${error.message || 'Erreur inconnue'}`);
+      setSchedules([]);
     } finally {
       setLoading(false);
     }
