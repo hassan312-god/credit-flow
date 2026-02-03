@@ -599,6 +599,13 @@ export type Database = {
     }
     Functions: {
       cleanup_old_login_attempts: { Args: never; Returns: undefined }
+      get_lockout_settings: {
+        Args: never
+        Returns: {
+          lockout_duration: number
+          max_attempts: number
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

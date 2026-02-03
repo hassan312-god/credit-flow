@@ -82,14 +82,17 @@ export function useWorkSession() {
         throw checkError;
       }
 
+      // Cast pour accéder aux propriétés
+      const session = existingSession as any;
+
       // Si une session existe déjà et est fermée, on ne peut pas la rouvrir
-      if (existingSession && existingSession.status === 'closed') {
+      if (session && session.status === 'closed') {
         return { error: 'Une session fermée existe déjà pour aujourd\'hui. Vous ne pouvez pas en créer une nouvelle.' };
       }
 
       // Si une session ouverte existe déjà, on la retourne
-      if (existingSession && existingSession.status === 'open') {
-        setWorkSession(existingSession as unknown as WorkSession);
+      if (session && session.status === 'open') {
+        setWorkSession(session as WorkSession);
         setIsOpen(true);
         return { error: null };
       }
