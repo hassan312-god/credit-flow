@@ -33,8 +33,7 @@
       "dmg",
       "appimage",
       "deb",
-      "msi",
-      "nsis"
+      "msi"
     ],
     "icon": [
       "icons/32x32.png",
@@ -90,7 +89,7 @@
         "https://github.com/hassan312-god/credit-flow/releases/latest/download/latest.json"
       ],
       "dialog": true,
-      "pubkey": "PASTE_PUBLIC_KEY_HERE"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlBQURBMzU0RUM0NkJFOTAKUldTUXZrYnNWS090bWhZZXl3b0dPSGhsQitJUEZsMlFTNy92RFlza1Z5Z0xlZUkwTjNJNis2K1cK"
     }
   }
 }

@@ -60,6 +60,9 @@ export default defineConfig(({ mode }) => ({
         },
       },
     },
-    chunkSizeWarningLimit: 1000, // Augmenter la limite à 1MB
+    chunkSizeWarningLimit: 1500, // Augmenter la limite pour éviter les warnings
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom'],
   },
 }));
