@@ -36,13 +36,13 @@ const menuItems = [
     path: '/clients', 
     icon: Users, 
     label: 'Clients',
-    roles: ['admin', 'directeur', 'agent_credit']
+    roles: ['directeur', 'agent_credit'] // Admin ne voit pas clients
   },
   { 
     path: '/prets', 
     icon: FileText, 
     label: 'Prêts',
-    roles: ['admin', 'directeur', 'agent_credit', 'caissier', 'recouvrement']
+    roles: ['directeur', 'agent_credit', 'caissier', 'recouvrement'] // Admin ne voit pas prêts
   },
   { 
     path: '/reports', 
@@ -60,7 +60,7 @@ const menuItems = [
     path: '/company-funds', 
     icon: Wallet, 
     label: 'Fond de l\'entreprise',
-    roles: ['admin', 'directeur']
+    roles: ['directeur'] // Admin ne voit pas fonds
   },
   { 
     path: '/settings', 

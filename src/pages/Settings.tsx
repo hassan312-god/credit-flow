@@ -67,6 +67,10 @@ export default function Settings() {
   const [requireStrongPassword, setRequireStrongPassword] = useState(true);
   const [twoFactorAuth, setTwoFactorAuth] = useState(false);
   
+  // Paramètres de verrouillage de compte
+  const [lockoutMaxAttempts, setLockoutMaxAttempts] = useState('5');
+  const [lockoutDuration, setLockoutDuration] = useState('15');
+  
   // Paramètres de l'application
   const [autoBackup, setAutoBackup] = useState(true);
   const [backupFrequency, setBackupFrequency] = useState('daily');
@@ -110,6 +114,14 @@ export default function Settings() {
           if (settingsMap.has('max_file_size')) {
             const value = settingsMap.get('max_file_size');
             setMaxFileSize(typeof value === 'number' ? String(value) : String(value || '10'));
+          }
+          if (settingsMap.has('lockout_max_attempts')) {
+            const value = settingsMap.get('lockout_max_attempts');
+            setLockoutMaxAttempts(typeof value === 'number' ? String(value) : String(value || '5'));
+          }
+          if (settingsMap.has('lockout_duration_minutes')) {
+            const value = settingsMap.get('lockout_duration_minutes');
+            setLockoutDuration(typeof value === 'number' ? String(value) : String(value || '15'));
           }
         }
       } catch (error) {
@@ -155,6 +167,8 @@ export default function Settings() {
         { key: 'auto_backup', value: autoBackup },
         { key: 'backup_frequency', value: backupFrequency },
         { key: 'max_file_size', value: maxFileSize },
+        { key: 'lockout_max_attempts', value: parseInt(lockoutMaxAttempts) },
+        { key: 'lockout_duration_minutes', value: parseInt(lockoutDuration) },
       ];
 
       // Sauvegarder chaque paramètre (upsert)
@@ -389,6 +403,42 @@ export default function Settings() {
                   checked={twoFactorAuth}
                   onCheckedChange={setTwoFactorAuth}
                 />
+              </div>
+              <Separator />
+              <div className="space-y-2">
+                <Label htmlFor="lockout-attempts">Verrouillage après tentatives échouées</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Nombre de tentatives avant verrouillage du compte
+                </p>
+                <Select value={lockoutMaxAttempts} onValueChange={setLockoutMaxAttempts}>
+                  <SelectTrigger id="lockout-attempts">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">3 tentatives</SelectItem>
+                    <SelectItem value="5">5 tentatives</SelectItem>
+                    <SelectItem value="10">10 tentatives</SelectItem>
+                    <SelectItem value="15">15 tentatives</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lockout-duration">Durée de verrouillage</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Durée pendant laquelle le compte reste verrouillé
+                </p>
+                <Select value={lockoutDuration} onValueChange={setLockoutDuration}>
+                  <SelectTrigger id="lockout-duration">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5 minutes</SelectItem>
+                    <SelectItem value="15">15 minutes</SelectItem>
+                    <SelectItem value="30">30 minutes</SelectItem>
+                    <SelectItem value="60">1 heure</SelectItem>
+                    <SelectItem value="120">2 heures</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
