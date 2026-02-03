@@ -1,0 +1,63 @@
+name: Build macOS
+
+# Désactivé temporairement - uniquement build Windows
+on:
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
+  #   tags:
+  #     - 'v*'
+  # pull_request:
+  #   branches:
+  #     - main
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Verify icons exist
+        run: |
+          ls -la src-tauri/icons/
+          file src-tauri/icons/*.png || true
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+      
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 'src-tauri -> target'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build frontend
+        run: npm run build
+      
+      - name: Build Tauri app (Apple Silicon)
+        run: npm run tauri:build:macos
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build
+          path: |
+            src-tauri/target/aarch64-apple-darwin/release/bundle/**/*.dmg
+            src-tauri/target/aarch64-apple-darwin/release/bundle/**/*.app
+          retention-days: 30

@@ -1,0 +1,77 @@
+name: Build Linux
+
+# Désactivé temporairement - uniquement build Windows
+on:
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
+  #   tags:
+  #     - 'v*'
+  # pull_request:
+  #   branches:
+  #     - main
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-22.04
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Verify icons exist
+        run: |
+          ls -la src-tauri/icons/
+          file src-tauri/icons/*.png || true
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+      
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 'src-tauri -> target'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build frontend
+        run: npm run build
+      
+      - name: Build Tauri app
+        run: npm run tauri:build:linux
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: |
+            src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/**/*.deb
+            src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/**/*.AppImage
+          retention-days: 30

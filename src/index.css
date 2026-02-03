@@ -1,0 +1,408 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Primary - Deep Navy Blue */
+    --background: 220 20% 97%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Primary - Professional Navy */
+    --primary: 222 47% 20%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Secondary - Slate Gray */
+    --secondary: 215 20% 93%;
+    --secondary-foreground: 222 47% 20%;
+
+    /* Muted - Light Gray */
+    --muted: 215 20% 95%;
+    --muted-foreground: 215 16% 47%;
+
+    /* Accent - Teal/Emerald for positive actions */
+    --accent: 160 84% 39%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive - Warm Red */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Warning - Amber */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Success - Emerald */
+    --success: 160 84% 39%;
+    --success-foreground: 0 0% 100%;
+
+    /* Info - Blue */
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 222 47% 20%;
+
+    --radius: 0.625rem;
+
+    /* Sidebar */
+    --sidebar-background: 222 47% 14%;
+    --sidebar-foreground: 210 40% 95%;
+    --sidebar-primary: 160 84% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 47% 20%;
+    --sidebar-accent-foreground: 210 40% 95%;
+    --sidebar-border: 222 30% 22%;
+    --sidebar-ring: 160 84% 45%;
+
+    /* Custom gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(222 47% 14%) 0%, hsl(222 47% 24%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(160 84% 39%) 0%, hsl(160 84% 50%) 100%);
+    --gradient-warning: linear-gradient(135deg, hsl(38 92% 50%) 0%, hsl(45 93% 55%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 20% 98%) 100%);
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(222 47% 11% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(222 47% 11% / 0.1), 0 2px 4px -2px hsl(222 47% 11% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.1), 0 4px 6px -4px hsl(222 47% 11% / 0.1);
+    --shadow-glow: 0 0 20px hsl(160 84% 39% / 0.3);
+  }
+
+  .dark {
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 160 84% 45%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 217 32% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 32% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 160 84% 45%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 32% 20%;
+    --input: 217 32% 20%;
+    --ring: 160 84% 45%;
+
+    --sidebar-background: 222 47% 6%;
+    --sidebar-foreground: 210 40% 95%;
+    --sidebar-primary: 160 84% 45%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 222 47% 14%;
+    --sidebar-accent-foreground: 210 40% 95%;
+    --sidebar-border: 222 47% 14%;
+    --sidebar-ring: 160 84% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    @apply font-semibold tracking-tight;
+  }
+
+  /* Global Scrollbar Styles - Fine, discrete, modern scrollbars */
+  /* Webkit browsers (Chrome, Edge, Safari) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: hsl(220 13% 60% / 0.3);
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(220 13% 60% / 0.5);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(220 13% 60% / 0.3) transparent;
+  }
+}
+
+@layer components {
+  .stat-card {
+    @apply bg-card rounded-xl p-6 border border-border shadow-sm transition-all duration-200 hover:shadow-md;
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200;
+  }
+
+  .sidebar-item-active {
+    @apply bg-sidebar-accent text-sidebar-foreground font-medium;
+  }
+
+  .table-header {
+    @apply bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-medium;
+  }
+
+  .status-badge {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  .status-pending {
+    @apply bg-warning/10 text-warning border border-warning/20;
+  }
+
+  .status-approved {
+    @apply bg-success/10 text-success border border-success/20;
+  }
+
+  .status-rejected {
+    @apply bg-destructive/10 text-destructive border border-destructive/20;
+  }
+
+  .status-active {
+    @apply bg-info/10 text-info border border-info/20;
+  }
+
+  .input-label {
+    @apply text-sm font-medium text-foreground mb-1.5 block;
+  }
+
+  .card-gradient {
+    background: var(--gradient-card);
+  }
+
+  /* Custom Scrollbar Class - Pour les éléments avec overflow-y-auto */
+  .custom-scrollbar {
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: hsl(220 13% 60% / 0.3) transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: hsl(220 13% 60% / 0.3);
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(220 13% 60% / 0.5);
+  }
+
+  /* Sidebar Scrollbar Styles - Fine, discrete, dark scrollbar */
+  .sidebar-scrollbar {
+    /* Firefox - Fine scrollbar, discrète */
+    scrollbar-width: thin;
+    scrollbar-color: hsl(222 30% 25% / 0.3) transparent;
+  }
+
+  /* Webkit browsers (Chrome, Edge, Safari) */
+  .sidebar-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background-color: hsl(222 30% 25% / 0.3);
+    border-radius: 3px;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(222 30% 30% / 0.6);
+  }
+
+  /* Rendre la scrollbar plus visible au survol de la sidebar */
+  .sidebar-container:hover .sidebar-scrollbar {
+    scrollbar-color: hsl(222 30% 25% / 0.5) transparent; /* Firefox */
+  }
+
+  .sidebar-container:hover .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background-color: hsl(222 30% 25% / 0.5);
+  }
+
+  .sidebar-container:hover .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(222 30% 30% / 0.7);
+  }
+
+  /* Mobile Table Scroll Optimization */
+  .table-scroll-wrapper {
+    @apply overflow-x-auto -mx-4 md:mx-0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(220 13% 60% / 0.3) transparent;
+  }
+
+  .table-scroll-wrapper::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .table-scroll-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .table-scroll-wrapper::-webkit-scrollbar-thumb {
+    background-color: hsl(220 13% 60% / 0.3);
+    border-radius: 3px;
+  }
+
+  .table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(220 13% 60% / 0.5);
+  }
+
+  /* Mobile responsive improvements */
+  @media (max-width: 768px) {
+    /* Améliorer le touch target sur mobile */
+    button, a {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* Optimiser les inputs sur mobile */
+    input, textarea, select {
+      font-size: 16px; /* Évite le zoom automatique sur iOS */
+    }
+
+    /* Safe area pour les iPhones avec notch */
+    .safe-area-top {
+      padding-top: env(safe-area-inset-top);
+    }
+
+    .safe-area-bottom {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* Améliorer les cartes sur mobile */
+    .stat-card {
+      @apply p-4;
+    }
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-accent);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { 
+      opacity: 0; 
+      transform: translateY(10px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+
+  @keyframes scaleIn {
+    from { 
+      opacity: 0; 
+      transform: scale(0.95); 
+    }
+    to { 
+      opacity: 1; 
+      transform: scale(1); 
+    }
+  }
+
+  /* Mobile Safe Area Utilities */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pl-safe {
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+
+  .pr-safe {
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  /* Touch optimizations for mobile */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Prevent overscroll bounce on iOS */
+  html, body {
+    overscroll-behavior: none;
+  }
+
+  /* Smooth momentum scrolling on iOS */
+  .scroll-smooth-ios {
+    -webkit-overflow-scrolling: touch;
+  }
+}

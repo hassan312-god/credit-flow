@@ -1,0 +1,31 @@
+name: Fix Icons
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify-icons:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check icons
+        run: |
+          echo "Checking icons directory..."
+          ls -la src-tauri/icons/ || echo "Icons directory not found"
+          
+          echo "Checking individual files..."
+          for file in src-tauri/icons/*.png; do
+            if [ -f "$file" ]; then
+              echo "Checking $file"
+              file "$file" || echo "File command failed for $file"
+              identify "$file" 2>/dev/null || echo "ImageMagick not available, skipping identify"
+            fi
+          done
+          
+          echo "PNG files found:"
+          find src-tauri/icons -name "*.png" -type f
+          
+          echo "File sizes:"
+          du -h src-tauri/icons/*.png 2>/dev/null || echo "No PNG files found"

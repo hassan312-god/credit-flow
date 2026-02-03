@@ -1,0 +1,110 @@
+name: Build All Platforms
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+  release:
+    types: [published]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'windows-latest'
+            target: 'x86_64-pc-windows-msvc'
+            build-command: 'npm run tauri:build:windows'
+            artifact-name: 'windows-build'
+            artifact-path: |
+              src-tauri/target/x86_64-pc-windows-msvc/release/bundle/**/*.msi
+              src-tauri/target/x86_64-pc-windows-msvc/release/bundle/**/*.exe
+          - platform: 'macos-latest'
+            target: 'aarch64-apple-darwin'
+            build-command: 'npm run tauri:build:macos'
+            artifact-name: 'macos-build'
+            artifact-path: |
+              src-tauri/target/aarch64-apple-darwin/release/bundle/**/*.dmg
+              src-tauri/target/aarch64-apple-darwin/release/bundle/**/*.app
+          - platform: 'ubuntu-22.04'
+            target: 'x86_64-unknown-linux-gnu'
+            build-command: 'npm run tauri:build:linux'
+            artifact-name: 'linux-build'
+            artifact-path: |
+              src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/**/*.deb
+              src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/**/*.AppImage
+    
+    runs-on: ${{ matrix.platform }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Verify icons exist (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: cmd
+        run: |
+          dir src-tauri\icons\
+          if not exist src-tauri\icons\32x32.png (exit /b 1)
+      
+      - name: Verify icons exist (Linux/macOS)
+        if: matrix.platform != 'windows-latest'
+        shell: bash
+        run: |
+          ls -la src-tauri/icons/
+          test -f src-tauri/icons/32x32.png || exit 1
+          test -f src-tauri/icons/128x128.png || exit 1
+      
+      - name: Install system dependencies (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 'src-tauri -> target'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build frontend
+        run: npm run build
+      
+      - name: Build Tauri app
+        run: ${{ matrix.build-command }}
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: ${{ matrix.artifact-path }}
+          retention-days: 30
