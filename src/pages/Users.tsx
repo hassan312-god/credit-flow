@@ -325,8 +325,13 @@ export default function Users() {
         },
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Erreur lors de la création de l\'utilisateur');
+      if (authError) {
+        console.error('Auth error:', authError);
+        throw new Error(`Erreur d'authentification: ${authError.message}`);
+      }
+      if (!authData.user) {
+        throw new Error('Erreur lors de la création de l\'utilisateur: aucune donnée utilisateur retournée');
+      }
 
       // Wait a bit for the trigger to create the profile
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -340,6 +345,7 @@ export default function Users() {
 
         if (profileError) {
           console.error('Error updating profile:', profileError);
+          // Continue anyway - phone is optional
         }
       }
 
@@ -351,7 +357,16 @@ export default function Users() {
           role: newUser.role as AppRole,
         });
 
-      if (roleError) throw roleError;
+      if (roleError) {
+        console.error('Error assigning role:', roleError);
+        // Clean up the created user since role assignment failed
+        try {
+          await supabase.auth.admin.deleteUser(authData.user.id);
+        } catch (cleanupError) {
+          console.error('Error cleaning up user:', cleanupError);
+        }
+        throw new Error('Erreur lors de l\'attribution du rôle: ' + roleError.message);
+      }
 
       toast.success('Utilisateur créé avec succès');
       setCreateDialogOpen(false);
@@ -365,10 +380,24 @@ export default function Users() {
       fetchUsers();
     } catch (error: any) {
       console.error('Error creating user:', error);
-      if (error.message.includes('already registered') || error.message.includes('already exists')) {
+      
+      // Handle specific error cases
+      if (error.message?.includes('already registered') || error.message?.includes('already exists')) {
         toast.error('Cet email est déjà utilisé');
+      } else if (error.message?.includes('Password should be at least')) {
+        toast.error('Le mot de passe doit contenir au moins 6 caractères');
+      } else if (error.message?.includes('Invalid email')) {
+        toast.error('L\'adresse email n\'est pas valide');
+      } else if (error.message?.includes('User registration not allowed')) {
+        toast.error('L\'enregistrement d\'utilisateurs n\'est pas autorisé');
+      } else if (error.code === 'auth/email-already-in-use') {
+        toast.error('Cet email est déjà utilisé');
+      } else if (error.code === 'auth/weak-password') {
+        toast.error('Le mot de passe est trop faible');
+      } else if (error.code === 'auth/invalid-email') {
+        toast.error('L\'adresse email n\'est pas valide');
       } else {
-        toast.error('Erreur lors de la création de l\'utilisateur');
+        toast.error(`Erreur lors de la création de l'utilisateur: ${error.message || 'Erreur inconnue'}`);
       }
     } finally {
       setCreating(false);
