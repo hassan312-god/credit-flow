@@ -313,59 +313,30 @@ export default function Users() {
 
     setCreating(true);
     try {
-      // Create user in auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newUser.email,
-        password: newUser.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: newUser.full_name,
+      // Use edge function to create user with admin API (auto-confirms email)
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
           },
-        },
-      });
-
-      if (authError) {
-        console.error('Auth error:', authError);
-        throw new Error(`Erreur d'authentification: ${authError.message}`);
-      }
-      if (!authData.user) {
-        throw new Error('Erreur lors de la création de l\'utilisateur: aucune donnée utilisateur retournée');
-      }
-
-      // Wait a bit for the trigger to create the profile
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Update profile with phone if provided
-      if (newUser.phone) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ phone: newUser.phone })
-          .eq('id', authData.user.id);
-
-        if (profileError) {
-          console.error('Error updating profile:', profileError);
-          // Continue anyway - phone is optional
+          body: JSON.stringify({
+            action: 'create_user',
+            email: newUser.email,
+            password: newUser.password,
+            fullName: newUser.full_name,
+            phone: newUser.phone || null,
+            role: newUser.role,
+          }),
         }
-      }
+      );
 
-      // Assign role
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: authData.user.id,
-          role: newUser.role as AppRole,
-        });
+      const responseData = await response.json();
 
-      if (roleError) {
-        console.error('Error assigning role:', roleError);
-        // Clean up the created user since role assignment failed
-        try {
-          await supabase.auth.admin.deleteUser(authData.user.id);
-        } catch (cleanupError) {
-          console.error('Error cleaning up user:', cleanupError);
-        }
-        throw new Error('Erreur lors de l\'attribution du rôle: ' + roleError.message);
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Erreur lors de la création');
       }
 
       toast.success('Utilisateur créé avec succès');
@@ -380,25 +351,7 @@ export default function Users() {
       fetchUsers();
     } catch (error: any) {
       console.error('Error creating user:', error);
-      
-      // Handle specific error cases
-      if (error.message?.includes('already registered') || error.message?.includes('already exists')) {
-        toast.error('Cet email est déjà utilisé');
-      } else if (error.message?.includes('Password should be at least')) {
-        toast.error('Le mot de passe doit contenir au moins 6 caractères');
-      } else if (error.message?.includes('Invalid email')) {
-        toast.error('L\'adresse email n\'est pas valide');
-      } else if (error.message?.includes('User registration not allowed')) {
-        toast.error('L\'enregistrement d\'utilisateurs n\'est pas autorisé');
-      } else if (error.code === 'auth/email-already-in-use') {
-        toast.error('Cet email est déjà utilisé');
-      } else if (error.code === 'auth/weak-password') {
-        toast.error('Le mot de passe est trop faible');
-      } else if (error.code === 'auth/invalid-email') {
-        toast.error('L\'adresse email n\'est pas valide');
-      } else {
-        toast.error(`Erreur lors de la création de l'utilisateur: ${error.message || 'Erreur inconnue'}`);
-      }
+      toast.error(error.message || 'Erreur lors de la création de l\'utilisateur');
     } finally {
       setCreating(false);
     }

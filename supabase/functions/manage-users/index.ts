@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 Deno.serve(async (req) => {
@@ -42,21 +42,123 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if current user is admin
+    // Check if current user is admin or directeur
     const { data: roleData } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
       .single();
 
-    if (roleData?.role !== 'admin') {
+    const isAdmin = roleData?.role === 'admin';
+    const isDirecteur = roleData?.role === 'directeur';
+    const canManageUsers = isAdmin || isDirecteur;
+
+    if (!canManageUsers) {
       return new Response(
-        JSON.stringify({ error: 'Seul un administrateur peut effectuer cette action' }),
+        JSON.stringify({ error: 'Vous n\'avez pas les permissions nécessaires' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const { action, userId, newPassword, suspendUntil, suspendReason } = await req.json();
+    const { action, userId, newPassword, suspendUntil, suspendReason, email, password, fullName, phone, role } = await req.json();
+
+    // Handle create_user action - no userId required
+    if (action === 'create_user') {
+      if (!email || !password || !fullName || !role) {
+        return new Response(
+          JSON.stringify({ error: 'Email, mot de passe, nom complet et rôle sont requis' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (password.length < 6) {
+        return new Response(
+          JSON.stringify({ error: 'Le mot de passe doit contenir au moins 6 caractères' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Directeurs cannot create admins
+      if (!isAdmin && role === 'admin') {
+        return new Response(
+          JSON.stringify({ error: 'Seul un administrateur peut créer un compte administrateur' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Create user with admin API - email is automatically confirmed
+      const { data: newUserData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email: email,
+        password: password,
+        email_confirm: true, // Auto-confirm email
+        user_metadata: {
+          full_name: fullName,
+        },
+      });
+
+      if (createError) {
+        console.error('Error creating user:', createError);
+        if (createError.message?.includes('already registered') || createError.message?.includes('already exists')) {
+          return new Response(
+            JSON.stringify({ error: 'Cet email est déjà utilisé' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        return new Response(
+          JSON.stringify({ error: 'Erreur lors de la création de l\'utilisateur: ' + createError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!newUserData.user) {
+        return new Response(
+          JSON.stringify({ error: 'Erreur lors de la création de l\'utilisateur' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Wait for trigger to create profile
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Update profile with phone if provided
+      if (phone) {
+        await supabaseAdmin
+          .from('profiles')
+          .update({ phone: phone })
+          .eq('id', newUserData.user.id);
+      }
+
+      // Assign role
+      const { error: roleError } = await supabaseAdmin
+        .from('user_roles')
+        .insert({
+          user_id: newUserData.user.id,
+          role: role,
+        });
+
+      if (roleError) {
+        console.error('Error assigning role:', roleError);
+        // Clean up the created user since role assignment failed
+        await supabaseAdmin.auth.admin.deleteUser(newUserData.user.id);
+        return new Response(
+          JSON.stringify({ error: 'Erreur lors de l\'attribution du rôle' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: 'Utilisateur créé avec succès', userId: newUserData.user.id }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // For other actions, userId is required
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: 'userId est requis pour cette action' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Cannot manage own account
     if (userId === user.id) {
@@ -66,12 +168,28 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if target user is admin - admins cannot be managed by other admins
+    // Check if target user is admin - only admins can manage admins
     const { data: targetRoleData } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', userId)
       .single();
+
+    // Directors cannot manage admins
+    if (!isAdmin && targetRoleData?.role === 'admin') {
+      return new Response(
+        JSON.stringify({ error: 'Vous n\'avez pas les permissions pour gérer un administrateur' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Only admins can delete, change password, suspend
+    if (!isAdmin && (action === 'delete' || action === 'update_password' || action === 'suspend' || action === 'unsuspend')) {
+      return new Response(
+        JSON.stringify({ error: 'Seul un administrateur peut effectuer cette action' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (targetRoleData?.role === 'admin' && action === 'delete') {
       return new Response(
