@@ -32,38 +32,39 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // Séparer les grandes bibliothèques
+          // Simplifié pour éviter les dépendances circulaires
           if (id.includes('node_modules')) {
+            // React et écosystème - chunk séparé
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
               return 'react-vendor';
             }
-            if (id.includes('@radix-ui')) {
-              return 'ui-vendor';
-            }
+            // Bibliothèques volumineuses - chunks séparés
             if (id.includes('recharts')) {
               return 'chart-vendor';
             }
             if (id.includes('@supabase')) {
               return 'supabase-vendor';
             }
-            if (id.includes('@tanstack/react-query')) {
-              return 'query-vendor';
-            }
             if (id.includes('jspdf') || id.includes('exceljs') || id.includes('html2canvas')) {
               return 'export-vendor';
             }
-            if (id.includes('date-fns')) {
-              return 'date-vendor';
-            }
-            // Autres dépendances node_modules
+            // Tout le reste dans vendor pour éviter les circularités
             return 'vendor';
           }
         },
       },
     },
-    chunkSizeWarningLimit: 1500, // Augmenter la limite pour éviter les warnings
+    chunkSizeWarningLimit: 2000,
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom'],
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@tanstack/react-query',
+      'recharts',
+      'date-fns'
+    ],
+    force: true,
   },
 }));
