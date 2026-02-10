@@ -174,18 +174,7 @@ function HistoriqueTab() {
 
       const { data, error } = await supabase
         .from('work_sessions' as any)
-        .select(`
-          id,
-          user_id,
-          work_date,
-          opened_at,
-          closed_at,
-          status,
-          is_late,
-          late_minutes,
-          actual_start_time,
-          actual_end_time
-        `)
+        .select('id, user_id, work_date, opened_at, closed_at')
         .gte('work_date', startDate)
         .lte('work_date', endDate)
         .order('work_date', { ascending: false })
@@ -194,7 +183,6 @@ function HistoriqueTab() {
       if (error) {
         console.error('Error fetching sessions:', error);
         const errorMessage = error.message || 'Erreur inconnue';
-        // Vérifier si c'est un problème de permissions
         if (error.code === 'PGRST301' || errorMessage.includes('permission') || errorMessage.includes('policy')) {
           toast.error('Vous n\'avez pas les permissions nécessaires pour voir les horaires. Contactez un administrateur.');
         } else {
@@ -206,13 +194,11 @@ function HistoriqueTab() {
 
       const userIds = [...new Set((data || []).map((s: any) => s.user_id))];
       let profiles: any[] = [];
-      
       if (userIds.length > 0) {
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('id, full_name, email')
           .in('id', userIds);
-        
         if (profilesError) {
           console.error('Error fetching profiles:', profilesError);
           toast.error('Erreur lors du chargement des profils');
@@ -221,18 +207,25 @@ function HistoriqueTab() {
         }
       }
 
+      const timeFromIso = (iso: string | null) => iso ? new Date(iso).toTimeString().slice(0, 8) : null;
       const sessionsWithProfiles = (data || []).map((session: any) => {
-        // Calculer total_work_minutes si manquant
         let totalMinutes = session.total_work_minutes;
         if (!totalMinutes && session.opened_at && session.closed_at) {
           const opened = new Date(session.opened_at);
           const closed = new Date(session.closed_at);
           totalMinutes = Math.round((closed.getTime() - opened.getTime()) / (1000 * 60));
         }
-        
+        const status = session.closed_at ? 'closed' : 'open';
         return {
           ...session,
+          status,
+          is_late: session.is_late ?? null,
+          late_minutes: session.late_minutes ?? null,
           total_work_minutes: totalMinutes,
+          actual_start_time: timeFromIso(session.opened_at),
+          actual_end_time: timeFromIso(session.closed_at),
+          scheduled_start_time: session.scheduled_start_time ?? null,
+          scheduled_end_time: session.scheduled_end_time ?? null,
           profile: profiles.find((p: any) => p.id === session.user_id) || null,
         };
       });
@@ -710,7 +703,7 @@ function PresenceTab() {
 
       let query = supabase
         .from('work_sessions' as any)
-        .select('*')
+        .select('id, user_id, work_date, opened_at, closed_at')
         .order('work_date', { ascending: false })
         .order('opened_at', { ascending: false });
 
@@ -740,33 +733,31 @@ function PresenceTab() {
 
       const userIds = [...new Set((sessions || []).map((s: any) => s.user_id))];
       let profiles: any[] = [];
-      
       if (userIds.length > 0) {
         try {
           const { data: profilesData, error: profilesError } = await supabase
             .from('profiles')
             .select('id, full_name, email')
             .in('id', userIds);
-          
-          if (!profilesError && profilesData) {
-            profiles = profilesData;
-          }
+          if (!profilesError && profilesData) profiles = profilesData;
         } catch (profilesErr) {
           console.warn('Could not fetch profiles (may be offline):', profilesErr);
         }
       }
 
+      const timeFromIso = (iso: string | null) => iso ? new Date(iso).toTimeString().slice(0, 8) : null;
       const attendanceWithProfiles = (sessions || []).map((session: any) => {
-        // Calculer total_work_minutes si manquant
         let totalMinutes = session.total_work_minutes;
         if (!totalMinutes && session.opened_at && session.closed_at) {
           const opened = new Date(session.opened_at);
           const closed = new Date(session.closed_at);
           totalMinutes = Math.round((closed.getTime() - opened.getTime()) / (1000 * 60));
         }
-        
         return {
           ...session,
+          status: session.closed_at ? 'closed' : 'open',
+          actual_start_time: timeFromIso(session.opened_at),
+          actual_end_time: timeFromIso(session.closed_at),
           total_work_minutes: totalMinutes,
           profile: profiles?.find((p: any) => p.id === session.user_id) || null,
         };
@@ -988,7 +979,7 @@ function RapportsTab() {
 
       const { data: sessions, error: sessionsError } = await supabase
         .from('work_sessions' as any)
-        .select('*')
+        .select('id, user_id, work_date, opened_at, closed_at')
         .gte('work_date', startDate)
         .lte('work_date', endDate);
 
@@ -1006,36 +997,39 @@ function RapportsTab() {
 
       const userIds = [...new Set((sessions || []).map((s: any) => s.user_id))];
       let profiles: any[] = [];
-      
       if (userIds.length > 0) {
         try {
           const { data: profilesData, error: profilesError } = await supabase
             .from('profiles')
             .select('id, full_name, email')
             .in('id', userIds);
-          
-          if (!profilesError && profilesData) {
-            profiles = profilesData;
-          }
+          if (!profilesError && profilesData) profiles = profilesData;
         } catch (profilesErr) {
           console.warn('Could not fetch profiles (may be offline):', profilesErr);
         }
       }
 
-      const userMap = new Map<string, MonthlyReport>();
-
-      sessions?.forEach((session: any) => {
-        const userId = session.user_id;
-        const profile = profiles?.find((p: any) => p.id === userId);
-        
-        // Calculer total_work_minutes si manquant
+      const sessionsWithDerived = (sessions || []).map((session: any) => {
         let totalMinutes = session.total_work_minutes;
         if (!totalMinutes && session.opened_at && session.closed_at) {
           const opened = new Date(session.opened_at);
           const closed = new Date(session.closed_at);
           totalMinutes = Math.round((closed.getTime() - opened.getTime()) / (1000 * 60));
         }
-        
+        return {
+          ...session,
+          status: session.closed_at ? 'closed' : 'open',
+          is_late: session.is_late ?? false,
+          late_minutes: session.late_minutes ?? 0,
+          total_work_minutes: totalMinutes ?? 0,
+        };
+      });
+
+      const userMap = new Map<string, MonthlyReport>();
+
+      sessionsWithDerived.forEach((session: any) => {
+        const userId = session.user_id;
+        const profile = profiles?.find((p: any) => p.id === userId);
         if (!userMap.has(userId)) {
           userMap.set(userId, {
             user_id: userId,
@@ -1061,7 +1055,7 @@ function RapportsTab() {
           report.days_absent++;
         }
         report.total_late_minutes += session.late_minutes || 0;
-        report.total_work_minutes += totalMinutes || 0;
+        report.total_work_minutes += session.total_work_minutes || 0;
       });
 
       userMap.forEach((report) => {

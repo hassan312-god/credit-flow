@@ -51,14 +51,29 @@ export default function AttendanceReports() {
       // Fetch all work sessions for the month
       const { data: sessions, error: sessionsError } = await supabase
         .from('work_sessions' as any)
-        .select('*')
+        .select('id, user_id, work_date, opened_at, closed_at')
         .gte('work_date', startDate)
         .lte('work_date', endDate);
 
       if (sessionsError) throw sessionsError;
 
-      // Fetch profiles separately (with error handling for offline mode)
-      const userIds = [...new Set((sessions || []).map((s: any) => s.user_id))];
+      const sessionsWithDerived = (sessions || []).map((session: any) => {
+        let totalMinutes = session.total_work_minutes;
+        if (!totalMinutes && session.opened_at && session.closed_at) {
+          const opened = new Date(session.opened_at);
+          const closed = new Date(session.closed_at);
+          totalMinutes = Math.round((closed.getTime() - opened.getTime()) / (1000 * 60));
+        }
+        return {
+          ...session,
+          status: session.closed_at ? 'closed' : 'open',
+          is_late: session.is_late ?? false,
+          late_minutes: session.late_minutes ?? 0,
+          total_work_minutes: totalMinutes ?? 0,
+        };
+      });
+
+      const userIds = [...new Set(sessionsWithDerived.map((s: any) => s.user_id))];
       let profiles: any[] = [];
       
       if (userIds.length > 0) {
@@ -77,10 +92,25 @@ export default function AttendanceReports() {
         }
       }
 
-      // Group by user and calculate statistics
+      const sessionsWithDerived = (sessions || []).map((session: any) => {
+        let totalMinutes = session.total_work_minutes;
+        if (!totalMinutes && session.opened_at && session.closed_at) {
+          const opened = new Date(session.opened_at);
+          const closed = new Date(session.closed_at);
+          totalMinutes = Math.round((closed.getTime() - opened.getTime()) / (1000 * 60));
+        }
+        return {
+          ...session,
+          status: session.closed_at ? 'closed' : 'open',
+          is_late: session.is_late ?? false,
+          late_minutes: session.late_minutes ?? 0,
+          total_work_minutes: totalMinutes ?? 0,
+        };
+      });
+
       const userMap = new Map<string, MonthlyReport>();
 
-      sessions?.forEach((session: any) => {
+      sessionsWithDerived.forEach((session: any) => {
         const userId = session.user_id;
         const profile = profiles?.find((p: any) => p.id === userId);
         if (!userMap.has(userId)) {

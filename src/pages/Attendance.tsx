@@ -52,7 +52,7 @@ export default function Attendance() {
     try {
       let query = supabase
         .from('work_sessions' as any)
-        .select('*')
+        .select('id, user_id, work_date, opened_at, closed_at')
         .order('work_date', { ascending: false })
         .order('opened_at', { ascending: false });
 
@@ -90,11 +90,23 @@ export default function Attendance() {
         }
       }
 
-      // Combine data
-      const attendanceWithProfiles = (sessions || []).map((session: any) => ({
-        ...session,
-        profile: profiles?.find((p: any) => p.id === session.user_id) || null,
-      }));
+      const timeFromIso = (iso: string | null) => iso ? new Date(iso).toTimeString().slice(0, 8) : null;
+      const attendanceWithProfiles = (sessions || []).map((session: any) => {
+        let totalMinutes = session.total_work_minutes;
+        if (!totalMinutes && session.opened_at && session.closed_at) {
+          const opened = new Date(session.opened_at);
+          const closed = new Date(session.closed_at);
+          totalMinutes = Math.round((closed.getTime() - opened.getTime()) / (1000 * 60));
+        }
+        return {
+          ...session,
+          status: session.closed_at ? 'closed' : 'open',
+          actual_start_time: timeFromIso(session.opened_at),
+          actual_end_time: timeFromIso(session.closed_at),
+          total_work_minutes: totalMinutes,
+          profile: profiles?.find((p: any) => p.id === session.user_id) || null,
+        };
+      });
 
       setAttendance(attendanceWithProfiles as any);
     } catch (error: any) {

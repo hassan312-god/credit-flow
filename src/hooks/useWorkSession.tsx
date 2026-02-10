@@ -41,7 +41,7 @@ export function useWorkSession() {
       try {
         const { data, error } = await supabase
           .from('work_sessions' as any)
-          .select('*')
+          .select('id, user_id, work_date, opened_at, closed_at, initial_cash, final_cash, notes')
           .eq('user_id', user.id)
           .eq('work_date', today)
           .is('closed_at', null)
@@ -70,34 +70,29 @@ export function useWorkSession() {
     if (!user) return { error: 'User not authenticated' };
 
     try {
-      // Vérifier d'abord si une session existe déjà pour aujourd'hui
       const { data: existingSession, error: checkError } = await supabase
         .from('work_sessions' as any)
-        .select('*')
+        .select('id, user_id, work_date, opened_at, closed_at, initial_cash, final_cash, notes')
         .eq('user_id', user.id)
         .eq('work_date', today)
         .maybeSingle();
 
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
+      if (checkError && checkError.code !== 'PGRST116') {
         throw checkError;
       }
 
-      // Cast pour accéder aux propriétés
       const session = existingSession as any;
 
-      // Si une session existe déjà et est fermée, on ne peut pas la rouvrir
-      if (session && session.status === 'closed') {
+      if (session && session.closed_at) {
         return { error: 'Une session fermée existe déjà pour aujourd\'hui. Vous ne pouvez pas en créer une nouvelle.' };
       }
 
-      // Si une session ouverte existe déjà, on la retourne
-      if (session && session.status === 'open') {
+      if (session && !session.closed_at) {
         setWorkSession(session as WorkSession);
         setIsOpen(true);
         return { error: null };
       }
 
-      // Sinon, créer une nouvelle session avec upsert pour éviter les doublons
       const { data, error } = await supabase
         .from('work_sessions' as any)
         .upsert({
@@ -105,13 +100,12 @@ export function useWorkSession() {
           work_date: today,
           initial_cash: initialCash,
           notes: notes || null,
-          status: 'open',
           closed_at: null,
         }, {
           onConflict: 'user_id,work_date',
           ignoreDuplicates: false
         })
-        .select()
+        .select('id, user_id, work_date, opened_at, closed_at, initial_cash, final_cash, notes')
         .single();
 
       if (error) throw error;
@@ -143,7 +137,7 @@ export function useWorkSession() {
           notes: notes || workSession.notes,
         })
         .eq('id', workSession.id)
-        .select()
+        .select('id, user_id, work_date, opened_at, closed_at, initial_cash, final_cash, notes')
         .single();
 
       if (error) throw error;

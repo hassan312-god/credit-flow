@@ -8,12 +8,24 @@ import { WorkSessionDialog } from './WorkSessionDialog';
 import { Lock, Unlock, AlertTriangle, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
+function getElapsedSince(openedAt: string): string {
+  const opened = new Date(openedAt).getTime();
+  const now = Date.now();
+  const minutes = Math.floor((now - opened) / (1000 * 60));
+  if (minutes < 1) return 'à l\'instant';
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins ? `${hours}h ${mins}min` : `${hours}h`;
+}
+
 export function WorkSessionStatus() {
   const { role } = useAuth();
   const { isOpen, loading, canPerformOperations, workSession, today } = useWorkSession();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'open' | 'close'>('open');
   const [workHours, setWorkHours] = useState<{ start: string; end: string } | null>(null);
+  const [elapsed, setElapsed] = useState<string>('');
 
   // Récupérer les horaires de travail pour aujourd'hui (optionnel, affiché discrètement sur mobile)
   useEffect(() => {
@@ -40,6 +52,18 @@ export function WorkSessionStatus() {
 
     fetchWorkHours();
   }, []);
+
+  // Décompte en temps réel quand la journée est ouverte
+  useEffect(() => {
+    if (!isOpen || !workSession?.opened_at) {
+      setElapsed('');
+      return;
+    }
+    const updateElapsed = () => setElapsed(getElapsedSince(workSession.opened_at));
+    updateElapsed();
+    const interval = setInterval(updateElapsed, 60 * 1000);
+    return () => clearInterval(interval);
+  }, [isOpen, workSession?.opened_at]);
 
   // Les administrateurs n'ont pas besoin d'ouvrir une journée
   if (role === 'admin') {
@@ -124,15 +148,23 @@ export function WorkSessionStatus() {
           </Badge>
         </AlertTitle>
         <AlertDescription className="mt-2">
-          <div className="flex items-center justify-between">
-            <p>
-              Votre journée de travail est ouverte depuis{' '}
-              {workSession?.opened_at
-                ? new Date(workSession.opened_at).toLocaleTimeString('fr-FR', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })
-                : 'aujourd\'hui'}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span>
+                Ouverte à{' '}
+                {workSession?.opened_at
+                  ? new Date(workSession.opened_at).toLocaleTimeString('fr-FR', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                  : '—'}
+              </span>
+              {elapsed && (
+                <Badge variant="secondary" className="font-mono text-success bg-success/10 border-success/20">
+                  <Clock className="w-3 h-3 mr-1" />
+                  {elapsed}
+                </Badge>
+              )}
             </p>
             <Button
               variant="outline"
