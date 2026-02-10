@@ -125,35 +125,27 @@ export default function Horaires() {
           </div>
         </div>
 
-        {/* Main Tabs */}
-        <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as MainTab)}>
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="historique">Historique</TabsTrigger>
-            <TabsTrigger value="parametres">Paramètres</TabsTrigger>
-            <TabsTrigger value="presence">Présence</TabsTrigger>
-            <TabsTrigger value="rapports">Rapports</TabsTrigger>
-          </TabsList>
+        {/* Sélecteur de section (un seul bloc, pas de doublon avec les filtres en bas) */}
+        <div className="mb-4 flex flex-wrap items-center gap-4">
+          <Label className="text-muted-foreground shrink-0">Section :</Label>
+          <Select value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as MainTab)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="historique">Historique</SelectItem>
+              <SelectItem value="parametres">Paramètres</SelectItem>
+              <SelectItem value="presence">Présence</SelectItem>
+              <SelectItem value="rapports">Rapports</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-          {/* Onglet Historique */}
-          <TabsContent value="historique" className="mt-6">
-            <HistoriqueTab />
-          </TabsContent>
-
-          {/* Onglet Paramètres */}
-          <TabsContent value="parametres" className="mt-6">
-            <ParametresTab />
-          </TabsContent>
-
-          {/* Onglet Présence */}
-          <TabsContent value="presence" className="mt-6">
-            <PresenceTab />
-          </TabsContent>
-
-          {/* Onglet Rapports */}
-          <TabsContent value="rapports" className="mt-6">
-            <RapportsTab />
-          </TabsContent>
-        </Tabs>
+        {/* Contenu : Historique (recherche + dates + Tous/Résumé/etc) ou autre section */}
+        {activeMainTab === 'historique' && <HistoriqueTab />}
+        {activeMainTab === 'parametres' && <ParametresTab />}
+        {activeMainTab === 'presence' && <PresenceTab />}
+        {activeMainTab === 'rapports' && <RapportsTab />}
       </div>
     </MainLayout>
   );

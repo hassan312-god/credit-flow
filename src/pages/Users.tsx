@@ -307,36 +307,55 @@ export default function Users() {
 
     const result = createUserSchema.safeParse(newUser);
     if (!result.success) {
-      toast.error(result.error.errors[0].message);
+      const firstError = result.error.errors[0];
+      toast.error(firstError?.message || 'Vérifiez les champs du formulaire');
       return;
     }
 
     setCreating(true);
     try {
-      // Use edge function to create user with admin API (auto-confirms email)
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-          },
-          body: JSON.stringify({
-            action: 'create_user',
-            email: newUser.email,
-            password: newUser.password,
-            fullName: newUser.full_name,
-            phone: newUser.phone || null,
-            role: newUser.role,
-          }),
-        }
-      );
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        toast.error('Session expirée. Veuillez vous reconnecter.');
+        setCreating(false);
+        return;
+      }
 
-      const responseData = await response.json();
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (!baseUrl) {
+        toast.error('Configuration manquante (VITE_SUPABASE_URL). Contactez l\'administrateur.');
+        setCreating(false);
+        return;
+      }
+      const url = `${baseUrl}/functions/v1/manage-users`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          action: 'create_user',
+          email: newUser.email.trim(),
+          password: newUser.password,
+          fullName: newUser.full_name.trim(),
+          phone: newUser.phone?.trim() || null,
+          role: newUser.role,
+        }),
+      });
+
+      const text = await response.text();
+      let responseData: { error?: string; message?: string } = {};
+      try {
+        responseData = text ? JSON.parse(text) : {};
+      } catch {
+        responseData = { error: text || 'Réponse invalide du serveur' };
+      }
 
       if (!response.ok) {
-        throw new Error(responseData.error || 'Erreur lors de la création');
+        const message = responseData.error || responseData.message || `Erreur ${response.status}`;
+        throw new Error(message);
       }
 
       toast.success('Utilisateur créé avec succès');
@@ -351,7 +370,12 @@ export default function Users() {
       fetchUsers();
     } catch (error: any) {
       console.error('Error creating user:', error);
-      toast.error(error.message || 'Erreur lors de la création de l\'utilisateur');
+      const message = error?.message || 'Erreur lors de la création de l\'utilisateur';
+      if (message.includes('fetch') || message.includes('network') || message.includes('Failed to fetch')) {
+        toast.error('Impossible de joindre le serveur. Vérifiez votre connexion et que l\'URL Supabase est correcte.');
+      } else {
+        toast.error(message);
+      }
     } finally {
       setCreating(false);
     }
