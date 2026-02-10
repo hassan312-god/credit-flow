@@ -1,6 +1,6 @@
 {
   "productName": "N'FA KA SÉRUM",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "com.nfakaserum.creditflow",
   "build": {
     "beforeDevCommand": "npm run dev",
