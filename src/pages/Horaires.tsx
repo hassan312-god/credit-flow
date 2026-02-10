@@ -419,6 +419,7 @@ function HistoriqueTab() {
 
 // ==================== ONGLET PARAMÈTRES ====================
 function ParametresTab() {
+  const { user } = useAuth();
   const [schedules, setSchedules] = useState<WorkScheduleType[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -565,6 +566,7 @@ function ParametresTab() {
           end_time: schedule.end_time,
           is_active: Boolean(schedule.is_active),
           updated_at: new Date().toISOString(),
+          created_by: user?.id || null,
         };
 
         if (schedule.id) {
@@ -605,7 +607,7 @@ function ParametresTab() {
         <div>
           <h2 className="text-xl font-semibold">Horaires de travail</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Définissez les horaires officiels de travail pour chaque jour de la semaine
+            En tant qu&apos;administrateur ou directeur, vous pouvez définir les horaires officiels applicables à tous les employés pour chaque jour de la semaine.
           </p>
         </div>
         <Button onClick={handleSave} disabled={saving}>
