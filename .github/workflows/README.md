@@ -6,11 +6,12 @@
 
 Ajoutez ces secrets dans votre repository GitHub (`Settings > Secrets and variables > Actions`):
 
-#### `TAURI_PRIVATE_KEY` (obligatoire pour build signé)
+#### `TAURI_PRIVATE_KEY` (optionnel – uniquement pour signer les installateurs)
 - **Contenu** : tout le contenu du fichier `src-tauri/tauri.key` (y compris les lignes `-----BEGIN...` et `-----END...`)
 - **Où le mettre** : GitHub > Repo > **Settings** > **Secrets and variables** > **Actions** > **New repository secret** > Nom `TAURI_PRIVATE_KEY`
+- Si ce secret n’est pas défini, le workflow **Build Windows** (et les autres builds) réussissent quand même ; seuls les binaires ne seront pas signés.
 
-#### `TAURI_KEY_PASSWORD` (obligatoire si la clé est protégée par mot de passe)
+#### `TAURI_KEY_PASSWORD` (optionnel – si la clé est protégée par mot de passe)
 - **Contenu** : le mot de passe de la clé privée (celui utilisé à la génération)
 - **Où le mettre** : même menu > **New repository secret** > Nom `TAURI_KEY_PASSWORD`
 
@@ -76,7 +77,7 @@ git push origin main
 1. Allez dans **Actions** > **Build Windows**
 2. Cliquez sur **Run workflow** (à droite)
 3. Choisissez la branche (ex. `main`) puis **Run workflow**
-4. Si l’étape "Vérifier les secrets" échoue : ajoutez `TAURI_PRIVATE_KEY` et `TAURI_KEY_PASSWORD` dans **Settings** > **Secrets and variables** > **Actions** (voir §1 ci‑dessus).
+4. Aucun secret n’est obligatoire : le build peut tourner sans `TAURI_PRIVATE_KEY`. Pour signer les installateurs, ajoutez les secrets (voir §1).
 
 ### 8. **Publier une release à partir du build local (si GitHub Actions n’arrive pas à builder)**
 
@@ -109,7 +110,7 @@ Si le workflow **Build Windows** échoue sur GitHub, vous pouvez builder sur vot
 ### 10. **Dépannage**
 
 #### Erreurs communes:
-- **Missing secrets**: Vérifiez que `TAURI_PRIVATE_KEY` et `TAURI_KEY_PASSWORD` sont définis dans Settings > Secrets
+- **Signer les installateurs**: Ajoutez `TAURI_PRIVATE_KEY` (et `TAURI_KEY_PASSWORD` si la clé est protégée) dans Settings > Secrets pour obtenir des binaires signés
 - **Build failures**: Consultez les logs dans l’onglet **Actions**
 - **Permission denied**: Le workflow doit avoir les permissions `contents: write` si besoin
 
