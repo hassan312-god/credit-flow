@@ -2,81 +2,22 @@ import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { 
-  Wifi, 
-  WifiOff, 
-  AlertCircle,
-  RefreshCw,
-  Database,
-  Cloud
-} from 'lucide-react';
+import { Wifi, WifiOff, AlertCircle, RefreshCw } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { syncAll, downloadAllData } from '@/services/syncService';
-import { getMetadata, saveMetadata } from '@/services/localStorage';
-import { toast } from 'sonner';
+import { getMetadata } from '@/services/localStorage';
 import { cn } from '@/lib/utils';
 
 export function ConnectionStatus() {
   const { isOnline, isSyncing, pendingCount, syncQueue } = useOfflineQueue();
-  const [syncingAll, setSyncingAll] = useState(false);
   const [lastFullSync, setLastFullSync] = useState<number | null>(null);
 
   useEffect(() => {
-    // Charger le timestamp de la dernière synchronisation complète
     const loadLastSync = async () => {
       const timestamp = await getMetadata('last_full_sync');
-      if (timestamp) {
-        setLastFullSync(timestamp);
-      }
+      if (timestamp) setLastFullSync(timestamp);
     };
     loadLastSync();
   }, []);
-
-  const handleFullSync = async () => {
-    if (!isOnline) {
-      toast.error('Connexion requise pour synchroniser');
-      return;
-    }
-
-    setSyncingAll(true);
-    try {
-      const result = await syncAll();
-      if (result.success) {
-        await saveMetadata('last_full_sync', Date.now());
-        setLastFullSync(Date.now());
-        toast.success(`${result.synced} élément(s) synchronisé(s) avec succès`);
-      } else {
-        toast.error(`Erreur lors de la synchronisation: ${result.message || 'Erreur inconnue'}`);
-      }
-    } catch (error: any) {
-      toast.error(`Erreur: ${error.message}`);
-    } finally {
-      setSyncingAll(false);
-    }
-  };
-
-  const handleDownloadAll = async () => {
-    if (!isOnline) {
-      toast.error('Connexion requise pour télécharger les données');
-      return;
-    }
-
-    setSyncingAll(true);
-    try {
-      const result = await downloadAllData();
-      if (result.success) {
-        await saveMetadata('last_full_sync', Date.now());
-        setLastFullSync(Date.now());
-        toast.success(`${result.synced} élément(s) téléchargé(s) avec succès`);
-      } else {
-        toast.error(`Erreur lors du téléchargement: ${result.message || 'Erreur inconnue'}`);
-      }
-    } catch (error: any) {
-      toast.error(`Erreur: ${error.message}`);
-    } finally {
-      setSyncingAll(false);
-    }
-  };
 
   return (
     <div className="space-y-2">
@@ -143,51 +84,7 @@ export function ConnectionStatus() {
         </Alert>
       )}
 
-      {/* Boutons de synchronisation complète */}
-      {isOnline && (
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleFullSync}
-            disabled={syncingAll}
-            className="flex-1"
-          >
-            {syncingAll ? (
-              <>
-                <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                Synchronisation...
-              </>
-            ) : (
-              <>
-                <Cloud className="w-3.5 h-3.5 mr-1.5" />
-                Synchroniser tout
-              </>
-            )}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleDownloadAll}
-            disabled={syncingAll}
-            className="flex-1"
-          >
-            {syncingAll ? (
-              <>
-                <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                Téléchargement...
-              </>
-            ) : (
-              <>
-                <Database className="w-3.5 h-3.5 mr-1.5" />
-                Télécharger tout
-              </>
-            )}
-          </Button>
-        </div>
-      )}
-
-      {/* Info dernière synchronisation */}
+      {/* Info dernière synchronisation (mise à jour côté back) */}
       {lastFullSync && (
         <p className="text-xs text-muted-foreground text-center">
           Dernière synchronisation: {new Date(lastFullSync).toLocaleString('fr-FR')}

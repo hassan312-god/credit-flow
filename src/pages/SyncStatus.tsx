@@ -5,11 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, AlertCircle, RefreshCw, Database, Cloud, CheckCircle2, XCircle } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
-import { syncAll, downloadAllData } from '@/services/syncService';
-import { getMetadata, getFromLocal, STORES, saveMetadata } from '@/services/localStorage';
+import { getMetadata, getFromLocal, STORES } from '@/services/localStorage';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -28,7 +27,6 @@ export default function SyncStatus() {
   const { isOnline, queue, isSyncing, syncQueue } = useOfflineQueue();
   const [statuses, setStatuses] = useState<SyncStatus[]>([]);
   const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
   const [lastFullSync, setLastFullSync] = useState<number | null>(null);
 
   useEffect(() => {
@@ -100,54 +98,6 @@ export default function SyncStatus() {
     }
   };
 
-  const handleFullSync = async () => {
-    if (!isOnline) {
-      toast.error('Connexion requise pour synchroniser');
-      return;
-    }
-
-    setSyncing(true);
-    try {
-      const result = await syncAll();
-      if (result.success) {
-        await saveMetadata('last_full_sync', Date.now());
-        setLastFullSync(Date.now());
-        toast.success(`${result.synced} élément(s) synchronisé(s) avec succès`);
-        loadSyncStatus();
-      } else {
-        toast.error(`Erreur lors de la synchronisation: ${result.message || 'Erreur inconnue'}`);
-      }
-    } catch (error: any) {
-      toast.error(`Erreur: ${error.message}`);
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const handleDownloadAll = async () => {
-    if (!isOnline) {
-      toast.error('Connexion requise pour télécharger les données');
-      return;
-    }
-
-    setSyncing(true);
-    try {
-      const result = await downloadAllData();
-      if (result.success) {
-        await saveMetadata('last_full_sync', Date.now());
-        setLastFullSync(Date.now());
-        toast.success(`${result.synced} élément(s) téléchargé(s) avec succès`);
-        loadSyncStatus();
-      } else {
-        toast.error(`Erreur lors du téléchargement: ${result.message || 'Erreur inconnue'}`);
-      }
-    } catch (error: any) {
-      toast.error(`Erreur: ${error.message}`);
-    } finally {
-      setSyncing(false);
-    }
-  };
-
   const handleSyncQueue = async () => {
     await syncQueue();
     loadSyncStatus();
@@ -204,39 +154,6 @@ export default function SyncStatus() {
                 <>
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Synchroniser la file ({pendingActions.length})
-                </>
-              )}
-            </Button>
-            <Button
-              onClick={handleFullSync}
-              disabled={!isOnline || syncing}
-            >
-              {syncing ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Synchronisation...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Synchroniser tout
-                </>
-              )}
-            </Button>
-            <Button
-              onClick={handleDownloadAll}
-              disabled={!isOnline || syncing}
-              variant="outline"
-            >
-              {syncing ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Téléchargement...
-                </>
-              ) : (
-                <>
-                  <Database className="w-4 h-4 mr-2" />
-                  Télécharger tout
                 </>
               )}
             </Button>
