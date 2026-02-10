@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, AlertCircle, RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw, CheckCircle2, XCircle, Cloud } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { getMetadata, getFromLocal, STORES } from '@/services/localStorage';

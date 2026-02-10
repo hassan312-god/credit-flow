@@ -65,7 +65,7 @@ interface FundHistory {
 }
 
 export default function CompanyFunds() {
-  const { role, user } = useAuth();
+  const { role, user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [fund, setFund] = useState<CompanyFund | null>(null);
@@ -76,14 +76,14 @@ export default function CompanyFunds() {
   const [notes, setNotes] = useState('');
   const [showHistory, setShowHistory] = useState(false);
 
-  // Vérifier l'accès
+  // Vérifier l'accès : uniquement admin ou directeur, et rôle déjà chargé (évite appel API sans rôle = RLS 42501)
   const canManageFunds = role === 'admin' || role === 'directeur';
 
   useEffect(() => {
-    if (!canManageFunds) return;
+    if (authLoading || role == null || !canManageFunds) return;
     loadFundData();
     loadLoanStats();
-  }, [canManageFunds]);
+  }, [authLoading, role, canManageFunds]);
 
   const loadFundData = async () => {
     setLoadingData(true);
@@ -273,6 +273,16 @@ export default function CompanyFunds() {
     return labels[type] || type;
   };
 
+  if (authLoading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
+
   if (!canManageFunds) {
     return (
       <MainLayout>
@@ -280,7 +290,9 @@ export default function CompanyFunds() {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Accès refusé</AlertTitle>
           <AlertDescription>
-            Seuls les administrateurs et les directeurs peuvent gérer le fond de l'entreprise.
+            {role == null
+              ? 'Aucun rôle assigné à votre compte. Contactez un administrateur pour obtenir un accès.'
+              : 'Seuls les administrateurs et les directeurs peuvent gérer le fond de l\'entreprise.'}
           </AlertDescription>
         </Alert>
       </MainLayout>
