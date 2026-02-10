@@ -5,11 +5,13 @@ import {
   getFromLocal,
   STORES,
   initLocalDB,
+  deleteFromLocal,
 } from '@/services/localStorage';
 import {
   syncAll,
   downloadAllData,
   requiresOnline,
+  syncTable,
 } from '@/services/syncService';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -59,7 +61,6 @@ export function useLocalCache<T extends { id: string }>(options: UseLocalCacheOp
       await syncQueue();
 
       // Synchroniser les données de cette table
-      const { syncTable } = await import('@/services/syncService');
       const result = await syncTable(table);
       
       if (result.success) {
@@ -202,7 +203,6 @@ export function useLocalCache<T extends { id: string }>(options: UseLocalCacheOp
   // Supprimer une donnée du cache
   const removeFromCache = useCallback(async (id: string) => {
     try {
-      const { deleteFromLocal } = await import('@/services/localStorage');
       await deleteFromLocal(storeName, id);
       setData(prev => prev.filter(d => d.id !== id));
     } catch (error) {

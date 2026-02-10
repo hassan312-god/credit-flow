@@ -9,7 +9,8 @@ import { Loader2, AlertCircle, RefreshCw, Database, Cloud, CheckCircle2, XCircle
 import { useAuth } from '@/hooks/useAuth';
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { syncAll, downloadAllData } from '@/services/syncService';
-import { getMetadata } from '@/services/localStorage';
+import { getMetadata, getFromLocal, STORES, saveMetadata } from '@/services/localStorage';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -47,7 +48,6 @@ export default function SyncStatus() {
       const statuses: SyncStatus[] = [];
 
       for (const table of tables) {
-        const { getFromLocal, STORES } = await import('@/services/localStorage');
         const storeName = STORES[table as keyof typeof STORES];
         
         if (storeName) {
@@ -58,7 +58,6 @@ export default function SyncStatus() {
           let remoteCount = 0;
           if (isOnline) {
             try {
-              const { supabase } = await import('@/integrations/supabase/client');
               const { count, error: countError } = await supabase
                 .from(table as any)
                 .select('*', { count: 'exact', head: true });
@@ -111,7 +110,6 @@ export default function SyncStatus() {
     try {
       const result = await syncAll();
       if (result.success) {
-        const { saveMetadata } = await import('@/services/localStorage');
         await saveMetadata('last_full_sync', Date.now());
         setLastFullSync(Date.now());
         toast.success(`${result.synced} élément(s) synchronisé(s) avec succès`);
@@ -136,7 +134,6 @@ export default function SyncStatus() {
     try {
       const result = await downloadAllData();
       if (result.success) {
-        const { saveMetadata } = await import('@/services/localStorage');
         await saveMetadata('last_full_sync', Date.now());
         setLastFullSync(Date.now());
         toast.success(`${result.synced} élément(s) téléchargé(s) avec succès`);

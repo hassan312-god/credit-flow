@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { initLocalDB } from '@/services/localStorage';
+import { initLocalDB, getFromLocal, saveToLocal, markAsSynced, deleteFromLocal, STORES } from '@/services/localStorage';
 
 export interface QueuedAction {
   id: string;
@@ -12,7 +12,6 @@ export interface QueuedAction {
   error?: string;
 }
 
-import { STORES } from '@/services/localStorage';
 
 const STORE_NAME = STORES['offline-queue'];
 
@@ -38,7 +37,6 @@ export function useOfflineQueue() {
   useEffect(() => {
     const loadQueue = async () => {
       try {
-        const { getFromLocal } = await import('@/services/localStorage');
         const queueData = await getFromLocal(STORE_NAME);
         setQueue(queueData as QueuedAction[]);
       } catch (error) {
@@ -66,7 +64,6 @@ export function useOfflineQueue() {
     };
 
     try {
-      const { saveToLocal } = await import('@/services/localStorage');
       await saveToLocal(STORE_NAME, queuedAction, false);
       setQueue(prev => [...prev, queuedAction]);
       return id;
@@ -85,8 +82,6 @@ export function useOfflineQueue() {
     setIsSyncing(true);
 
     try {
-      const { markAsSynced, saveToLocal } = await import('@/services/localStorage');
-
       for (const action of unsyncedActions) {
         try {
           let result;
@@ -143,7 +138,6 @@ export function useOfflineQueue() {
 
   const removeFromQueue = useCallback(async (id: string) => {
     try {
-      const { deleteFromLocal } = await import('@/services/localStorage');
       await deleteFromLocal(STORE_NAME, id);
       setQueue(prev => prev.filter(a => a.id !== id));
     } catch (error) {

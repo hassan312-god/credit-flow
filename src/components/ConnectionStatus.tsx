@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { syncAll, downloadAllData } from '@/services/syncService';
+import { getMetadata, saveMetadata } from '@/services/localStorage';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -23,7 +24,6 @@ export function ConnectionStatus() {
   useEffect(() => {
     // Charger le timestamp de la dernière synchronisation complète
     const loadLastSync = async () => {
-      const { getMetadata } = await import('@/services/localStorage');
       const timestamp = await getMetadata('last_full_sync');
       if (timestamp) {
         setLastFullSync(timestamp);
@@ -42,7 +42,6 @@ export function ConnectionStatus() {
     try {
       const result = await syncAll();
       if (result.success) {
-        const { saveMetadata } = await import('@/services/localStorage');
         await saveMetadata('last_full_sync', Date.now());
         setLastFullSync(Date.now());
         toast.success(`${result.synced} élément(s) synchronisé(s) avec succès`);
@@ -66,7 +65,6 @@ export function ConnectionStatus() {
     try {
       const result = await downloadAllData();
       if (result.success) {
-        const { saveMetadata } = await import('@/services/localStorage');
         await saveMetadata('last_full_sync', Date.now());
         setLastFullSync(Date.now());
         toast.success(`${result.synced} élément(s) téléchargé(s) avec succès`);

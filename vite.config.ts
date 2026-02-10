@@ -32,29 +32,27 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // Simplifié pour éviter les dépendances circulaires
+          // Ne pas séparer React dans un chunk à part : le code qui utilise
+          // React.createContext (composants UI, Radix) doit avoir React
+          // dans le même graphe de modules pour éviter "createContext of undefined".
           if (id.includes('node_modules')) {
-            // React et écosystème - chunk séparé
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'react-vendor';
-            }
-            // Bibliothèques volumineuses - chunks séparés
+            // Chunks séparés sans cycle : chart et supabase uniquement.
+            // jspdf/exceljs/html2canvas restent dans vendor pour éviter
+            // la dépendance circulaire vendor -> export-vendor -> vendor.
             if (id.includes('recharts')) {
               return 'chart-vendor';
             }
             if (id.includes('@supabase')) {
               return 'supabase-vendor';
             }
-            if (id.includes('jspdf') || id.includes('exceljs') || id.includes('html2canvas')) {
-              return 'export-vendor';
-            }
-            // Tout le reste dans vendor pour éviter les circularités
+            // Tout le reste (React, jspdf, exceljs, etc.) dans vendor
             return 'vendor';
           }
         },
       },
     },
-    chunkSizeWarningLimit: 2000,
+    // Limite à 1 Go pour éviter les avertissements (app desktop, vendor volumineux)
+    chunkSizeWarningLimit: 1024 * 1024,
   },
   optimizeDeps: {
     include: [
