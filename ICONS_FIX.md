@@ -134,13 +134,14 @@ done
 
 ## 🔧 Workflows Mis à Jour
 
-Les workflows suivants ont été mis à jour pour vérifier les icônes :
-- `build-linux.yml`
+Les workflows suivants exécutent **scripts/verify-icons.sh** en première étape (après checkout) :
 - `build-windows.yml`
 - `build-macos.yml`
+- `build-linux.yml`
 - `build-all.yml`
+- `release.yml`
 
-Ils vérifient maintenant la présence des icônes avant de lancer le build.
+Le script exige la présence et la validité des 5 fichiers (`32x32.png`, `128x128.png`, `128x128@2x.png`, `icon.ico`, `icon.icns`). Si un fichier manque ou qu’un PNG est invalide, le job échoue tout de suite avec un message clair, avant le build Tauri.
 
 ## 📝 Note
 

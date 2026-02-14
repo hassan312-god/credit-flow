@@ -40,6 +40,9 @@ jobs:
         run: |
           Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/p/?LinkId=2124703" -OutFile "$env:TEMP\MicrosoftEdgeWebview2Setup.exe" -UseBasicParsing
           Start-Process -FilePath "$env:TEMP\MicrosoftEdgeWebview2Setup.exe" -ArgumentList "/silent /install" -Wait -NoNewWindow
+
+      - name: Verify icons
+        run: bash scripts/verify-icons.sh
       
       - name: Install system dependencies (Linux)
         if: matrix.platform == 'ubuntu-latest'

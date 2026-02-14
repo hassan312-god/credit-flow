@@ -30,24 +30,24 @@ for file in "${REQUIRED_FILES[@]}"; do
   
   # Vérifier que c'est un fichier PNG valide
   if ! file "$ICON_DIR/$file" | grep -q "PNG"; then
-    echo "⚠️  $file n'est pas un PNG valide"
+    echo "❌ $file n'est pas un PNG valide (tauri::generate_context!() plantera)"
     file "$ICON_DIR/$file"
-  else
-    echo "✅ $file est valide"
+    exit 1
   fi
+  echo "✅ $file est valide"
 done
 
-# Vérifier les autres formats
-if [ -f "$ICON_DIR/icon.ico" ]; then
-  echo "✅ icon.ico existe"
-else
-  echo "⚠️  icon.ico manquant (requis pour Windows)"
+# Exiger icon.ico et icon.icns (requis par tauri.conf.json)
+if [ ! -f "$ICON_DIR/icon.ico" ]; then
+  echo "❌ icon.ico manquant (requis pour Windows)"
+  exit 1
 fi
+echo "✅ icon.ico existe"
 
-if [ -f "$ICON_DIR/icon.icns" ]; then
-  echo "✅ icon.icns existe"
-else
-  echo "⚠️  icon.icns manquant (requis pour macOS)"
+if [ ! -f "$ICON_DIR/icon.icns" ]; then
+  echo "❌ icon.icns manquant (requis pour macOS)"
+  exit 1
 fi
+echo "✅ icon.icns existe"
 
-echo "✅ Toutes les icônes requises sont présentes"
+echo "✅ Toutes les icônes requises sont présentes et valides"

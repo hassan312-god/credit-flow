@@ -22,11 +22,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify icons exist
-        run: |
-          ls -la src-tauri/icons/
-          file src-tauri/icons/*.png || true
-      
+      - name: Verify icons
+        run: bash scripts/verify-icons.sh
+
       - name: Install system dependencies
         run: |
           sudo apt-get update

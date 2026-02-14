@@ -26,11 +26,9 @@ jobs:
         id: arch
         run: echo "ARCH=$(uname -m)" >> $GITHUB_OUTPUT
       
-      - name: Verify icons exist
-        run: |
-          ls -la src-tauri/icons/
-          file src-tauri/icons/*.png || true
-      
+      - name: Verify icons
+        run: bash scripts/verify-icons.sh
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:

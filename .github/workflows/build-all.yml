@@ -46,21 +46,9 @@ jobs:
           fetch-depth: 0
           lfs: true
 
-      - name: Verify icons exist (Windows)
-        if: matrix.platform == 'windows-latest'
-        shell: cmd
-        run: |
-          dir src-tauri\icons\
-          if not exist src-tauri\icons\32x32.png (exit /b 1)
-      
-      - name: Verify icons exist (Linux/macOS)
-        if: matrix.platform != 'windows-latest'
-        shell: bash
-        run: |
-          ls -la src-tauri/icons/
-          test -f src-tauri/icons/32x32.png || exit 1
-          test -f src-tauri/icons/128x128.png || exit 1
-      
+      - name: Verify icons
+        run: bash scripts/verify-icons.sh
+
       - name: Install system dependencies (Linux)
         if: matrix.platform == 'ubuntu-22.04'
         run: |
