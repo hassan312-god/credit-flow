@@ -2,6 +2,8 @@
 
 [![Build Windows](https://github.com/hassan312-god/credit-flow/actions/workflows/build-windows.yml/badge.svg)](https://github.com/hassan312-god/credit-flow/actions/workflows/build-windows.yml)
 
+**📥 [Télécharger l’application](https://github.com/hassan312-god/credit-flow/releases/latest)** (Windows / macOS / Linux) — Page dédiée : [credit-flow-eight.vercel.app/download.html](https://credit-flow-eight.vercel.app/download.html)
+
 Une application web moderne de gestion de crédit et de prêts, conçue pour les institutions financières et les entreprises de microfinance. L'application offre une gestion complète des clients, des prêts, des paiements et du recouvrement, avec un support hors ligne et une synchronisation automatique.
 
 ## 🚀 Fonctionnalités Principales
