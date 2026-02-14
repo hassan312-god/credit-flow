@@ -109,11 +109,11 @@ Pour signer les applications (recommandé pour la distribution) :
 
 2. **Ajouter les secrets GitHub** :
    - Allez sur GitHub → Settings → Secrets and variables → Actions
-   - Ajoutez :
-     - `TAURI_PRIVATE_KEY` : Contenu du fichier `.key`
-     - `TAURI_KEY_PASSWORD` : Mot de passe de la clé
+   - Ajoutez (noms **obligatoires** pour tous les workflows) :
+     - `TAURI_SIGNING_PRIVATE_KEY` : Contenu du fichier `.key`
+     - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` : Mot de passe de la clé
 
-Les workflows utiliseront automatiquement ces secrets pour signer les applications.
+Les workflows utiliseront automatiquement ces secrets pour signer les applications. Si les secrets sont absents, le build peut réussir sans signature (selon la configuration).
 
 ## ⚙️ Configuration
 
@@ -141,7 +141,7 @@ Dans chaque workflow :
 - name: Setup Node.js
   uses: actions/setup-node@v4
   with:
-    node-version: 18  # Modifier ici
+    node-version: 20  # Modifier ici
 
 - name: Setup Rust
   uses: dtolnay/rust-toolchain@stable

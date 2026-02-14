@@ -19,6 +19,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect macOS arch
+        id: arch
+        run: echo "ARCH=$(uname -m)" >> $GITHUB_OUTPUT
       
       - name: Verify icons exist
         run: |
@@ -34,12 +40,18 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin
+          targets: ${{ steps.arch.outputs.ARCH == 'arm64' && 'aarch64-apple-darwin' || 'x86_64-apple-darwin' }}
       
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
+      - name: Cache cargo
+        uses: actions/cache@v4
         with:
-          workspaces: 'src-tauri -> target'
+          path: |
+            src-tauri/target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
       
       - name: Install dependencies
         run: npm ci
@@ -47,17 +59,22 @@ jobs:
       - name: Build frontend
         run: npm run build
       
-      - name: Build Tauri app (Apple Silicon)
-        run: npm run tauri:build:macos
+      - name: Build Tauri app (macOS)
+        run: |
+          TARGET="${{ steps.arch.outputs.ARCH == 'arm64' && 'aarch64-apple-darwin' || 'x86_64-apple-darwin' }}"
+          npm run tauri build -- --target "$TARGET"
         env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
-      
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+      - name: Show built files
+        run: find src-tauri/target -type f \( -name "*.dmg" -o -name "*.app" \) 2>/dev/null | head -50
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-build
           path: |
-            src-tauri/target/aarch64-apple-darwin/release/bundle/**/*.dmg
-            src-tauri/target/aarch64-apple-darwin/release/bundle/**/*.app
+            src-tauri/target/**/release/bundle/**/*.dmg
+            src-tauri/target/**/release/bundle/**/*.app
           retention-days: 30

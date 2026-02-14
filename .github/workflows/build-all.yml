@@ -19,22 +19,23 @@ jobs:
             build-command: 'npm run tauri:build:windows'
             artifact-name: 'windows-build'
             artifact-path: |
-              src-tauri/target/x86_64-pc-windows-msvc/release/bundle/**/*.msi
-              src-tauri/target/x86_64-pc-windows-msvc/release/bundle/**/*.exe
+              src-tauri/target/**/release/bundle/**/*.msi
+              src-tauri/target/**/release/bundle/**/*.exe
+              src-tauri/target/**/release/*.exe
           - platform: 'macos-latest'
             target: 'aarch64-apple-darwin'
             build-command: 'npm run tauri:build:macos'
             artifact-name: 'macos-build'
             artifact-path: |
-              src-tauri/target/aarch64-apple-darwin/release/bundle/**/*.dmg
-              src-tauri/target/aarch64-apple-darwin/release/bundle/**/*.app
+              src-tauri/target/**/release/bundle/**/*.dmg
+              src-tauri/target/**/release/bundle/**/*.app
           - platform: 'ubuntu-22.04'
             target: 'x86_64-unknown-linux-gnu'
             build-command: 'npm run tauri:build:linux'
             artifact-name: 'linux-build'
             artifact-path: |
-              src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/**/*.deb
-              src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/**/*.AppImage
+              src-tauri/target/**/release/bundle/**/*.deb
+              src-tauri/target/**/release/bundle/**/*.AppImage
     
     runs-on: ${{ matrix.platform }}
     
@@ -42,6 +43,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           lfs: true
 
       - name: Verify icons exist (Windows)
@@ -85,10 +87,16 @@ jobs:
         with:
           targets: ${{ matrix.target }}
       
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
+      - name: Cache cargo
+        uses: actions/cache@v4
         with:
-          workspaces: 'src-tauri -> target'
+          path: |
+            src-tauri/target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
       
       - name: Install dependencies
         run: npm ci
@@ -99,8 +107,8 @@ jobs:
       - name: Build Tauri app
         run: ${{ matrix.build-command }}
         env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
       
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

@@ -14,12 +14,15 @@ jobs:
       matrix:
         include:
           - platform: 'windows-latest'
+            rust-target: 'x86_64-pc-windows-msvc'
             args: '--target x86_64-pc-windows-msvc'
             bundle-pattern: '**/*.msi'
           - platform: 'macos-latest'
+            rust-target: 'aarch64-apple-darwin'
             args: '--target aarch64-apple-darwin'
             bundle-pattern: '**/*.dmg'
           - platform: 'ubuntu-latest'
+            rust-target: 'x86_64-unknown-linux-gnu'
             args: '--target x86_64-unknown-linux-gnu'
             bundle-pattern: '**/*.deb'
     
@@ -28,6 +31,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install WebView2 runtime (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/p/?LinkId=2124703" -OutFile "$env:TEMP\MicrosoftEdgeWebview2Setup.exe" -UseBasicParsing
+          Start-Process -FilePath "$env:TEMP\MicrosoftEdgeWebview2Setup.exe" -ArgumentList "/silent /install" -Wait -NoNewWindow
       
       - name: Install system dependencies (Linux)
         if: matrix.platform == 'ubuntu-latest'
@@ -47,13 +59,24 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: 'npm'
       
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.args == '--target x86_64-pc-windows-msvc' && 'x86_64-pc-windows-msvc' || (matrix.args == '--target aarch64-apple-darwin' && 'aarch64-apple-darwin' || 'x86_64-unknown-linux-gnu') }}
+          targets: ${{ matrix.rust-target }}
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            src-tauri/target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
       
       - name: Install dependencies
         run: npm ci
