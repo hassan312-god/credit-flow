@@ -62,7 +62,7 @@ jobs:
       - name: Build Tauri app (macOS)
         run: |
           TARGET="${{ steps.arch.outputs.ARCH == 'arm64' && 'aarch64-apple-darwin' || 'x86_64-apple-darwin' }}"
-          npm run tauri build -- --target "$TARGET"
+          npm run tauri:build -- --target "$TARGET"
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
