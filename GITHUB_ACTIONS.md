@@ -163,6 +163,8 @@ Vous pouvez voir le statut des builds :
 1. Vérifiez les logs dans l'onglet "Actions"
 2. Vérifiez que toutes les dépendances sont dans `package.json`
 3. Vérifiez que les scripts npm sont corrects
+4. **Erreur « Signature PNG invalide » ou crash sur `tauri::generate_context!()`** : les icônes dans `src-tauri/icons/` sont absentes ou corrompues. Voir **ICONS_FIX.md** et régénérer les icônes (ex. `npm run tauri icon path/to/icon.png`).
+5. **Échec à l’étape de signature** : vérifiez que les secrets **TAURI_SIGNING_PRIVATE_KEY** et **TAURI_SIGNING_PRIVATE_KEY_PASSWORD** existent bien dans Settings → Secrets and variables → Actions (orthographe exacte).
 
 ### Artefacts non disponibles
 

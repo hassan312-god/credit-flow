@@ -21,6 +21,8 @@ Les fichiers PNG des icônes sont soit :
 2. Non correctement commités (fichiers binaires)
 3. Vides ou invalides
 
+**Indice de corruption** : si tous les fichiers dans `src-tauri/icons/` ont exactement la même taille (octets), ils sont probablement des copies du même fichier (ex. un 128x128 mis à la place du 32x32). Dans ce cas, régénérer les icônes depuis une source unique avec `npm run tauri icon path/to/icon.png` ou ImageMagick (voir ci‑dessous).
+
 ## ✅ Solution
 
 ### Étape 1 : Vérifier les icônes localement
@@ -29,8 +31,11 @@ Les fichiers PNG des icônes sont soit :
 # Vérifier que les fichiers existent
 ls -la src-tauri/icons/
 
-# Vérifier que ce sont des PNG valides
+# Vérifier que ce sont des PNG valides (doit afficher "PNG image data" pour chaque .png)
 file src-tauri/icons/*.png
+
+# Tailles attendues (ordre de grandeur) : 32x32.png < 128x128.png < 128x128@2x.png
+# Si 32x32.png fait la même taille que 128x128.png, le fichier est probablement incorrect.
 ```
 
 ### Étape 2 : Vérifier dans Git
