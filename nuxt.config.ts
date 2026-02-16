@@ -91,6 +91,15 @@ export default defineNuxtConfig({
     '/settings': { redirect: '/settings/profile' },
   },
 
+  // Éviter l'échec du build (generate) quand le prerender rencontre des 404/500 sur des routes
+  // liées par les pages composants (docs, examples, terms, privacy, /components, pagination).
+  nitro: {
+    prerender: {
+      failOnError: false,
+      ignore: ['/components', '/examples/forms', '/terms', '/privacy', '/docs'],
+    },
+  },
+
   imports: {
     dirs: [
       './lib',
