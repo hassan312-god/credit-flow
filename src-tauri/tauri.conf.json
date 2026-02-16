@@ -1,0 +1,81 @@
+{
+  "productName": "N'FA KA SÉRUM",
+  "version": "0.1.1",
+  "identifier": "com.nfakaserum.creditflow",
+  "build": {
+    "beforeDevCommand": "pnpm run dev",
+    "beforeBuildCommand": "pnpm run generate",
+    "devUrl": "http://localhost:3000",
+    "frontendDist": "../.output/public"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "N'FA KA SÉRUM - Gestion des prêts",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "createUpdaterArtifacts": true,
+    "targets": ["app", "dmg", "appimage", "deb", "msi"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": [],
+    "externalBin": [],
+    "copyright": "© 2025 N'FA KA SÉRUM",
+    "category": "Business",
+    "shortDescription": "Application de gestion des crédits, suivi des remboursements et recouvrement",
+    "longDescription": "Application complète de gestion des crédits avec suivi des remboursements, paiements et recouvrement. Permet de gérer les clients, créer des prêts, enregistrer les paiements et suivre les échéances en retard.",
+    "windows": {
+      "webviewInstallMode": {
+        "type": "embedBootstrapper",
+        "silent": true
+      },
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    },
+    "macOS": {
+      "frameworks": [],
+      "minimumSystemVersion": "10.13",
+      "exceptionDomain": "",
+      "signingIdentity": null,
+      "providerShortName": null,
+      "entitlements": null
+    },
+    "linux": {
+      "deb": { "depends": [] },
+      "appimage": { "bundleMediaFramework": false }
+    }
+  },
+  "plugins": {
+    "shell": { "open": true },
+    "deep-link": {
+      "desktop": { "schemes": ["nfa-ka-serum"] }
+    },
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/hassan312-god/credit-flow/releases/latest/download/latest.json"
+      ],
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlBQURBMzU0RUM0NkJFOTAKUldTUXZrYnNWS090bWhZZXl3b0dPSGhsQitJUEZsMlFTNy92RFlza1Z5Z0xlZUkwTjNJNis2K1cK"
+    }
+  }
+}

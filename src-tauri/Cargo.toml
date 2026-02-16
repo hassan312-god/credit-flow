@@ -1,0 +1,25 @@
+[package]
+name = "nfa-ka-serum"
+version = "0.1.0"
+description = "N'FA KA SÉRUM - Gestion des prêts"
+authors = ["you"]
+license = ""
+repository = ""
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.0", features = [] }
+tauri-plugin-shell = "2.0"
+tauri-plugin-dialog = "2.0"
+tauri-plugin-fs = "2.0"
+tauri-plugin-http = "2.0"
+tauri-plugin-deep-link = "2.0"
+tauri-plugin-updater = "2.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
