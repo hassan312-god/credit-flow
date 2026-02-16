@@ -69,6 +69,37 @@ const editRoleOptions = computed<AppRole[]>(() => {
   return [...opts, u.role as AppRole]
 })
 
+const updatingRoleFor = ref<string | null>(null)
+const roleUpdateError = ref('')
+
+async function changeRole(u: UserWithRole, newRole: AppRole) {
+  if (newRole === (u.role as AppRole))
+    return
+  if (currentUserRole.value !== 'admin' && (currentUserRole.value === 'directeur' && newRole === 'admin'))
+    return
+  roleUpdateError.value = ''
+  updatingRoleFor.value = u.id
+  try {
+    const r = await callManageUsers({ action: 'update_role', userId: u.id, role: newRole })
+    if (!r.ok) {
+      roleUpdateError.value = r.error ?? 'Erreur'
+      return
+    }
+    u.role = newRole
+  }
+  finally {
+    updatingRoleFor.value = null
+  }
+}
+
+function roleOptionsForUser(u: UserWithRole): AppRole[] {
+  if (currentUserRole.value === 'admin')
+    return roleOptions.value
+  if (currentUserRole.value === 'directeur')
+    return u.role === 'admin' ? roleOptions.value : roleOptions.value.filter(r => r !== 'admin')
+  return []
+}
+
 async function fetchUsers() {
   loading.value = true
   error.value = ''
@@ -262,15 +293,23 @@ onMounted(() => fetchUsers())
 <template>
   <div class="w-full flex flex-col gap-4">
     <div class="flex flex-wrap items-center justify-between gap-2">
-      <h2 class="text-2xl font-bold tracking-tight">
-        Utilisateurs
-      </h2>
+      <div>
+        <h2 class="text-2xl font-bold tracking-tight">
+          Utilisateurs
+        </h2>
+        <p class="text-muted-foreground text-sm mt-0.5">
+          En tant qu'admin, vous pouvez choisir et modifier le rôle de chaque employé ou directeur.
+        </p>
+      </div>
       <Button v-if="roleOptions.length > 0" @click="openCreateDialog">
         Créer un employé
       </Button>
     </div>
     <p v-if="error" class="text-destructive text-sm">
       {{ error }}
+    </p>
+    <p v-if="roleUpdateError" class="text-destructive text-sm">
+      {{ roleUpdateError }}
     </p>
     <Card v-else>
       <CardContent class="p-0">
@@ -301,7 +340,22 @@ onMounted(() => fetchUsers())
                 <TableCell>{{ u.email }}</TableCell>
                 <TableCell>{{ u.phone || '—' }}</TableCell>
                 <TableCell>
-                  <Badge variant="secondary">
+                  <Select
+                    v-if="canEditUser(u) && roleOptionsForUser(u).length > 0"
+                    :model-value="(u.role as AppRole) ?? ''"
+                    :disabled="updatingRoleFor === u.id"
+                    @update:model-value="changeRole(u, $event as AppRole)"
+                  >
+                    <SelectTrigger class="w-[160px] h-8">
+                      <SelectValue :placeholder="updatingRoleFor === u.id ? 'Enregistrement…' : 'Choisir un rôle'" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="r in roleOptionsForUser(u)" :key="r" :value="r">
+                        {{ roleLabels[r] }}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Badge v-else variant="secondary">
                     {{ roleLabels[u.role as string] ?? u.role ?? '—' }}
                   </Badge>
                 </TableCell>
@@ -380,9 +434,9 @@ onMounted(() => fetchUsers())
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Modifier l'employé</DialogTitle>
-          <DialogDescription>
-            Modifier le nom, le numéro, le rôle ou le mot de passe. Laissez le mot de passe vide pour ne pas le changer.
-          </DialogDescription>
+        <DialogDescription>
+          Modifier le nom, le téléphone, le rôle (employé ou directeur) ou le mot de passe. Laissez le mot de passe vide pour ne pas le changer.
+        </DialogDescription>
         </DialogHeader>
         <form v-if="editUser" class="flex flex-col gap-4" @submit.prevent="saveEdit">
           <p v-if="editError" class="text-destructive text-sm">
