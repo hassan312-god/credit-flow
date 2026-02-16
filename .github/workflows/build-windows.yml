@@ -14,6 +14,10 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    env:
+      CI: true
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
     steps:
       - name: Checkout code
@@ -24,8 +28,9 @@ jobs:
       - name: Install WebView2 runtime
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/p/?LinkId=2124703" -OutFile "$env:TEMP\MicrosoftEdgeWebview2Setup.exe" -UseBasicParsing
-          Start-Process -FilePath "$env:TEMP\MicrosoftEdgeWebview2Setup.exe" -ArgumentList "/silent /install" -Wait -NoNewWindow
+          $installer = Join-Path $env:TEMP 'MicrosoftEdgeWebview2Setup.exe'
+          Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile $installer
+          Start-Process -FilePath $installer -ArgumentList '/silent','/install' -Wait -NoNewWindow
 
       - name: Copy icons from reference if missing
         shell: pwsh
@@ -45,14 +50,14 @@ jobs:
         run: |
           if not exist src-tauri\icons\32x32.png (echo "Missing src-tauri/icons/32x32.png - add icons or copy from credit-flow-reference" && exit /b 1)
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '22'
 
       - name: Enable pnpm (Corepack)
-        run: corepack enable && corepack prepare pnpm@10.10.0 --activate
         shell: pwsh
+        run: corepack enable && corepack prepare pnpm@10.10.0 --activate
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -64,20 +69,23 @@ jobs:
         with:
           path: |
             src-tauri/target
-            ~/.cargo/registry
-            ~/.cargo/git
+            C:\Users\runneradmin\.cargo\registry
+            C:\Users\runneradmin\.cargo\git
           key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.lock', 'src-tauri/Cargo.toml') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        shell: pwsh
 
-      - name: Build frontend (Nuxt generate) and Tauri app
+      - name: Build frontend (Nuxt generate)
+        run: pnpm run generate
+        shell: pwsh
+
+      - name: Build Tauri app
         run: pnpm run tauri build
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        shell: pwsh
 
       - name: Show built files
         shell: pwsh
