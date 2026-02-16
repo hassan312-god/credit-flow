@@ -12,7 +12,7 @@ async function checkConnection() {
     const supabase = useSupabase()
     if (!supabase) {
       status.value = 'error'
-      errorMessage.value = 'Supabase non configuré (variables d\'environnement manquantes).'
+      errorMessage.value = 'Supabase non configuré.'
       return
     }
     const { error } = await supabase.from('clients').select('id').limit(1)

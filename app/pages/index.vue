@@ -40,7 +40,7 @@ async function fetchDashboardData() {
   try {
     const supabase = useSupabase()
     if (!supabase) {
-      error.value = 'Supabase non configuré. En local : .env. Sur Vercel : Settings → Environment Variables (voir docs/VERCEL.md).'
+      error.value = 'Supabase non configuré.'
       return
     }
 
