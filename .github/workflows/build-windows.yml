@@ -50,15 +50,16 @@ jobs:
         run: |
           if not exist src-tauri\icons\32x32.png (echo "Missing src-tauri/icons/32x32.png - add icons or copy from credit-flow-reference" && exit /b 1)
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.10.0
+
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'pnpm'
-
-      - name: Enable pnpm (Corepack)
-        shell: pwsh
-        run: corepack enable && corepack prepare pnpm@10.10.0 --activate
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
