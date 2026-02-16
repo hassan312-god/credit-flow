@@ -89,6 +89,8 @@ export default defineNuxtConfig({
 
   routeRules: {
     '/settings': { redirect: '/settings/profile' },
+    // Pagination (Reka UI) provoque une 500 au prerender ; rendu côté client uniquement.
+    '/components/pagination': { ssr: false },
   },
 
   // Éviter l'échec du build (generate) quand le prerender rencontre des 404/500 sur des routes

@@ -35,35 +35,42 @@
         </Badge>
       </div>
     </div>
-    <div class="grid gap-4 md:grid-cols-2">
-      <Card class="w-full">
-        <CardHeader>
-          <CardTitle>Basic</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div class="min-h-100px w-full flex items-center justify-center gap-4 md:min-h-200px">
-            <Pagination v-slot="{ page }" :total="100" :sibling-count="1" show-edges :default-page="2">
-              <PaginationList v-slot="{ items }" class="flex items-center gap-1">
-                <PaginationFirst />
-                <PaginationPrev />
+    <ClientOnly>
+      <div class="grid gap-4 md:grid-cols-2">
+        <Card class="w-full">
+          <CardHeader>
+            <CardTitle>Basic</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="min-h-100px w-full flex items-center justify-center gap-4 md:min-h-200px">
+              <Pagination v-slot="{ page }" :total="100" :sibling-count="1" show-edges :default-page="2">
+                <PaginationList v-slot="{ items }" class="flex items-center gap-1">
+                  <PaginationFirst />
+                  <PaginationPrev />
 
-                <template v-for="(item, index) in items">
-                  <PaginationListItem v-if="item.type === 'page'" :key="index" :value="item.value" as-child>
-                    <Button class="h-9 w-9 p-0" :variant="item.value === page ? 'default' : 'outline'">
-                      {{ item.value }}
-                    </Button>
-                  </PaginationListItem>
-                  <PaginationEllipsis v-else :key="item.type" :index="index" />
-                </template>
+                  <template v-for="(item, index) in items">
+                    <PaginationListItem v-if="item.type === 'page'" :key="index" :value="item.value" as-child>
+                      <Button class="h-9 w-9 p-0" :variant="item.value === page ? 'default' : 'outline'">
+                        {{ item.value }}
+                      </Button>
+                    </PaginationListItem>
+                    <PaginationEllipsis v-else :key="item.type" :index="index" />
+                  </template>
 
-                <PaginationNext />
-                <PaginationLast />
-              </PaginationList>
-            </Pagination>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+                  <PaginationNext />
+                  <PaginationLast />
+                </PaginationList>
+              </Pagination>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      <template #fallback>
+        <div class="min-h-200px w-full flex items-center justify-center text-muted-foreground">
+          Chargement…
+        </div>
+      </template>
+    </ClientOnly>
   </div>
 </template>
 
