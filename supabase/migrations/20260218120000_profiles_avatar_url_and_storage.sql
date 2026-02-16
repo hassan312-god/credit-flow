@@ -3,11 +3,13 @@
 ALTER TABLE public.profiles
 ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 
--- Bucket "avatars" : à créer manuellement dans Supabase si l'INSERT ci-dessous
--- n'est pas exécutable (Dashboard → Storage → New bucket → nom "avatars", Public).
--- INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
--- VALUES ('avatars', 'avatars', true, 2097152, ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
--- ON CONFLICT (id) DO NOTHING;
+-- Bucket "avatars" pour les photos de profil (public, 2 Mo max, images uniquement)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('avatars', 'avatars', true, 2097152, ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+ON CONFLICT (id) DO UPDATE SET
+  public = EXCLUDED.public,
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
 
 -- RLS storage.objects (à exécuter après que le bucket "avatars" existe) : lecture publique, écriture uniquement dans son dossier (auth.uid())
 DROP POLICY IF EXISTS "Avatar images are publicly readable" ON storage.objects;
