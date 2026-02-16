@@ -31,7 +31,8 @@ async function fetchLogs() {
       .select('*')
       .order('created_at', { ascending: false })
       .limit(100)
-    if (e) throw e
+    if (e)
+      throw e
     logs.value = (data ?? []) as AuditLog[]
   }
   catch (e: any) {
@@ -74,7 +75,9 @@ onMounted(() => fetchLogs())
                   {{ new Date(log.created_at).toLocaleString('fr-FR') }}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline">{{ log.action }}</Badge>
+                  <Badge variant="outline">
+                    {{ log.action }}
+                  </Badge>
                 </TableCell>
                 <TableCell>{{ log.table_name }}</TableCell>
                 <TableCell class="max-w-24 truncate font-mono text-xs">

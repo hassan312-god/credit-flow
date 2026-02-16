@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { LoanStatus } from '~/types/database'
 import NumberFlow from '@number-flow/vue'
-import { HandCoins } from 'lucide-vue-next'
 
 definePageMeta({ layout: 'default' })
 
@@ -46,7 +45,8 @@ async function fetchLoans() {
       .from('loans')
       .select('id, client_id, amount, interest_rate, duration_months, status, total_amount, monthly_payment, purpose, disbursement_date, created_at, clients(full_name)')
       .order('created_at', { ascending: false })
-    if (e) throw e
+    if (e)
+      throw e
     loans.value = (data ?? []).map((row: any) => ({
       ...row,
       clients: Array.isArray(row.clients) ? row.clients[0] : row.clients,
@@ -75,7 +75,9 @@ onMounted(() => fetchLoans())
         Prêts
       </h2>
       <Button as-child>
-        <NuxtLink to="/loans/new">Nouveau prêt</NuxtLink>
+        <NuxtLink to="/loans/new">
+          Nouveau prêt
+        </NuxtLink>
       </Button>
     </div>
 
@@ -86,7 +88,9 @@ onMounted(() => fetchLoans())
     <Card v-else>
       <CardContent class="p-0">
         <div v-if="loading" class="flex items-center justify-center py-12">
-          <p class="text-muted-foreground">Chargement…</p>
+          <p class="text-muted-foreground">
+            Chargement…
+          </p>
         </div>
         <template v-else>
           <Table v-if="loans.length > 0">
@@ -98,7 +102,7 @@ onMounted(() => fetchLoans())
                 <TableHead>Statut</TableHead>
                 <TableHead>Date déblocage</TableHead>
                 <TableHead>Créé le</TableHead>
-                <TableHead></TableHead>
+                <TableHead />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -129,7 +133,9 @@ onMounted(() => fetchLoans())
                 </TableCell>
                 <TableCell>
                   <Button variant="ghost" size="sm" as-child>
-                    <NuxtLink :to="`/loans/${loan.id}`">Voir</NuxtLink>
+                    <NuxtLink :to="`/loans/${loan.id}`">
+                      Voir
+                    </NuxtLink>
                   </Button>
                 </TableCell>
               </TableRow>

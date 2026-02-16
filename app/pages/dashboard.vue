@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import NumberFlow from '@number-flow/vue'
-import { Users, HandCoins, AlertTriangle, TrendingUp, ArrowRight } from 'lucide-vue-next'
 import type { LoanStatus } from '~/types/database'
+import NumberFlow from '@number-flow/vue'
+import { AlertTriangle, ArrowRight, HandCoins, Users } from 'lucide-vue-next'
 
 definePageMeta({
   layout: 'default',

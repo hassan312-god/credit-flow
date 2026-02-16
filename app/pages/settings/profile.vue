@@ -103,18 +103,20 @@ async function save() {
       avatarPreview.value = null
     }
 
-    const payload: { full_name: string | null; phone: string | null; avatar_url?: string | null } = {
+    const payload: { full_name: string | null, phone: string | null, avatar_url?: string | null } = {
       full_name: form.value.full_name.trim() || null,
       phone: form.value.phone.trim() || null,
     }
-    if (newAvatarUrl !== null) payload.avatar_url = newAvatarUrl
+    if (newAvatarUrl !== null)
+      payload.avatar_url = newAvatarUrl
 
     if (profileExists.value) {
       const { error: e } = await supabase
         .from('profiles')
         .update(payload)
         .eq('id', user.id)
-      if (e) throw e
+      if (e)
+        throw e
     }
     else {
       const { error: e } = await supabase
@@ -126,10 +128,12 @@ async function save() {
           phone: payload.phone,
           ...(payload.avatar_url !== undefined && { avatar_url: payload.avatar_url }),
         })
-      if (e) throw e
+      if (e)
+        throw e
       profileExists.value = true
     }
-    if (newAvatarUrl !== null) form.value.avatar_url = newAvatarUrl
+    if (newAvatarUrl !== null)
+      form.value.avatar_url = newAvatarUrl
     await supabase.auth.updateUser({ data: { full_name: form.value.full_name.trim() || undefined } })
     const { refresh } = useAuthRole()
     await refresh()
@@ -195,7 +199,9 @@ onMounted(() => load())
           <div class="grid gap-2">
             <Label for="profile_email">Email</Label>
             <Input id="profile_email" :model-value="form.email" disabled class="bg-muted" />
-            <p class="text-muted-foreground text-xs">L'email est géré par l'authentification.</p>
+            <p class="text-muted-foreground text-xs">
+              L'email est géré par l'authentification.
+            </p>
           </div>
           <div class="grid gap-2">
             <Label for="profile_full_name">Nom complet</Label>

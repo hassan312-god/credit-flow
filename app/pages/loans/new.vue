@@ -25,14 +25,16 @@ const totalAmount = computed(() => {
   const a = form.value.amount
   const r = form.value.interest_rate / 100
   const n = form.value.duration_months
-  if (!a || !n) return 0
+  if (!a || !n)
+    return 0
   return Math.round(a * (1 + r * (n / 12)) * 100) / 100
 })
 
 const monthlyPayment = computed(() => {
   const total = totalAmount.value
   const n = form.value.duration_months
-  if (!n) return 0
+  if (!n)
+    return 0
   return Math.round((total / n) * 100) / 100
 })
 
@@ -40,12 +42,14 @@ async function fetchClients() {
   loadingClients.value = true
   try {
     const supabase = useSupabase()
-    if (!supabase) return
+    if (!supabase)
+      return
     const { data, error: e } = await supabase
       .from('clients')
       .select('id, full_name, phone')
       .order('full_name')
-    if (!e) clients.value = data ?? []
+    if (!e)
+      clients.value = data ?? []
   }
   finally {
     loadingClients.value = false
@@ -55,7 +59,8 @@ async function fetchClients() {
 onMounted(() => {
   fetchClients()
   const prefillClient = route.query.client as string
-  if (prefillClient) form.value.client_id = prefillClient
+  if (prefillClient)
+    form.value.client_id = prefillClient
 })
 
 async function submit() {
@@ -89,7 +94,8 @@ async function submit() {
       })
       .select('id')
       .single()
-    if (e) throw e
+    if (e)
+      throw e
     await router.push(`/loans/${data?.id ?? ''}`)
   }
   catch (e: any) {
@@ -105,7 +111,9 @@ async function submit() {
   <div class="w-full flex flex-col gap-4">
     <div class="flex items-center gap-2">
       <Button variant="ghost" size="icon" as-child>
-        <NuxtLink to="/loans"><ArrowLeft class="size-4" /></NuxtLink>
+        <NuxtLink to="/loans">
+          <ArrowLeft class="size-4" />
+        </NuxtLink>
       </Button>
       <h2 class="text-2xl font-bold tracking-tight">
         Nouveau prêt
@@ -141,7 +149,9 @@ async function submit() {
                 </SelectItem>
               </SelectContent>
             </Select>
-            <p v-if="loadingClients" class="text-muted-foreground text-xs">Chargement des clients…</p>
+            <p v-if="loadingClients" class="text-muted-foreground text-xs">
+              Chargement des clients…
+            </p>
           </div>
           <div class="grid gap-2">
             <Label for="amount">Montant (XOF) *</Label>

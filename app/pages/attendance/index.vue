@@ -35,7 +35,8 @@ async function fetchSessions() {
       .order('work_date', { ascending: false })
       .order('opened_at', { ascending: false })
       .limit(100)
-    if (e) throw e
+    if (e)
+      throw e
     sessions.value = (data ?? []) as WorkSession[]
   }
   catch (e: any) {
@@ -81,7 +82,9 @@ onMounted(() => fetchSessions())
                 <TableCell>{{ s.opened_at }}</TableCell>
                 <TableCell>{{ s.closed_at || '—' }}</TableCell>
                 <TableCell>
-                  <Badge variant="secondary">{{ s.status }}</Badge>
+                  <Badge variant="secondary">
+                    {{ s.status }}
+                  </Badge>
                 </TableCell>
                 <TableCell>
                   <span v-if="s.is_late" class="text-destructive text-sm">{{ s.late_minutes ?? 0 }} min</span>

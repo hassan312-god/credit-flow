@@ -7,6 +7,8 @@ await navigateTo('/auth/login', { replace: true })
 
 <template>
   <div class="flex min-h-screen flex-col items-center justify-center gap-6 p-4">
-    <p class="text-muted-foreground">Redirection vers la connexion…</p>
+    <p class="text-muted-foreground">
+      Redirection vers la connexion…
+    </p>
   </div>
 </template>

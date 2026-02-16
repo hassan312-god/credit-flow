@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import NumberFlow from '@number-flow/vue'
-import { Wallet, Plus, Minus, History } from 'lucide-vue-next'
+import { History, Wallet } from 'lucide-vue-next'
 
 definePageMeta({ layout: 'default' })
 
@@ -60,7 +60,8 @@ async function fetchFunds() {
       return
     }
     const { data, error: e } = await supabase.from('company_funds').select('*').order('created_at', { ascending: true })
-    if (e) throw e
+    if (e)
+      throw e
     funds.value = (data ?? []) as Fund[]
     if (funds.value.length > 0) {
       const fundId = funds.value[0].id
@@ -70,7 +71,8 @@ async function fetchFunds() {
         .eq('fund_id', fundId)
         .order('created_at', { ascending: false })
         .limit(50)
-      if (!eH) history.value = (histData ?? []) as FundHistoryRow[]
+      if (!eH)
+        history.value = (histData ?? []) as FundHistoryRow[]
       else history.value = []
     }
     else {
@@ -86,7 +88,8 @@ async function fetchFunds() {
 }
 
 async function createFund() {
-  if (!canEdit.value || !supabase) return
+  if (!canEdit.value || !supabase)
+    return
   const cap = Number(createForm.value.initial_capital)
   if (Number.isNaN(cap) || cap < 0) {
     error.value = 'Le capital initial doit être un nombre positif.'
@@ -109,7 +112,8 @@ async function createFund() {
       })
       .select('id')
       .single()
-    if (e) throw e
+    if (e)
+      throw e
     const fundId = (inserted as { id: string }).id
     await supabase.from('company_funds_history').insert({
       fund_id: fundId,
@@ -133,7 +137,8 @@ async function createFund() {
 
 async function applyAdjustment() {
   const f = mainFund.value
-  if (!canEdit.value || !supabase || !f) return
+  if (!canEdit.value || !supabase || !f)
+    return
   const amount = Number(adjustmentForm.value.amount)
   if (Number.isNaN(amount) || amount === 0) {
     error.value = 'Indiquez un montant (positif pour ajouter, négatif pour retirer).'
@@ -156,7 +161,8 @@ async function applyAdjustment() {
         updated_by: user?.id ?? null,
       })
       .eq('id', f.id)
-    if (e) throw e
+    if (e)
+      throw e
     await supabase.from('company_funds_history').insert({
       fund_id: f.id,
       previous_balance: f.current_balance,
@@ -179,7 +185,8 @@ async function applyAdjustment() {
 
 async function updateFundDetails() {
   const f = mainFund.value
-  if (!canEdit.value || !supabase || !f) return
+  if (!canEdit.value || !supabase || !f)
+    return
   const cap = Number(updateForm.value.initial_capital)
   if (Number.isNaN(cap) || cap < 0) {
     error.value = 'Le capital initial doit être un nombre positif.'
@@ -197,7 +204,8 @@ async function updateFundDetails() {
         updated_by: user?.id ?? null,
       })
       .eq('id', f.id)
-    if (e) throw e
+    if (e)
+      throw e
     await fetchFunds()
   }
   catch (e: any) {
@@ -220,7 +228,8 @@ function initUpdateForm() {
 
 onMounted(() => fetchFunds())
 watch(mainFund, (f) => {
-  if (f) initUpdateForm()
+  if (f)
+    initUpdateForm()
 }, { immediate: true })
 </script>
 
@@ -237,13 +246,17 @@ watch(mainFund, (f) => {
     </p>
 
     <template v-if="loading">
-      <p class="text-muted-foreground">Chargement…</p>
+      <p class="text-muted-foreground">
+        Chargement…
+      </p>
     </template>
     <template v-else>
       <!-- Aucun fonds : création (directeur uniquement) -->
       <Card v-if="funds.length === 0">
         <CardHeader>
-          <CardTitle class="text-base">Créer le fonds de trésorerie</CardTitle>
+          <CardTitle class="text-base">
+            Créer le fonds de trésorerie
+          </CardTitle>
           <CardDescription>
             Aucun fonds enregistré. Définissez le capital initial pour commencer.
           </CardDescription>
@@ -273,7 +286,9 @@ watch(mainFund, (f) => {
         <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card v-for="f in funds" :key="f.id">
             <CardHeader class="flex flex-row items-center justify-between pb-2">
-              <CardTitle class="text-sm font-medium">Trésorerie</CardTitle>
+              <CardTitle class="text-sm font-medium">
+                Trésorerie
+              </CardTitle>
               <Wallet class="size-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -296,7 +311,9 @@ watch(mainFund, (f) => {
         <div v-if="canEdit && mainFund" class="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle class="text-base">Ajustement du solde</CardTitle>
+              <CardTitle class="text-base">
+                Ajustement du solde
+              </CardTitle>
               <CardDescription>
                 Ajouter (montant positif) ou retirer (montant négatif) de la trésorerie.
               </CardDescription>
@@ -319,7 +336,9 @@ watch(mainFund, (f) => {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle class="text-base">Modifier les informations</CardTitle>
+              <CardTitle class="text-base">
+                Modifier les informations
+              </CardTitle>
               <CardDescription>
                 Capital initial (affiché) et notes. N’affecte pas le solde actuel.
               </CardDescription>
@@ -376,7 +395,9 @@ watch(mainFund, (f) => {
                   <TableCell class="tabular-nums">
                     <NumberFlow :value="h.new_balance" :format="{ style: 'currency', currency: 'XOF' }" />
                   </TableCell>
-                  <TableCell class="text-muted-foreground text-sm">{{ h.notes || '—' }}</TableCell>
+                  <TableCell class="text-muted-foreground text-sm">
+                    {{ h.notes || '—' }}
+                  </TableCell>
                 </TableRow>
               </TableBody>
             </Table>

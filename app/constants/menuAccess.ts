@@ -1,5 +1,5 @@
 import type { AppRole } from '~/types/database'
-import type { NavMenu, NavLink, NavGroup } from '~/types/nav'
+import type { NavGroup, NavLink, NavMenu } from '~/types/nav'
 import { navMenu } from '~/constants/menus'
 
 /**
@@ -41,7 +41,8 @@ export const roleLabels: Record<AppRole, string> = {
 }
 
 function pathMatches(path: string, pattern: string): boolean {
-  if (pattern === path) return true
+  if (pattern === path)
+    return true
   if (pattern.endsWith('*')) {
     const prefix = pattern.slice(0, -1)
     return path === prefix || path.startsWith(prefix)
@@ -51,22 +52,27 @@ function pathMatches(path: string, pattern: string): boolean {
 
 export function getRolesForPath(path: string): AppRole[] | null {
   const exact = pathRoles[path]
-  if (exact) return exact
+  if (exact)
+    return exact
   for (const [pattern, roles] of Object.entries(pathRoles)) {
-    if (pathMatches(path, pattern)) return roles
+    if (pathMatches(path, pattern))
+      return roles
   }
   return null
 }
 
 export function canAccessPath(path: string, role: AppRole | null): boolean {
-  if (!role) return false
+  if (!role)
+    return false
   const roles = getRolesForPath(path)
-  if (!roles) return true
+  if (!roles)
+    return true
   return roles.includes(role)
 }
 
-function itemHasAccess(item: NavLink | NavGroup, role: AppRole | null): boolean {
-  if (!role) return false
+function _itemHasAccess(item: NavLink | NavGroup, role: AppRole | null): boolean {
+  if (!role)
+    return false
   if ('link' in item && item.link) {
     return canAccessPath(item.link, role)
   }
@@ -79,7 +85,8 @@ function itemHasAccess(item: NavLink | NavGroup, role: AppRole | null): boolean 
 function filterNavItem(item: NavLink | NavGroup, role: AppRole | null): NavLink | NavGroup | null {
   if ('children' in item && item.children) {
     const filteredChildren = item.children.filter((c: NavLink) => c.link && canAccessPath(c.link, role))
-    if (filteredChildren.length === 0) return null
+    if (filteredChildren.length === 0)
+      return null
     return { ...item, children: filteredChildren }
   }
   if ('link' in item) {
@@ -89,13 +96,15 @@ function filterNavItem(item: NavLink | NavGroup, role: AppRole | null): NavLink 
 }
 
 export function getNavMenuForRole(role: AppRole | null): NavMenu[] {
-  if (!role) return []
+  if (!role)
+    return []
   return navMenu
     .map((group) => {
       const items = group.items
-        .map((item) => filterNavItem(item, role))
+        .map(item => filterNavItem(item, role))
         .filter((item): item is NavLink | NavGroup => item != null)
-      if (items.length === 0) return null
+      if (items.length === 0)
+        return null
       return { ...group, items }
     })
     .filter((group): group is NavMenu => group != null)

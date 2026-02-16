@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Database } from '~/types/database'
-import { Search, Plus, Phone, Mail } from 'lucide-vue-next'
+import { Mail, Phone, Plus, Search } from 'lucide-vue-next'
 
 definePageMeta({ layout: 'default' })
 
@@ -24,7 +24,8 @@ async function fetchClients() {
       .from('clients')
       .select('*')
       .order('created_at', { ascending: false })
-    if (e) throw e
+    if (e)
+      throw e
     clients.value = data ?? []
   }
   catch (e: any) {
@@ -37,7 +38,8 @@ async function fetchClients() {
 
 const filteredClients = computed(() => {
   const q = search.value.trim().toLowerCase()
-  if (!q) return clients.value
+  if (!q)
+    return clients.value
   return clients.value.filter(c =>
     c.full_name.toLowerCase().includes(q)
     || (c.phone && c.phone.includes(q))
@@ -80,7 +82,9 @@ onMounted(() => fetchClients())
     <Card v-else>
       <CardContent class="p-0">
         <div v-if="loading" class="flex items-center justify-center py-12">
-          <p class="text-muted-foreground">Chargement…</p>
+          <p class="text-muted-foreground">
+            Chargement…
+          </p>
         </div>
         <template v-else>
           <Table v-if="filteredClients.length > 0">

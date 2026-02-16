@@ -44,22 +44,28 @@ const form = ref({
 
 const roleOptions = computed<AppRole[]>(() => {
   const all: AppRole[] = ['admin', 'directeur', 'agent_credit', 'caissier', 'recouvrement']
-  if (currentUserRole.value === 'admin') return all
-  if (currentUserRole.value === 'directeur') return ['directeur', 'agent_credit', 'caissier', 'recouvrement']
+  if (currentUserRole.value === 'admin')
+    return all
+  if (currentUserRole.value === 'directeur')
+    return ['directeur', 'agent_credit', 'caissier', 'recouvrement']
   return []
 })
 
 function canEditUser(u: UserWithRole) {
-  if (roleOptions.value.length === 0) return false
-  if (currentUserRole.value === 'admin') return true
-  if (currentUserRole.value === 'directeur') return u.role !== 'admin'
+  if (roleOptions.value.length === 0)
+    return false
+  if (currentUserRole.value === 'admin')
+    return true
+  if (currentUserRole.value === 'directeur')
+    return u.role !== 'admin'
   return false
 }
 
 const editRoleOptions = computed<AppRole[]>(() => {
   const opts = roleOptions.value
   const u = editUser.value
-  if (!u?.role || opts.includes(u.role as AppRole)) return opts
+  if (!u?.role || opts.includes(u.role as AppRole))
+    return opts
   return [...opts, u.role as AppRole]
 })
 
@@ -72,7 +78,8 @@ async function fetchUsers() {
       return
     }
     const { data: profilesData, error: e1 } = await supabase.from('profiles').select('id, email, full_name, phone, created_at').order('created_at', { ascending: false })
-    if (e1) throw e1
+    if (e1)
+      throw e1
     const { data: rolesData } = await supabase.from('user_roles').select('user_id, role')
     const roleByUser = (rolesData ?? []).reduce((acc: Record<string, string>, r: any) => {
       acc[r.user_id] = r.role
@@ -131,7 +138,7 @@ async function createUser() {
       }),
     })
     const text = await res.text()
-    let data: { error?: string; message?: string } = {}
+    let data: { error?: string, message?: string } = {}
     try {
       data = text ? JSON.parse(text) : {}
     }
@@ -172,27 +179,32 @@ function openEditDialog(u: UserWithRole) {
   editDialogOpen.value = true
 }
 
-async function callManageUsers(body: Record<string, unknown>): Promise<{ ok: boolean; error?: string }> {
+async function callManageUsers(body: Record<string, unknown>): Promise<{ ok: boolean, error?: string }> {
   const { data: { session } } = await supabase!.auth.getSession()
   const token = session?.access_token
-  if (!token) return { ok: false, error: 'Session expirée. Reconnectez-vous.' }
+  if (!token)
+    return { ok: false, error: 'Session expirée. Reconnectez-vous.' }
   const baseUrl = (config.supabaseUrl as string) || ''
-  if (!baseUrl) return { ok: false, error: 'Configuration Supabase manquante.' }
+  if (!baseUrl)
+    return { ok: false, error: 'Configuration Supabase manquante.' }
   const res = await fetch(`${baseUrl}/functions/v1/manage-users`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
     body: JSON.stringify(body),
   })
   const text = await res.text()
-  let data: { error?: string; message?: string } = {}
-  try { data = text ? JSON.parse(text) : {} } catch { data = { error: text || 'Réponse invalide' } }
-  if (!res.ok) return { ok: false, error: data.error || data.message || `Erreur ${res.status}` }
+  let data: { error?: string, message?: string } = {}
+  try { data = text ? JSON.parse(text) : {} }
+  catch { data = { error: text || 'Réponse invalide' } }
+  if (!res.ok)
+    return { ok: false, error: data.error || data.message || `Erreur ${res.status}` }
   return { ok: true }
 }
 
 async function saveEdit() {
   const u = editUser.value
-  if (!u) return
+  if (!u)
+    return
   editError.value = ''
   const { full_name, phone, role: newRole, new_password } = editForm.value
   if (!full_name.trim()) {
@@ -263,23 +275,29 @@ onMounted(() => fetchUsers())
     <Card v-else>
       <CardContent class="p-0">
         <div v-if="loading" class="flex items-center justify-center py-12">
-          <p class="text-muted-foreground">Chargement…</p>
+          <p class="text-muted-foreground">
+            Chargement…
+          </p>
         </div>
         <template v-else>
           <Table v-if="users.length > 0">
-<TableHeader>
-            <TableRow>
+            <TableHeader>
+              <TableRow>
                 <TableHead>Nom</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Téléphone</TableHead>
                 <TableHead>Rôle</TableHead>
                 <TableHead>Créé le</TableHead>
-                <TableHead v-if="roleOptions.length > 0" class="w-[100px] text-right">Actions</TableHead>
+                <TableHead v-if="roleOptions.length > 0" class="w-[100px] text-right">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               <TableRow v-for="u in users" :key="u.id">
-                <TableCell class="font-medium">{{ u.full_name }}</TableCell>
+                <TableCell class="font-medium">
+                  {{ u.full_name }}
+                </TableCell>
                 <TableCell>{{ u.email }}</TableCell>
                 <TableCell>{{ u.phone || '—' }}</TableCell>
                 <TableCell>

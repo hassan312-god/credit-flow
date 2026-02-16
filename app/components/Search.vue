@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { NavMenu, NavLink, NavGroup } from '~/types/nav'
+import type { NavLink } from '~/types/nav'
 import { navMenu } from '~/constants/menus'
 
 interface CommandEntry {

@@ -26,7 +26,7 @@ const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
 
-const allSchedules = ref<{ id: string; day_of_week: number; start_time: string; end_time: string; is_active: boolean }[]>([])
+const allSchedules = ref<{ id: string, day_of_week: number, start_time: string, end_time: string, is_active: boolean }[]>([])
 
 async function fetchSchedules() {
   loading.value = true
@@ -37,7 +37,8 @@ async function fetchSchedules() {
       return
     }
     const { data, error: e } = await supabase.from('work_schedule').select('*').order('day_of_week')
-    if (e) throw e
+    if (e)
+      throw e
     schedules.value = (data ?? []) as WorkSchedule[]
     const existing = schedules.value
     allSchedules.value = []
@@ -74,16 +75,19 @@ async function fetchSchedules() {
 
 function setTime(dayOfWeek: number, field: 'start_time' | 'end_time', value: string) {
   const s = allSchedules.value.find(x => x.day_of_week === dayOfWeek)
-  if (s) s[field] = value
+  if (s)
+    s[field] = value
 }
 
 function setActive(dayOfWeek: number, isActive: boolean) {
   const s = allSchedules.value.find(x => x.day_of_week === dayOfWeek)
-  if (s) s.is_active = isActive
+  if (s)
+    s.is_active = isActive
 }
 
 async function saveAll() {
-  if (!supabase) return
+  if (!supabase)
+    return
   saving.value = true
   error.value = ''
   try {
@@ -97,7 +101,8 @@ async function saveAll() {
         ...(s.id ? { id: s.id } : {}),
       }
       const { error: e } = await supabase.from('work_schedule').upsert(payload, { onConflict: 'day_of_week' })
-      if (e) throw e
+      if (e)
+        throw e
     }
     await fetchSchedules()
   }
@@ -134,7 +139,9 @@ onMounted(() => fetchSchedules())
     <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       <Card v-for="s in allSchedules" :key="s.day_of_week">
         <CardHeader class="pb-2">
-          <CardTitle class="text-base">{{ DAYS.find(d => d.value === s.day_of_week)?.label }}</CardTitle>
+          <CardTitle class="text-base">
+            {{ DAYS.find(d => d.value === s.day_of_week)?.label }}
+          </CardTitle>
         </CardHeader>
         <CardContent class="flex flex-col gap-3">
           <div class="flex items-center gap-2">

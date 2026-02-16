@@ -1,10 +1,10 @@
-import type { AppRole } from '~/types/database'
 import type { User } from '@supabase/supabase-js'
+import type { AppRole } from '~/types/database'
 
 export interface AuthRoleState {
   user: User | null
   role: AppRole | null
-  profile: { full_name: string; email: string; avatar_url?: string | null } | null
+  profile: { full_name: string, email: string, avatar_url?: string | null } | null
   loading: boolean
 }
 
@@ -19,14 +19,15 @@ export default defineNuxtPlugin(() => {
   const { $supabase: supabase } = useNuxtApp()
 
   async function fetchUserData(userId: string) {
-    if (!supabase) return
+    if (!supabase)
+      return
     try {
       const [profileRes, roleRes] = await Promise.all([
         supabase.from('profiles').select('full_name, email, avatar_url').eq('id', userId).maybeSingle(),
         supabase.from('user_roles').select('role').eq('user_id', userId).maybeSingle(),
       ])
       const authUser = state.value.user
-      const fromDb = profileRes.data as { full_name?: string; email?: string; avatar_url?: string | null } | null
+      const fromDb = profileRes.data as { full_name?: string, email?: string, avatar_url?: string | null } | null
       const fallbackName = authUser?.user_metadata?.full_name as string | undefined
       const fallbackEmail = authUser?.email ?? ''
       if (fromDb) {
@@ -43,7 +44,8 @@ export default defineNuxtPlugin(() => {
           avatar_url: null,
         }
       }
-      if (roleRes.data?.role) state.value.role = roleRes.data.role as AppRole
+      if (roleRes.data?.role)
+        state.value.role = roleRes.data.role as AppRole
     }
     catch (e) {
       console.error('auth.client fetchUserData', e)

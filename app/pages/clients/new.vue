@@ -40,7 +40,8 @@ async function submit() {
       profession: form.value.profession?.trim() || null,
       monthly_income: form.value.monthly_income === '' ? null : Number(form.value.monthly_income),
     })
-    if (e) throw e
+    if (e)
+      throw e
     success.value = true
     form.value = { full_name: '', phone: '', email: '', id_type: 'CNI', id_number: '', address: '', profession: '', monthly_income: '' }
   }
@@ -57,7 +58,9 @@ async function submit() {
   <div class="w-full flex flex-col gap-4">
     <div class="flex items-center gap-2">
       <Button variant="ghost" size="icon" as-child>
-        <NuxtLink to="/clients"><ArrowLeft class="size-4" /></NuxtLink>
+        <NuxtLink to="/clients">
+          <ArrowLeft class="size-4" />
+        </NuxtLink>
       </Button>
       <h2 class="text-2xl font-bold tracking-tight">
         Nouveau client
@@ -68,7 +71,9 @@ async function submit() {
       {{ error }}
     </p>
     <p v-if="success" class="text-green-600 text-sm">
-      Client créé. <NuxtLink to="/clients" class="underline">Voir la liste</NuxtLink>
+      Client créé. <NuxtLink to="/clients" class="underline">
+        Voir la liste
+      </NuxtLink>
     </p>
 
     <Card class="max-w-xl">
@@ -100,9 +105,15 @@ async function submit() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CNI">CNI</SelectItem>
-                  <SelectItem value="Passeport">Passeport</SelectItem>
-                  <SelectItem value="Permis">Permis</SelectItem>
+                  <SelectItem value="CNI">
+                    CNI
+                  </SelectItem>
+                  <SelectItem value="Passeport">
+                    Passeport
+                  </SelectItem>
+                  <SelectItem value="Permis">
+                    Permis
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>

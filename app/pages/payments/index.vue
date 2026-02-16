@@ -35,7 +35,8 @@ async function fetchPayments() {
       `)
       .order('payment_date', { ascending: false })
       .limit(200)
-    if (e) throw e
+    if (e)
+      throw e
     payments.value = (data ?? []) as PaymentWithLoan[]
   }
   catch (e: any) {
@@ -48,7 +49,8 @@ async function fetchPayments() {
 
 function clientName(p: PaymentWithLoan) {
   const loan = p.loans
-  if (!loan) return '—'
+  if (!loan)
+    return '—'
   const clients = Array.isArray(loan.clients) ? loan.clients[0] : loan.clients
   return (clients as any)?.full_name ?? '—'
 }
@@ -71,7 +73,9 @@ onMounted(() => fetchPayments())
     <Card v-else>
       <CardContent class="p-0">
         <div v-if="loading" class="flex items-center justify-center py-12">
-          <p class="text-muted-foreground">Chargement…</p>
+          <p class="text-muted-foreground">
+            Chargement…
+          </p>
         </div>
         <template v-else>
           <Table v-if="payments.length > 0">

@@ -54,7 +54,8 @@ const statusLabels: Record<LoanStatus, string> = {
 const totalPaid = computed(() => payments.value.reduce((s, p) => s + p.amount, 0))
 const remaining = computed(() => {
   const l = loan.value
-  if (!l?.total_amount) return null
+  if (!l?.total_amount)
+    return null
   return Math.max(0, l.total_amount - totalPaid.value)
 })
 
@@ -78,7 +79,8 @@ async function fetchData() {
       .select('id, client_id, amount, interest_rate, duration_months, status, total_amount, monthly_payment, purpose, disbursement_date, validation_date, created_at, clients(full_name)')
       .eq('id', id)
       .single()
-    if (eLoan) throw eLoan
+    if (eLoan)
+      throw eLoan
     loan.value = {
       ...loanData,
       clients: Array.isArray((loanData as any)?.clients) ? (loanData as any).clients[0] : (loanData as any)?.clients,
@@ -89,7 +91,8 @@ async function fetchData() {
       .select('id, amount, payment_date, payment_method, notes, created_at')
       .eq('loan_id', id)
       .order('payment_date', { ascending: false })
-    if (!ePay) payments.value = payData ?? []
+    if (!ePay)
+      payments.value = payData ?? []
     else payments.value = []
   }
   catch (e: any) {
@@ -107,12 +110,14 @@ function clientName() {
 
 async function addPayment() {
   const id = loanId.value
-  if (!id || !loan.value || paymentForm.value.amount <= 0) return
+  if (!id || !loan.value || paymentForm.value.amount <= 0)
+    return
   addingPayment.value = true
   error.value = ''
   try {
     const supabase = useSupabase()
-    if (!supabase) throw new Error('Supabase non configuré.')
+    if (!supabase)
+      throw new Error('Supabase non configuré.')
     const date = paymentForm.value.payment_date || new Date().toISOString().slice(0, 10)
     const { user } = useAuthRole()
     const { error: e } = await supabase.from('payments').insert({
@@ -123,7 +128,8 @@ async function addPayment() {
       notes: paymentForm.value.notes?.trim() || null,
       recorded_by: user.value?.id ?? null,
     })
-    if (e) throw e
+    if (e)
+      throw e
     paymentForm.value = { amount: 0, payment_date: '', payment_method: 'especes', notes: '' }
     await fetchData()
   }
@@ -137,18 +143,21 @@ async function addPayment() {
 
 async function disburseLoan() {
   const id = loanId.value
-  if (!id || !loan.value) return
+  if (!id || !loan.value)
+    return
   disbursingLoan.value = true
   error.value = ''
   try {
     const supabase = useSupabase()
-    if (!supabase) throw new Error('Supabase non configuré.')
+    if (!supabase)
+      throw new Error('Supabase non configuré.')
     const today = new Date().toISOString().slice(0, 10)
     const { error: e } = await supabase.from('loans').update({
       status: 'en_cours',
       disbursement_date: today,
     }).eq('id', id)
-    if (e) throw e
+    if (e)
+      throw e
     await fetchData()
   }
   catch (e: any) {
@@ -161,14 +170,17 @@ async function disburseLoan() {
 
 async function closeLoan() {
   const id = loanId.value
-  if (!id || !loan.value) return
+  if (!id || !loan.value)
+    return
   closingLoan.value = true
   error.value = ''
   try {
     const supabase = useSupabase()
-    if (!supabase) throw new Error('Supabase non configuré.')
+    if (!supabase)
+      throw new Error('Supabase non configuré.')
     const { error: e } = await supabase.from('loans').update({ status: 'rembourse' }).eq('id', id)
-    if (e) throw e
+    if (e)
+      throw e
     await fetchData()
   }
   catch (e: any) {
@@ -190,7 +202,9 @@ watch(loanId, () => fetchData())
   <div class="w-full flex flex-col gap-4">
     <div class="flex items-center gap-2">
       <Button variant="ghost" size="icon" as-child>
-        <NuxtLink to="/loans"><ArrowLeft class="size-4" /></NuxtLink>
+        <NuxtLink to="/loans">
+          <ArrowLeft class="size-4" />
+        </NuxtLink>
       </Button>
       <h2 class="text-2xl font-bold tracking-tight">
         Détail du prêt
@@ -201,7 +215,9 @@ watch(loanId, () => fetchData())
       {{ error }}
     </p>
     <template v-else-if="loading">
-      <p class="text-muted-foreground">Chargement…</p>
+      <p class="text-muted-foreground">
+        Chargement…
+      </p>
     </template>
     <template v-else-if="loan">
       <div class="grid gap-4 md:grid-cols-2">
@@ -273,7 +289,9 @@ watch(loanId, () => fetchData())
       <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-4">
         <Card class="flex-1">
           <CardHeader>
-            <CardTitle class="text-base">Enregistrer un paiement</CardTitle>
+            <CardTitle class="text-base">
+              Enregistrer un paiement
+            </CardTitle>
             <CardDescription>Quand un client paie, enregistrez le montant ici.</CardDescription>
           </CardHeader>
           <CardContent class="flex flex-wrap items-end gap-3">
@@ -292,11 +310,21 @@ watch(loanId, () => fetchData())
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="especes">Espèces</SelectItem>
-                  <SelectItem value="mobile_money">Mobile money</SelectItem>
-                  <SelectItem value="virement">Virement</SelectItem>
-                  <SelectItem value="cheque">Chèque</SelectItem>
-                  <SelectItem value="autre">Autre</SelectItem>
+                  <SelectItem value="especes">
+                    Espèces
+                  </SelectItem>
+                  <SelectItem value="mobile_money">
+                    Mobile money
+                  </SelectItem>
+                  <SelectItem value="virement">
+                    Virement
+                  </SelectItem>
+                  <SelectItem value="cheque">
+                    Chèque
+                  </SelectItem>
+                  <SelectItem value="autre">
+                    Autre
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -311,7 +339,9 @@ watch(loanId, () => fetchData())
         </Card>
         <Card v-if="!loan.disbursement_date && loan.status !== 'rembourse'" class="sm:w-auto">
           <CardHeader>
-            <CardTitle class="text-base">Débloquer le prêt</CardTitle>
+            <CardTitle class="text-base">
+              Débloquer le prêt
+            </CardTitle>
             <CardDescription>Enregistrer la sortie de trésorerie (montant prêté au client).</CardDescription>
           </CardHeader>
           <CardContent>
@@ -322,7 +352,9 @@ watch(loanId, () => fetchData())
         </Card>
         <Card v-if="loan.status !== 'rembourse' && loan.disbursement_date" class="sm:w-auto">
           <CardHeader>
-            <CardTitle class="text-base">Clôturer le prêt</CardTitle>
+            <CardTitle class="text-base">
+              Clôturer le prêt
+            </CardTitle>
             <CardDescription>Marquer comme entièrement remboursé.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -333,7 +365,9 @@ watch(loanId, () => fetchData())
         </Card>
       </div>
 
-      <h3 class="text-lg font-semibold">Paiements</h3>
+      <h3 class="text-lg font-semibold">
+        Paiements
+      </h3>
       <Card>
         <CardContent class="p-0">
           <Table v-if="payments.length > 0">
@@ -354,7 +388,9 @@ watch(loanId, () => fetchData())
                   <NumberFlow :value="p.amount" :format="{ style: 'currency', currency: 'XOF' }" />
                 </TableCell>
                 <TableCell>{{ p.payment_method }}</TableCell>
-                <TableCell class="text-muted-foreground text-sm">{{ p.notes || '—' }}</TableCell>
+                <TableCell class="text-muted-foreground text-sm">
+                  {{ p.notes || '—' }}
+                </TableCell>
               </TableRow>
             </TableBody>
           </Table>

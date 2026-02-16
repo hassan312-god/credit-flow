@@ -21,7 +21,8 @@ async function load() {
       return
     }
     const { data: { user } } = await supabase.auth.getUser()
-    if (user) email.value = user.email ?? ''
+    if (user)
+      email.value = user.email ?? ''
   }
   catch (e: any) {
     error.value = e?.message || 'Erreur chargement'
@@ -49,7 +50,8 @@ async function changePassword() {
       return
     }
     const { error: e } = await supabase.auth.updateUser({ password: form.value.newPassword })
-    if (e) throw e
+    if (e)
+      throw e
     message.value = 'Mot de passe mis à jour.'
     form.value.newPassword = ''
     form.value.confirmPassword = ''
@@ -94,7 +96,9 @@ onMounted(() => load())
           </div>
           <Separator />
           <div class="max-w-md">
-            <h4 class="text-sm font-medium mb-2">Changer le mot de passe</h4>
+            <h4 class="text-sm font-medium mb-2">
+              Changer le mot de passe
+            </h4>
             <form class="flex flex-col gap-4" @submit.prevent="changePassword">
               <div class="grid gap-2">
                 <Label for="new_password">Nouveau mot de passe</Label>

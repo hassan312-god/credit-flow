@@ -16,7 +16,8 @@ async function checkConnection() {
       return
     }
     const { error } = await supabase.from('clients').select('id').limit(1)
-    if (error) throw error
+    if (error)
+      throw error
     status.value = 'ok'
     lastCheck.value = new Date()
   }
@@ -41,7 +42,9 @@ onMounted(() => checkConnection())
     <div class="grid gap-4 md:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle class="text-sm font-medium">Connexion Supabase</CardTitle>
+          <CardTitle class="text-sm font-medium">
+            Connexion Supabase
+          </CardTitle>
           <CardDescription>
             Vérification de l’accès à la base.
           </CardDescription>
@@ -76,7 +79,9 @@ onMounted(() => checkConnection())
 
     <Card>
       <CardHeader>
-        <CardTitle class="text-sm font-medium">À propos</CardTitle>
+        <CardTitle class="text-sm font-medium">
+          À propos
+        </CardTitle>
       </CardHeader>
       <CardContent class="text-sm text-muted-foreground">
         Les données (clients, prêts, paiements, etc.) sont lues et écrites directement sur Supabase.

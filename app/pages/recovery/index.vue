@@ -13,7 +13,7 @@ interface LoanWithClient {
   total_amount: number | null
   created_at: string
   disbursement_date: string | null
-  clients?: { full_name: string; phone: string } | null
+  clients?: { full_name: string, phone: string } | null
 }
 
 const loans = ref<LoanWithClient[]>([])
@@ -34,7 +34,8 @@ async function fetchRecovery() {
       .select('id, client_id, amount, status, total_amount, created_at, disbursement_date, clients(full_name, phone)')
       .in('status', ['en_retard', 'defaut'])
       .order('created_at', { ascending: false })
-    if (e) throw e
+    if (e)
+      throw e
     loans.value = (data ?? []).map((row: any) => ({
       ...row,
       clients: Array.isArray(row.clients) ? row.clients[0] : row.clients,
@@ -80,7 +81,9 @@ onMounted(() => fetchRecovery())
     <Card v-else>
       <CardContent class="p-0">
         <div v-if="loading" class="flex items-center justify-center py-12">
-          <p class="text-muted-foreground">Chargement…</p>
+          <p class="text-muted-foreground">
+            Chargement…
+          </p>
         </div>
         <template v-else>
           <Table v-if="loans.length > 0">

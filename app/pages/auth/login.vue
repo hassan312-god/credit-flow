@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Mail, Lock, Eye, EyeOff } from 'lucide-vue-next'
+import { Eye, EyeOff, Mail } from 'lucide-vue-next'
 
 definePageMeta({ layout: 'blank' })
 
@@ -24,11 +24,12 @@ async function submit() {
       error.value = 'Supabase non configuré.'
       return
     }
-    const { data, error: e } = await supabase.auth.signInWithPassword({
+    const { error: e } = await supabase.auth.signInWithPassword({
       email: email.value.trim(),
       password: password.value,
     })
-    if (e) throw e
+    if (e)
+      throw e
     const { refresh } = useAuthRole()
     await refresh()
     message.value = 'Connexion réussie.'
@@ -154,7 +155,9 @@ async function submit() {
               </div>
               <!-- Contenu principal mockup -->
               <div class="flex-1 p-3 flex flex-col gap-2">
-                <div class="text-white/90 text-xs font-semibold">Bienvenue</div>
+                <div class="text-white/90 text-xs font-semibold">
+                  Bienvenue
+                </div>
                 <div class="flex gap-1.5">
                   <div class="h-8 w-12 rounded bg-white/15" />
                   <div class="h-8 w-12 rounded bg-white/15" />
@@ -174,10 +177,16 @@ async function submit() {
               <img src="/favicon.ico" alt="" class="size-4 object-contain [mix-blend-mode:darken]">
               <span class="text-[10px] font-semibold text-[#0d281f]">N'FA KA SÉRUM</span>
             </div>
-            <div class="text-[10px] font-bold text-[#0d281f]">Connexion</div>
+            <div class="text-[10px] font-bold text-[#0d281f]">
+              Connexion
+            </div>
             <div class="mt-1.5 space-y-1">
-              <div class="h-5 rounded border border-gray-200 bg-gray-50 text-[9px] text-gray-400 px-1.5 flex items-center">email@exemple.com</div>
-              <div class="h-5 rounded border border-gray-200 bg-gray-50 text-[9px] text-gray-400 px-1.5 flex items-center">••••••••</div>
+              <div class="h-5 rounded border border-gray-200 bg-gray-50 text-[9px] text-gray-400 px-1.5 flex items-center">
+                email@exemple.com
+              </div>
+              <div class="h-5 rounded border border-gray-200 bg-gray-50 text-[9px] text-gray-400 px-1.5 flex items-center">
+                ••••••••
+              </div>
             </div>
             <div class="mt-1.5 h-5 rounded bg-[#0d281f] flex items-center justify-center">
               <span class="text-[8px] font-semibold text-white uppercase">Connexion</span>

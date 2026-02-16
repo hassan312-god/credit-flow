@@ -4,9 +4,11 @@ const { isAuthenticated, loading, role, canAccessPath } = useAuthRole()
 const publicPaths = ['/auth/login', '/auth/register', '/auth/forgot-password']
 
 watchEffect(() => {
-  if (import.meta.server || loading.value) return
+  if (import.meta.server || loading.value)
+    return
   const path = route.path
-  if (publicPaths.some(p => path.startsWith(p))) return
+  if (publicPaths.some(p => path.startsWith(p)))
+    return
   if (!isAuthenticated.value) {
     navigateTo('/auth/login', { replace: true })
     return

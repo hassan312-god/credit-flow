@@ -3,6 +3,7 @@ import withNuxt from './.nuxt/eslint.config.mjs'
 
 export default withNuxt(antfu(
   {
+    ignores: ['credit-flow-reference/**', '**/credit-flow-reference/**'],
     rules: {
       // Allow trailing space in comments, for possible JSDoc formattings
       'style/no-trailing-spaces': ['error', { ignoreComments: true }],
@@ -15,6 +16,12 @@ export default withNuxt(antfu(
     files: ['**/*.md'],
     rules: {
       'style/no-trailing-spaces': 'off',
+    },
+  },
+  {
+    files: ['nuxt.config.ts', 'nuxt.config.*.ts'],
+    rules: {
+      'node/prefer-global/process': 'off',
     },
   },
 ))

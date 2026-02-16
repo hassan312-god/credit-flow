@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import NumberFlow from '@number-flow/vue'
-import { FileBarChart, TrendingUp, Wallet, HandCoins } from 'lucide-vue-next'
+import { FileBarChart, HandCoins, TrendingUp, Wallet } from 'lucide-vue-next'
 
 definePageMeta({ layout: 'default' })
 
@@ -64,7 +64,9 @@ onMounted(() => fetchReports())
       <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader class="flex flex-row items-center justify-between pb-2">
-            <CardTitle class="text-sm font-medium">Clients</CardTitle>
+            <CardTitle class="text-sm font-medium">
+              Clients
+            </CardTitle>
             <FileBarChart class="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -75,7 +77,9 @@ onMounted(() => fetchReports())
         </Card>
         <Card>
           <CardHeader class="flex flex-row items-center justify-between pb-2">
-            <CardTitle class="text-sm font-medium">Prêts (nombre)</CardTitle>
+            <CardTitle class="text-sm font-medium">
+              Prêts (nombre)
+            </CardTitle>
             <HandCoins class="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -86,7 +90,9 @@ onMounted(() => fetchReports())
         </Card>
         <Card>
           <CardHeader class="flex flex-row items-center justify-between pb-2">
-            <CardTitle class="text-sm font-medium">Montant prêté</CardTitle>
+            <CardTitle class="text-sm font-medium">
+              Montant prêté
+            </CardTitle>
             <TrendingUp class="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -97,7 +103,9 @@ onMounted(() => fetchReports())
         </Card>
         <Card>
           <CardHeader class="flex flex-row items-center justify-between pb-2">
-            <CardTitle class="text-sm font-medium">Paiements reçus</CardTitle>
+            <CardTitle class="text-sm font-medium">
+              Paiements reçus
+            </CardTitle>
             <Wallet class="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>

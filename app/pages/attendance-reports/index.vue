@@ -9,7 +9,7 @@ interface WorkSession {
 const loading = ref(true)
 const error = ref('')
 const totalSessions = ref(0)
-const byDate = ref<{ date: string; count: number }[]>([])
+const byDate = ref<{ date: string, count: number }[]>([])
 
 async function fetchReport() {
   loading.value = true
@@ -25,7 +25,8 @@ async function fetchReport() {
       .select('work_date, status')
       .order('work_date', { ascending: false })
       .limit(500)
-    if (e) throw e
+    if (e)
+      throw e
     const rows = (data ?? []) as WorkSession[]
     totalSessions.value = rows.length
     const byDateMap = new Map<string, number>()
@@ -58,16 +59,22 @@ onMounted(() => fetchReport())
       {{ error }}
     </p>
     <template v-else-if="loading">
-      <p class="text-muted-foreground">Chargement…</p>
+      <p class="text-muted-foreground">
+        Chargement…
+      </p>
     </template>
     <template v-else>
       <div class="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle class="text-sm font-medium">Total sessions (dernières 500)</CardTitle>
+            <CardTitle class="text-sm font-medium">
+              Total sessions (dernières 500)
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p class="text-2xl font-bold">{{ totalSessions }}</p>
+            <p class="text-2xl font-bold">
+              {{ totalSessions }}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -86,7 +93,9 @@ onMounted(() => fetchReport())
             </TableHeader>
             <TableBody>
               <TableRow v-for="row in byDate" :key="row.date">
-                <TableCell class="font-medium">{{ new Date(row.date).toLocaleDateString('fr-FR') }}</TableCell>
+                <TableCell class="font-medium">
+                  {{ new Date(row.date).toLocaleDateString('fr-FR') }}
+                </TableCell>
                 <TableCell>{{ row.count }}</TableCell>
               </TableRow>
             </TableBody>

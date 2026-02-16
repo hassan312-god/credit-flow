@@ -1,11 +1,11 @@
 /** Types Supabase pour Credit Flow (alignés sur le projet original) */
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json
+  = | string
+    | number
+    | boolean
+    | null
+    | { [key: string]: Json | undefined }
+    | Json[]
 
 export type LoanStatus = 'en_attente' | 'valide' | 'en_cours' | 'rembourse' | 'en_retard' | 'defaut'
 export type PaymentStatus = 'pending' | 'paid' | 'partial' | 'overdue'

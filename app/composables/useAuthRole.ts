@@ -1,9 +1,9 @@
-import type { AppRole } from '~/types/database'
 import type { User } from '@supabase/supabase-js'
+import type { AppRole } from '~/types/database'
 import { canAccessPath as checkPathAccess } from '~/constants/menuAccess'
 
 export function useAuthRole() {
-  const state = useState<{ user: User | null; role: AppRole | null; profile: { full_name: string; email: string; avatar_url?: string | null } | null; loading: boolean }>('auth-role-state', () => ({
+  const state = useState<{ user: User | null, role: AppRole | null, profile: { full_name: string, email: string, avatar_url?: string | null } | null, loading: boolean }>('auth-role-state', () => ({
     user: null,
     role: null,
     profile: null,
@@ -31,7 +31,7 @@ export function useAuthRole() {
           supabase.from('profiles').select('full_name, email, avatar_url').eq('id', user.id).maybeSingle(),
           supabase.from('user_roles').select('role').eq('user_id', user.id).maybeSingle(),
         ])
-        const fromDb = profileRes.data as { full_name?: string; email?: string; avatar_url?: string | null } | null
+        const fromDb = profileRes.data as { full_name?: string, email?: string, avatar_url?: string | null } | null
         const fallbackName = user.user_metadata?.full_name as string | undefined
         const fallbackEmail = user.email ?? ''
         if (fromDb) {
@@ -58,7 +58,8 @@ export function useAuthRole() {
   }
 
   async function signOut() {
-    if (supabase) await supabase.auth.signOut()
+    if (supabase)
+      await supabase.auth.signOut()
     state.value.user = null
     state.value.role = null
     state.value.profile = null

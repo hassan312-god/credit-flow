@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import type { LoanStatus } from '~/types/database'
-import type { Database } from '~/types/database'
+import type { Database, LoanStatus } from '~/types/database'
 import NumberFlow from '@number-flow/vue'
-import { ArrowLeft, Phone, Mail, MapPin, Briefcase, CreditCard, Trash2 } from 'lucide-vue-next'
+import { ArrowLeft, Briefcase, CreditCard, Mail, MapPin, Phone, Trash2 } from 'lucide-vue-next'
 
 definePageMeta({ layout: 'default' })
 
@@ -73,7 +72,8 @@ async function fetchData() {
       .select('*')
       .eq('id', id)
       .single()
-    if (eClient) throw eClient
+    if (eClient)
+      throw eClient
     client.value = clientData
 
     const { data: loansData, error: eLoans } = await supabase
@@ -81,7 +81,8 @@ async function fetchData() {
       .select('id, amount, interest_rate, duration_months, status, total_amount, monthly_payment, disbursement_date, created_at')
       .eq('client_id', id)
       .order('created_at', { ascending: false })
-    if (eLoans) throw eLoans
+    if (eLoans)
+      throw eLoans
     loans.value = loansData ?? []
 
     const loanIds = loans.value.map(l => l.id)
@@ -92,7 +93,8 @@ async function fetchData() {
         .in('loan_id', loanIds)
         .order('payment_date', { ascending: false })
         .limit(50)
-      if (!ePay) payments.value = paymentsData ?? []
+      if (!ePay)
+        payments.value = paymentsData ?? []
     }
     else {
       payments.value = []
@@ -109,12 +111,14 @@ async function fetchData() {
 async function deleteClient() {
   const id = clientId.value
   const supabase = useSupabase()
-  if (!id || !supabase) return
+  if (!id || !supabase)
+    return
   deleting.value = true
   deleteError.value = ''
   try {
     const { error: e } = await supabase.from('clients').delete().eq('id', id)
-    if (e) throw e
+    if (e)
+      throw e
     deleteDialogOpen.value = false
     await navigateTo('/clients', { replace: true })
   }
@@ -137,7 +141,9 @@ watch(clientId, () => fetchData())
   <div class="w-full flex flex-col gap-4">
     <div class="flex items-center gap-2">
       <Button variant="ghost" size="icon" as-child>
-        <NuxtLink to="/clients"><ArrowLeft class="size-4" /></NuxtLink>
+        <NuxtLink to="/clients">
+          <ArrowLeft class="size-4" />
+        </NuxtLink>
       </Button>
       <h2 class="text-2xl font-bold tracking-tight">
         Détail client
@@ -148,7 +154,9 @@ watch(clientId, () => fetchData())
       {{ error }}
     </p>
     <template v-else-if="loading">
-      <p class="text-muted-foreground">Chargement…</p>
+      <p class="text-muted-foreground">
+        Chargement…
+      </p>
     </template>
     <template v-else-if="client">
       <Card>
@@ -202,9 +210,13 @@ watch(clientId, () => fetchData())
       </Card>
 
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-semibold">Prêts</h3>
+        <h3 class="text-lg font-semibold">
+          Prêts
+        </h3>
         <Button as-child size="sm">
-          <NuxtLink :to="`/loans/new?client=${client.id}`">Nouveau prêt</NuxtLink>
+          <NuxtLink :to="`/loans/new?client=${client.id}`">
+            Nouveau prêt
+          </NuxtLink>
         </Button>
       </div>
       <Card>
@@ -216,7 +228,7 @@ watch(clientId, () => fetchData())
                 <TableHead>Taux / Durée</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>Déblocage</TableHead>
-                <TableHead></TableHead>
+                <TableHead />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -237,7 +249,9 @@ watch(clientId, () => fetchData())
                 </TableCell>
                 <TableCell>
                   <Button variant="ghost" size="sm" as-child>
-                    <NuxtLink :to="`/loans/${loan.id}`">Voir</NuxtLink>
+                    <NuxtLink :to="`/loans/${loan.id}`">
+                      Voir
+                    </NuxtLink>
                   </Button>
                 </TableCell>
               </TableRow>
@@ -249,7 +263,9 @@ watch(clientId, () => fetchData())
         </CardContent>
       </Card>
 
-      <h3 class="text-lg font-semibold">Derniers paiements</h3>
+      <h3 class="text-lg font-semibold">
+        Derniers paiements
+      </h3>
       <Card>
         <CardContent class="p-0">
           <Table v-if="payments.length > 0">
@@ -290,7 +306,9 @@ watch(clientId, () => fetchData())
             {{ deleteError }}
           </p>
           <AlertDialogFooter>
-            <AlertDialogCancel :disabled="deleting">Annuler</AlertDialogCancel>
+            <AlertDialogCancel :disabled="deleting">
+              Annuler
+            </AlertDialogCancel>
             <AlertDialogAction
               class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               :disabled="deleting"

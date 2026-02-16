@@ -40,8 +40,10 @@ async function load() {
         for (const row of data) {
           const key = row.key as keyof NotificationPrefs
           const val = row.value
-          if (key === 'reminder_days') form.value.reminder_days = typeof val === 'number' ? val : Number(val) || 3
-          else if (key in form.value) (form.value as Record<string, unknown>)[key] = Boolean(val)
+          if (key === 'reminder_days')
+            form.value.reminder_days = typeof val === 'number' ? val : Number(val) || 3
+          else if (key in form.value)
+            (form.value as Record<string, unknown>)[key] = Boolean(val)
         }
       }
     }
@@ -80,7 +82,8 @@ async function save() {
         const { error: e } = await supabase
           .from('app_settings')
           .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' })
-        if (e) throw e
+        if (e)
+          throw e
       }
       message.value = 'Paramètres enregistrés dans Supabase.'
     }
@@ -125,21 +128,27 @@ onMounted(() => load())
           <div class="flex items-center justify-between">
             <div>
               <Label>Notifications par email</Label>
-              <p class="text-muted-foreground text-xs">Recevoir des emails de rappel et d'alerte.</p>
+              <p class="text-muted-foreground text-xs">
+                Recevoir des emails de rappel et d'alerte.
+              </p>
             </div>
             <Switch v-model:checked="form.email_notifications" />
           </div>
           <div class="flex items-center justify-between">
             <div>
               <Label>Rappels de paiement</Label>
-              <p class="text-muted-foreground text-xs">Rappels avant les échéances.</p>
+              <p class="text-muted-foreground text-xs">
+                Rappels avant les échéances.
+              </p>
             </div>
             <Switch v-model:checked="form.payment_reminders" />
           </div>
           <div class="flex items-center justify-between">
             <div>
               <Label>Alertes de retard</Label>
-              <p class="text-muted-foreground text-xs">Alertes pour les prêts en retard ou en défaut.</p>
+              <p class="text-muted-foreground text-xs">
+                Alertes pour les prêts en retard ou en défaut.
+              </p>
             </div>
             <Switch v-model:checked="form.overdue_alerts" />
           </div>
