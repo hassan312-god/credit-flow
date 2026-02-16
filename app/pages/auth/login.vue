@@ -43,7 +43,9 @@ async function submit() {
     await navigateTo('/', { replace: true })
   }
   catch (e: any) {
-    error.value = e?.message || 'Erreur de connexion.'
+    console.error('Auth login failed:', e)
+    const msg = e?.message ?? e?.error_description ?? e?.msg ?? 'Erreur de connexion.'
+    error.value = msg
   }
   finally {
     loading.value = false

@@ -11,8 +11,9 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL = 'https://rfgbccnkarkwasrmfmcm.supabase.co',
-      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyZ2JjY25ra2Fyd2Fzcm1mbm1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzNjQyOTksImV4cCI6MjA4MTk0MDI5OX0.mAG4XZw4EKr7V6fzcUhTL1dP52UhWzgvvSEslmYhPSw',
+      apiUrl: process.env.NUXT_PUBLIC_API_URL || 'http://localhost:3000',
+      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || '',
+      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || '',
     },
   },
 
@@ -97,7 +98,9 @@ export default defineNuxtConfig({
   // liées par les pages composants (docs, examples, terms, privacy, /components, pagination).
   nitro: {
     prerender: {
-      failOnError: false,
+      crawlLinks: process.env.CI !== 'true',
+      failOnError: process.env.CI === 'true' ? false : true,
+      routes: ['/', '/404', '/200', '/auth/login'],
       ignore: ['/components', '/examples/forms', '/terms', '/privacy', '/docs'],
     },
   },
@@ -109,4 +112,10 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2024-12-14',
+
+  // Évite l'avertissement console : "The resource .../dev.json was preloaded but not used"
+  // (appManifest désactive le preload des meta de build ; désactive aussi le check "nouvelle version").
+  experimental: {
+    appManifest: false,
+  },
 })

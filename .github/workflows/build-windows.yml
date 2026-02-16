@@ -54,6 +54,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'pnpm'
 
       - name: Enable pnpm (Corepack)
         shell: pwsh
@@ -86,6 +87,9 @@ jobs:
       - name: Build Tauri app
         run: pnpm run tauri build
         shell: pwsh
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Show built files
         shell: pwsh
