@@ -46,7 +46,7 @@ const adjustmentForm = ref({ amount: 0, notes: '' })
 const updateForm = ref({ initial_capital: 0, notes: '' })
 
 const { role } = useAuthRole()
-const supabase = useSupabase()
+const supabase = useSupabase().value
 const canEdit = computed(() => role.value === 'directeur')
 
 const mainFund = computed(() => funds.value[0] ?? null)

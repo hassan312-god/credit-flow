@@ -38,7 +38,7 @@ async function fetchDashboardData() {
   loading.value = true
   error.value = ''
   try {
-    const supabase = useSupabase()
+    const supabase = useSupabase().value
     if (!supabase) {
       error.value = 'Supabase non configuré.'
       return

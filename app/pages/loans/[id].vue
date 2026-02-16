@@ -69,7 +69,7 @@ async function fetchData() {
     return
   }
   try {
-    const supabase = useSupabase()
+    const supabase = useSupabase().value
     if (!supabase) {
       error.value = 'Supabase non configuré.'
       return
@@ -115,7 +115,7 @@ async function addPayment() {
   addingPayment.value = true
   error.value = ''
   try {
-    const supabase = useSupabase()
+    const supabase = useSupabase().value
     if (!supabase)
       throw new Error('Supabase non configuré.')
     const date = paymentForm.value.payment_date || new Date().toISOString().slice(0, 10)
@@ -148,7 +148,7 @@ async function disburseLoan() {
   disbursingLoan.value = true
   error.value = ''
   try {
-    const supabase = useSupabase()
+    const supabase = useSupabase().value
     if (!supabase)
       throw new Error('Supabase non configuré.')
     const today = new Date().toISOString().slice(0, 10)
@@ -175,7 +175,7 @@ async function closeLoan() {
   closingLoan.value = true
   error.value = ''
   try {
-    const supabase = useSupabase()
+    const supabase = useSupabase().value
     if (!supabase)
       throw new Error('Supabase non configuré.')
     const { error: e } = await supabase.from('loans').update({ status: 'rembourse' }).eq('id', id)

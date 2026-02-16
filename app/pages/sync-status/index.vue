@@ -9,7 +9,7 @@ async function checkConnection() {
   status.value = 'checking'
   errorMessage.value = ''
   try {
-    const supabase = useSupabase()
+    const supabase = useSupabase().value
     if (!supabase) {
       status.value = 'error'
       errorMessage.value = 'Supabase non configuré.'

@@ -10,10 +10,11 @@ export function useAuthRole() {
     loading: true,
   }))
 
-  const supabase = useSupabase()
+  const supabaseRef = useSupabase()
 
   async function refresh() {
     state.value.loading = true
+    const supabase = supabaseRef?.value ?? null
     if (!supabase) {
       state.value.loading = false
       return
@@ -59,6 +60,7 @@ export function useAuthRole() {
 
   async function signOut() {
     try {
+      const supabase = supabaseRef?.value ?? null
       if (supabase) {
         // scope: 'local' évite un 403 possible sur /auth/v1/logout (Supabase) tout en déconnectant l'app
         await supabase.auth.signOut({ scope: 'local' })

@@ -41,7 +41,7 @@ const monthlyPayment = computed(() => {
 async function fetchClients() {
   loadingClients.value = true
   try {
-    const supabase = useSupabase()
+    const supabase = useSupabase().value
     if (!supabase)
       return
     const { data, error: e } = await supabase
@@ -75,7 +75,7 @@ async function submit() {
   }
   submitting.value = true
   try {
-    const supabase = useSupabase()
+    const supabase = useSupabase().value
     if (!supabase) {
       error.value = 'Supabase non configuré.'
       return

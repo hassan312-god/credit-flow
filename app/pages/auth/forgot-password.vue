@@ -17,7 +17,7 @@ async function submit() {
   }
   loading.value = true
   try {
-    const supabase = useSupabase()
+    const supabase = useSupabase().value
     if (!supabase) {
       error.value = 'Supabase non configuré.'
       return

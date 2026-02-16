@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
 
-const supabase = useSupabase()
+const supabase = useSupabase().value
 const loading = ref(true)
 const saving = ref(false)
 const error = ref('')

@@ -8,12 +8,13 @@ export default defineNuxtRouteMiddleware((to) => {
     return
 
   const { isAuthenticated, loading, role, canAccessPath } = useAuthRole()
+  // Première connexion / non connecté : afficher directement la page login (pas de flash du dashboard)
+  if (path === '/' && (loading.value || !isAuthenticated.value))
+    return navigateTo('/auth/login', { replace: true })
   if (loading.value)
     return
-
   if (!isAuthenticated.value)
     return navigateTo('/auth/login', { replace: true })
-  // Ne jamais rediriger vers / quand on est déjà sur / (évite la boucle infinie)
   if (path === '/')
     return
   if (!role.value)

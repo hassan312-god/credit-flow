@@ -20,7 +20,7 @@ interface WorkSchedule {
   created_at: string
 }
 
-const supabase = useSupabase()
+const supabase = useSupabase().value
 const schedules = ref<WorkSchedule[]>([])
 const loading = ref(true)
 const saving = ref(false)

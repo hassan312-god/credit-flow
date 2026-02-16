@@ -62,7 +62,7 @@ async function fetchData() {
     return
   }
   try {
-    const supabase = useSupabase()
+    const supabase = useSupabase().value
     if (!supabase) {
       error.value = 'Supabase non configuré.'
       return
@@ -110,7 +110,7 @@ async function fetchData() {
 
 async function deleteClient() {
   const id = clientId.value
-  const supabase = useSupabase()
+  const supabase = useSupabase().value
   if (!id || !supabase)
     return
   deleting.value = true

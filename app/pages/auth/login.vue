@@ -3,6 +3,12 @@ import { Eye, EyeOff, Mail } from 'lucide-vue-next'
 
 definePageMeta({ layout: 'blank' })
 
+const { isAuthenticated } = useAuthRole()
+watch(isAuthenticated, (v) => {
+  if (v)
+    navigateTo('/', { replace: true })
+}, { immediate: true })
+
 const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
@@ -19,7 +25,7 @@ async function submit() {
   }
   loading.value = true
   try {
-    const supabase = useSupabase()
+    const supabase = useSupabase().value
     if (!supabase) {
       error.value = 'Supabase non configuré.'
       return

@@ -27,7 +27,7 @@ const editForm = ref({ full_name: '', phone: '', role: '' as AppRole | '', new_p
 
 const { role: currentUserRole } = useAuthRole()
 const config = useRuntimeConfig().public
-const supabase = useSupabase()
+const supabase = useSupabase().value
 
 const roleLabels: Record<string, string> = {
   ...accessRoleLabels,
