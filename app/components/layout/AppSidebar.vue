@@ -18,15 +18,18 @@ const { role, profile } = useAuthRole()
 
 const navMenuFiltered = computed(() => getNavMenuForRole(role.value))
 
+const defaultAvatar = '/avatars/avatartion.png'
+
 const user = computed(() => {
   const fullName = profile.value?.full_name?.trim()
   const email = profile.value?.email ?? ''
   const displayName = (fullName && fullName !== email) ? fullName : 'Utilisateur'
   const avatarUrl = profile.value?.avatar_url?.trim()
+  const validAvatar = avatarUrl && avatarUrl.startsWith('https://') ? avatarUrl : defaultAvatar
   return {
     name: displayName,
     email,
-    avatar: avatarUrl || '/avatars/avatartion.png',
+    avatar: validAvatar,
     roleLabel: role.value ? roleLabels[role.value] : '',
   }
 })

@@ -66,7 +66,7 @@ export const navMenu: NavMenu[] = [
       },
       {
         title: 'Synchronisation',
-        icon: 'i-lucide-cloud-sync',
+        icon: 'i-lucide-refresh-cw',
         link: '/sync-status',
       },
     ],
