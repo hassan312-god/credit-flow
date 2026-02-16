@@ -1,7 +1,9 @@
 import type { Database } from '~/types/database'
 import { createClient } from '@supabase/supabase-js'
 
-export function createSupabaseClient(url: string, anonKey: string) {
+type FetchFn = typeof globalThis.fetch
+
+export function createSupabaseClient(url: string, anonKey: string, customFetch?: FetchFn) {
   if (!url || !anonKey) {
     throw new Error('Missing Supabase URL or Anon Key. Set NUXT_PUBLIC_SUPABASE_URL and NUXT_PUBLIC_SUPABASE_ANON_KEY in .env')
   }
@@ -11,5 +13,6 @@ export function createSupabaseClient(url: string, anonKey: string) {
       persistSession: true,
       autoRefreshToken: true,
     },
+    ...(customFetch && { global: { fetch: customFetch } }),
   })
 }

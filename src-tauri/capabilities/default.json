@@ -1,0 +1,15 @@
+{
+  "identifier": "main-capability",
+  "description": "Capability for the main window",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        { "url": "https://*.supabase.co" },
+        { "url": "https://rrgbccnkkarwasrmfnmc.supabase.co" }
+      ]
+    }
+  ]
+}
