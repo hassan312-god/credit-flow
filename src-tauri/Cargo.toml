@@ -2,7 +2,7 @@
 name = "nfa-ka-serum"
 version = "0.1.0"
 description = "N'FA KA SÉRUM - Gestion des prêts"
-authors = ["you"]
+authors = [ "you" ]
 license = ""
 repository = ""
 edition = "2021"
@@ -18,8 +18,8 @@ tauri-plugin-fs = "2.0"
 tauri-plugin-http = "2.0"
 tauri-plugin-deep-link = "2.0"
 tauri-plugin-updater = "2.0"
-serde = { version = "1", features = ["derive"] }
+serde = { version = "1", features = [ "derive" ] }
 serde_json = "1"
 
 [features]
-custom-protocol = ["tauri/custom-protocol"]
+custom-protocol = [ "tauri/custom-protocol" ]

@@ -38,15 +38,6 @@
     "node": "22.x",
     "pnpm": ">=9"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@parcel/watcher",
-      "esbuild",
-      "maplibre-gl",
-      "unrs-resolver",
-      "vue-demi"
-    ]
-  },
   "scripts": {
     "clean": "node -e \"const fs=require('fs'); ['.nuxt','.output','node_modules/.cache'].forEach(p=>{try{fs.rmSync(p,{recursive:true});console.log('Supprimé: '+p)}catch(e){}})\"",
     "dev:fresh": "pnpm run clean && pnpm run dev",
@@ -89,6 +80,7 @@
     "@nuxt/icon": "^1.15.0",
     "@nuxtjs/color-mode": "^3.5.2",
     "@pinia/nuxt": "^0.5.5",
+    "@tauri-apps/cli": "^2.9.0",
     "@vee-validate/zod": "^4.15.1",
     "@vueuse/core": "^12.8.2",
     "@vueuse/math": "^12.8.2",
@@ -110,7 +102,15 @@
     "vue-router": "^4.5.1",
     "vue-sonner": "^2.0.9",
     "vue-tsc": "^2.2.12",
-    "zod": "^3.25.76",
-    "@tauri-apps/cli": "^2.9.0"
+    "zod": "^3.25.76"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "esbuild",
+      "maplibre-gl",
+      "unrs-resolver",
+      "vue-demi"
+    ]
   }
 }
