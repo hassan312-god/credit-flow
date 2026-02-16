@@ -40,7 +40,7 @@ async function fetchDashboardData() {
   try {
     const supabase = useSupabase()
     if (!supabase) {
-      error.value = 'Supabase non configuré. Ajoutez les variables d\'environnement.'
+      error.value = 'Supabase non configuré. En local : .env avec NUXT_PUBLIC_SUPABASE_URL et NUXT_PUBLIC_SUPABASE_ANON_KEY. Sur Vercel : Settings → Environment Variables (voir docs/VERCEL.md).'
       return
     }
 

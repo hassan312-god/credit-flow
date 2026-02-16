@@ -5,8 +5,10 @@ import { Toaster } from '@/components/ui/sonner'
 import 'vue-sonner/style.css'
 
 const colorMode = useColorMode()
-const color = computed(() => colorMode.value === 'dark' ? '#09090b' : '#ffffff')
+// theme-color: valeur neutre en SSR pour limiter les hydration mismatches
+const color = computed(() => (import.meta.client ? (colorMode.value === 'dark' ? '#09090b' : '#ffffff') : '#ffffff'))
 const { theme } = useAppSettings()
+const bodyClass = computed(() => `color-${theme.value?.color || 'default'} theme-${theme.value?.type || 'default'}`)
 
 useHead({
   meta: [
@@ -21,7 +23,7 @@ useHead({
     lang: 'en',
   },
   bodyAttrs: {
-    class: computed(() => `color-${theme.value?.color || 'default'} theme-${theme.value?.type || 'default'}`),
+    class: bodyClass,
   },
 })
 
@@ -68,6 +70,9 @@ const dir = computed(() => textDirection.value === 'rtl' ? 'rtl' : 'ltr')
       <Toaster :theme="colorMode.preference as any || 'system'" />
     </ConfigProvider>
 
-    <Analytics />
+    <ClientOnly>
+      <Analytics />
+      <template #fallback></template>
+    </ClientOnly>
   </Body>
 </template>
