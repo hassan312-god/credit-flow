@@ -11,8 +11,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || '',
-      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || '',
+      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL = 'https://rfgbccnkarkwasrmfmcm.supabase.co',
+      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyZ2JjY25ra2Fyd2Fzcm1mbm1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzNjQyOTksImV4cCI6MjA4MTk0MDI5OX0.mAG4XZw4EKr7V6fzcUhTL1dP52UhWzgvvSEslmYhPSw',
     },
   },
 
