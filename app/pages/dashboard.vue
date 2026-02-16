@@ -2,6 +2,8 @@
 import type { LoanStatus } from '~/types/database'
 import NumberFlow from '@number-flow/vue'
 import { AlertTriangle, ArrowRight, HandCoins, Users } from 'lucide-vue-next'
+import { DonutChart } from '@/components/ui/chart-donut'
+import { BarChart } from '@/components/ui/chart-bar'
 
 definePageMeta({
   layout: 'default',
@@ -23,6 +25,18 @@ interface RecentLoan {
   client?: { full_name: string } | null
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  en_attente: 'En attente',
+  en_cours_validation: 'En validation',
+  approuve: 'Approuvé',
+  rejete: 'Rejeté',
+  en_cours: 'En cours',
+  rembourse: 'Remboursé',
+  en_retard: 'En retard',
+  defaut: 'Défaut',
+  valide: 'Validé',
+}
+
 const stats = ref<DashboardStats>({
   totalClients: 0,
   totalLoans: 0,
@@ -31,6 +45,8 @@ const stats = ref<DashboardStats>({
   totalAmount: 0,
 })
 const recentLoans = ref<RecentLoan[]>([])
+const chartByStatus = ref<{ statusLabel: string, count: number }[]>([])
+const chartAmountByStatus = ref<{ statusLabel: string, amount: number }[]>([])
 const loading = ref(true)
 const error = ref('')
 
@@ -64,6 +80,27 @@ async function fetchDashboardData() {
       totalAmount,
     }
 
+    const statusOrder = ['en_attente', 'en_cours_validation', 'approuve', 'rejete', 'en_cours', 'rembourse', 'en_retard', 'defaut', 'valide'] as const
+    const countByStatus: Record<string, number> = {}
+    const amountByStatus: Record<string, number> = {}
+    for (const s of statusOrder) {
+      countByStatus[s] = 0
+      amountByStatus[s] = 0
+    }
+    for (const l of loansData ?? []) {
+      const st = l.status as string
+      if (st) {
+        countByStatus[st] = (countByStatus[st] ?? 0) + 1
+        amountByStatus[st] = (amountByStatus[st] ?? 0) + (Number(l.amount) || 0)
+      }
+    }
+    chartByStatus.value = statusOrder
+      .filter(s => (countByStatus[s] ?? 0) > 0)
+      .map(s => ({ statusLabel: STATUS_LABELS[s] || s, count: countByStatus[s] ?? 0 }))
+    chartAmountByStatus.value = statusOrder
+      .filter(s => (amountByStatus[s] ?? 0) > 0)
+      .map(s => ({ statusLabel: STATUS_LABELS[s] || s, amount: amountByStatus[s] ?? 0 }))
+
     recentLoans.value = (recent ?? []).map((loan: any) => {
       const client = loan.clients ?? loan.client
       return {
@@ -88,15 +125,7 @@ onMounted(() => {
 })
 
 function statusLabel(s: LoanStatus) {
-  const labels: Record<LoanStatus, string> = {
-    en_attente: 'En attente',
-    valide: 'Validé',
-    en_cours: 'En cours',
-    rembourse: 'Remboursé',
-    en_retard: 'En retard',
-    defaut: 'Défaut',
-  }
-  return labels[s] || s
+  return STATUS_LABELS[s] || s
 }
 </script>
 
@@ -211,6 +240,52 @@ function statusLabel(s: LoanStatus) {
           </p>
         </CardContent>
       </Card>
+
+      <div class="grid gap-4 md:grid-cols-2">
+        <Card class="@container/card">
+          <CardHeader>
+            <CardTitle>Prêts par statut</CardTitle>
+            <CardDescription>
+              Nombre de prêts par statut
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div v-if="chartByStatus.length === 0" class="text-muted-foreground flex h-48 items-center justify-center text-sm">
+              Aucune donnée
+            </div>
+            <DonutChart
+              v-else
+              :data="chartByStatus"
+              category="count"
+              index="statusLabel"
+              class="h-48"
+              :value-formatter="(v: number) => String(v)"
+            />
+          </CardContent>
+        </Card>
+        <Card class="@container/card">
+          <CardHeader>
+            <CardTitle>Montant des prêts par statut</CardTitle>
+            <CardDescription>
+              Somme des montants par statut (XOF)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div v-if="chartAmountByStatus.length === 0" class="text-muted-foreground flex h-48 items-center justify-center text-sm">
+              Aucune donnée
+            </div>
+            <BarChart
+              v-else
+              :data="chartAmountByStatus"
+              :categories="['amount']"
+              index="statusLabel"
+              class="h-48"
+              type="grouped"
+              :y-formatter="(v: number) => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(v)"
+            />
+          </CardContent>
+        </Card>
+      </div>
 
       <Card class="@container/card">
         <CardHeader>
