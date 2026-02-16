@@ -58,8 +58,15 @@ export function useAuthRole() {
   }
 
   async function signOut() {
-    if (supabase)
-      await supabase.auth.signOut()
+    try {
+      if (supabase) {
+        // scope: 'local' évite un 403 possible sur /auth/v1/logout (Supabase) tout en déconnectant l'app
+        await supabase.auth.signOut({ scope: 'local' })
+      }
+    }
+    catch (_e) {
+      // Même en cas d'erreur (ex. 403), on nettoie l'état local
+    }
     state.value.user = null
     state.value.role = null
     state.value.profile = null
