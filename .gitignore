@@ -6,6 +6,10 @@
 .cache
 dist
 
+# Reference app build outputs
+credit-flow-reference/dev-dist
+credit-flow-reference/dist
+
 # Node dependencies
 node_modules
 

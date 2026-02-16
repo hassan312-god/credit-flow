@@ -1,0 +1,631 @@
+import { format } from 'date-fns'
+import {
+  AlertCircle,
+  Bell,
+  Building2,
+  Database,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  Loader2,
+  Save,
+  Settings as SettingsIcon,
+  Shield,
+} from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
+import { MainLayout } from '@/components/layout/MainLayout'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
+import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/integrations/supabase/client'
+import { logExportActivity, maskSensitiveData, SENSITIVE_FIELDS } from '@/utils/dataExportUtils'
+import { exportToPDF, exportToXLSX } from '@/utils/exportUtils'
+
+export default function Settings() {
+  const { role } = useAuth()
+  const [loading, setLoading] = useState(false)
+  const [loadingSettings, setLoadingSettings] = useState(true)
+
+  // Updater hook (uniquement disponible dans l'app Tauri)
+  const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+  let updater: any = null
+
+  if (isTauri) {
+    try {
+      // Import dynamique pour éviter les erreurs en mode web
+      const updaterModule = require('@/hooks/useUpdater')
+      updater = updaterModule.useUpdater()
+    }
+    catch (e) {
+      console.warn('Updater not available:', e)
+    }
+  }
+
+  // Paramètres généraux
+  const [companyName, setCompanyName] = useState('N\'FA KA SÉRUM')
+  const [currency, setCurrency] = useState('XOF')
+  const [language, setLanguage] = useState('fr')
+
+  // Paramètres de notification
+  const [emailNotifications, setEmailNotifications] = useState(true)
+  const [paymentReminders, setPaymentReminders] = useState(true)
+  const [overdueAlerts, setOverdueAlerts] = useState(true)
+  const [reminderDays, setReminderDays] = useState('3')
+
+  // Paramètres de sécurité
+  const [sessionTimeout, setSessionTimeout] = useState('30')
+  const [requireStrongPassword, setRequireStrongPassword] = useState(true)
+  const [twoFactorAuth, setTwoFactorAuth] = useState(false)
+
+  // Paramètres de verrouillage de compte
+  const [lockoutMaxAttempts, setLockoutMaxAttempts] = useState('5')
+  const [lockoutDuration, setLockoutDuration] = useState('15')
+
+  // Paramètres de l'application
+  const [autoBackup, setAutoBackup] = useState(true)
+  const [backupFrequency, setBackupFrequency] = useState('daily')
+  const [maxFileSize, setMaxFileSize] = useState('10')
+
+  // Charger les paramètres depuis la base de données
+  useEffect(() => {
+    const loadSettings = async () => {
+      if (role !== 'admin')
+        return
+
+      try {
+        const { data, error } = await supabase
+          .from('app_settings' as any)
+          .select('key, value')
+          .order('key')
+
+        if (error)
+          throw error
+
+        if (data) {
+          const settingsMap = new Map((data as any[]).map((s: any) => [s.key, s.value]))
+
+          // Charger les valeurs
+          if (settingsMap.has('company_name'))
+            setCompanyName(settingsMap.get('company_name') as string)
+          if (settingsMap.has('currency'))
+            setCurrency(settingsMap.get('currency') as string)
+          if (settingsMap.has('language'))
+            setLanguage(settingsMap.get('language') as string)
+          if (settingsMap.has('email_notifications'))
+            setEmailNotifications(settingsMap.get('email_notifications') as boolean)
+          if (settingsMap.has('payment_reminders'))
+            setPaymentReminders(settingsMap.get('payment_reminders') as boolean)
+          if (settingsMap.has('overdue_alerts'))
+            setOverdueAlerts(settingsMap.get('overdue_alerts') as boolean)
+          if (settingsMap.has('reminder_days')) {
+            const value = settingsMap.get('reminder_days')
+            setReminderDays(typeof value === 'number' ? String(value) : String(value || '3'))
+          }
+          if (settingsMap.has('session_timeout')) {
+            const value = settingsMap.get('session_timeout')
+            setSessionTimeout(typeof value === 'number' ? String(value) : String(value || '30'))
+          }
+          if (settingsMap.has('require_strong_password'))
+            setRequireStrongPassword(settingsMap.get('require_strong_password') as boolean)
+          if (settingsMap.has('two_factor_auth'))
+            setTwoFactorAuth(settingsMap.get('two_factor_auth') as boolean)
+          if (settingsMap.has('auto_backup'))
+            setAutoBackup(settingsMap.get('auto_backup') as boolean)
+          if (settingsMap.has('backup_frequency'))
+            setBackupFrequency(settingsMap.get('backup_frequency') as string)
+          if (settingsMap.has('max_file_size')) {
+            const value = settingsMap.get('max_file_size')
+            setMaxFileSize(typeof value === 'number' ? String(value) : String(value || '10'))
+          }
+          if (settingsMap.has('lockout_max_attempts')) {
+            const value = settingsMap.get('lockout_max_attempts')
+            setLockoutMaxAttempts(typeof value === 'number' ? String(value) : String(value || '5'))
+          }
+          if (settingsMap.has('lockout_duration_minutes')) {
+            const value = settingsMap.get('lockout_duration_minutes')
+            setLockoutDuration(typeof value === 'number' ? String(value) : String(value || '15'))
+          }
+        }
+      }
+      catch (error) {
+        console.error('Error loading settings:', error)
+        toast.error('Erreur lors du chargement des paramètres')
+      }
+      finally {
+        setLoadingSettings(false)
+      }
+    }
+
+    loadSettings()
+  }, [role])
+
+  // Vérifier l'accès administrateur
+  if (role !== 'admin') {
+    return (
+      <MainLayout>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Accès refusé</AlertTitle>
+          <AlertDescription>
+            Seuls les administrateurs peuvent accéder aux paramètres.
+          </AlertDescription>
+        </Alert>
+      </MainLayout>
+    )
+  }
+
+  const handleSave = async () => {
+    setLoading(true)
+    try {
+      const settings = [
+        { key: 'company_name', value: companyName },
+        { key: 'currency', value: currency },
+        { key: 'language', value: language },
+        { key: 'email_notifications', value: emailNotifications },
+        { key: 'payment_reminders', value: paymentReminders },
+        { key: 'overdue_alerts', value: overdueAlerts },
+        { key: 'reminder_days', value: reminderDays },
+        { key: 'session_timeout', value: sessionTimeout },
+        { key: 'require_strong_password', value: requireStrongPassword },
+        { key: 'two_factor_auth', value: twoFactorAuth },
+        { key: 'auto_backup', value: autoBackup },
+        { key: 'backup_frequency', value: backupFrequency },
+        { key: 'max_file_size', value: maxFileSize },
+        { key: 'lockout_max_attempts', value: Number.parseInt(lockoutMaxAttempts) },
+        { key: 'lockout_duration_minutes', value: Number.parseInt(lockoutDuration) },
+      ]
+
+      // Sauvegarder chaque paramètre (upsert)
+      for (const setting of settings) {
+        const { error } = await supabase
+          .from('app_settings' as any)
+          .upsert(
+            { key: setting.key, value: setting.value } as any,
+            { onConflict: 'key' },
+          )
+
+        if (error)
+          throw error
+      }
+
+      toast.success('Paramètres sauvegardés avec succès !')
+    }
+    catch (error) {
+      console.error('Error saving settings:', error)
+      toast.error('Erreur lors de la sauvegarde des paramètres')
+    }
+    finally {
+      setLoading(false)
+    }
+  }
+
+  if (loadingSettings) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    )
+  }
+
+  return (
+    <MainLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-bold flex items-center gap-3">
+              <SettingsIcon className="w-8 h-8" />
+              Paramètres
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Gérez les paramètres de l'application et configurez les préférences système
+            </p>
+          </div>
+          <Button onClick={handleSave} disabled={loading} className="gap-2">
+            {loading
+              ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Sauvegarde...
+                  </>
+                )
+              : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Enregistrer
+                  </>
+                )}
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Paramètres généraux */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-primary" />
+                <CardTitle>Paramètres généraux</CardTitle>
+              </div>
+              <CardDescription>
+                Configurez les informations de base de l'entreprise
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="company-name">Nom de l'entreprise</Label>
+                <Input
+                  id="company-name"
+                  value={companyName}
+                  onChange={e => setCompanyName(e.target.value)}
+                  placeholder="Nom de l'entreprise"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="currency">Devise</Label>
+                <Select value={currency} onValueChange={setCurrency}>
+                  <SelectTrigger id="currency">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="XOF">XOF (Franc CFA)</SelectItem>
+                    <SelectItem value="EUR">EUR (Euro)</SelectItem>
+                    <SelectItem value="USD">USD (Dollar)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="language">Langue</Label>
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger id="language">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fr">Français</SelectItem>
+                    <SelectItem value="en">English</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Paramètres de notification */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Bell className="w-5 h-5 text-primary" />
+                <CardTitle>Notifications</CardTitle>
+              </div>
+              <CardDescription>
+                Configurez les alertes et notifications du système
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Notifications par email</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Recevoir des notifications par email
+                  </p>
+                </div>
+                <Switch
+                  checked={emailNotifications}
+                  onCheckedChange={setEmailNotifications}
+                />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Rappels de paiement</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Activer les rappels automatiques
+                  </p>
+                </div>
+                <Switch
+                  checked={paymentReminders}
+                  onCheckedChange={setPaymentReminders}
+                />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Alertes de retard</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Notifier les retards de paiement
+                  </p>
+                </div>
+                <Switch
+                  checked={overdueAlerts}
+                  onCheckedChange={setOverdueAlerts}
+                />
+              </div>
+              {paymentReminders && (
+                <div className="space-y-2 pt-2">
+                  <Label htmlFor="reminder-days">Délai avant échéance</Label>
+                  <Select value={reminderDays} onValueChange={setReminderDays}>
+                    <SelectTrigger id="reminder-days">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 jour</SelectItem>
+                      <SelectItem value="3">3 jours</SelectItem>
+                      <SelectItem value="7">1 semaine (7 jours)</SelectItem>
+                      <SelectItem value="14">2 semaines (14 jours)</SelectItem>
+                      <SelectItem value="15">15 jours</SelectItem>
+                      <SelectItem value="21">3 semaines (21 jours)</SelectItem>
+                      <SelectItem value="30">1 mois (30 jours)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Paramètres de sécurité */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-primary" />
+                <CardTitle>Sécurité</CardTitle>
+              </div>
+              <CardDescription>
+                Paramètres de sécurité et authentification
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="session-timeout">Délai d'expiration de session (minutes)</Label>
+                <Select value={sessionTimeout} onValueChange={setSessionTimeout}>
+                  <SelectTrigger id="session-timeout">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="15">15 minutes</SelectItem>
+                    <SelectItem value="30">30 minutes</SelectItem>
+                    <SelectItem value="60">1 heure</SelectItem>
+                    <SelectItem value="120">2 heures</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Mots de passe forts requis</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Exiger des mots de passe complexes
+                  </p>
+                </div>
+                <Switch
+                  checked={requireStrongPassword}
+                  onCheckedChange={setRequireStrongPassword}
+                />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Authentification à deux facteurs</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Activer la 2FA pour tous les utilisateurs
+                  </p>
+                </div>
+                <Switch
+                  checked={twoFactorAuth}
+                  onCheckedChange={setTwoFactorAuth}
+                />
+              </div>
+              <Separator />
+              <div className="space-y-2">
+                <Label htmlFor="lockout-attempts">Verrouillage après tentatives échouées</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Nombre de tentatives avant verrouillage du compte
+                </p>
+                <Select value={lockoutMaxAttempts} onValueChange={setLockoutMaxAttempts}>
+                  <SelectTrigger id="lockout-attempts">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">3 tentatives</SelectItem>
+                    <SelectItem value="5">5 tentatives</SelectItem>
+                    <SelectItem value="10">10 tentatives</SelectItem>
+                    <SelectItem value="15">15 tentatives</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lockout-duration">Durée de verrouillage</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Durée pendant laquelle le compte reste verrouillé
+                </p>
+                <Select value={lockoutDuration} onValueChange={setLockoutDuration}>
+                  <SelectTrigger id="lockout-duration">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5 minutes</SelectItem>
+                    <SelectItem value="15">15 minutes</SelectItem>
+                    <SelectItem value="30">30 minutes</SelectItem>
+                    <SelectItem value="60">1 heure</SelectItem>
+                    <SelectItem value="120">2 heures</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Paramètres de l'application */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Database className="w-5 h-5 text-primary" />
+                <CardTitle>Sauvegarde et données</CardTitle>
+              </div>
+              <CardDescription>
+                Gestion des sauvegardes et des données
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Sauvegarde automatique</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Effectuer des sauvegardes automatiques
+                  </p>
+                </div>
+                <Switch
+                  checked={autoBackup}
+                  onCheckedChange={setAutoBackup}
+                />
+              </div>
+              {autoBackup && (
+                <>
+                  <Separator />
+                  <div className="space-y-2">
+                    <Label htmlFor="backup-frequency">Fréquence de sauvegarde</Label>
+                    <Select value={backupFrequency} onValueChange={setBackupFrequency}>
+                      <SelectTrigger id="backup-frequency">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="hourly">Toutes les heures</SelectItem>
+                        <SelectItem value="daily">Quotidienne</SelectItem>
+                        <SelectItem value="weekly">Hebdomadaire</SelectItem>
+                        <SelectItem value="monthly">Mensuelle</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+              <Separator />
+              <div className="space-y-2">
+                <Label htmlFor="max-file-size">Taille maximale des fichiers (MB)</Label>
+                <Select value={maxFileSize} onValueChange={setMaxFileSize}>
+                  <SelectTrigger id="max-file-size">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5 MB</SelectItem>
+                    <SelectItem value="10">10 MB</SelectItem>
+                    <SelectItem value="25">25 MB</SelectItem>
+                    <SelectItem value="50">50 MB</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Separator />
+              <div className="flex gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="flex-1">
+                      <Download className="w-4 h-4 mr-2" />
+                      Exporter les données
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={async () => {
+                      try {
+                        const { data: clients, error: clientsError } = await supabase.from('clients').select('*')
+                        if (clientsError)
+                          throw clientsError
+
+                        const { data: loans, error: loansError } = await supabase.from('loans').select('*')
+                        if (loansError)
+                          throw loansError
+
+                        const { data: payments, error: paymentsError } = await supabase.from('payments').select('*')
+                        if (paymentsError)
+                          throw paymentsError
+
+                        // Mask sensitive data before export
+                        const maskedClients = maskSensitiveData(clients || [], SENSITIVE_FIELDS)
+                        const maskedLoans = loans || []
+                        const maskedPayments = payments || []
+
+                        const allData = [
+                          ...maskedClients.map(c => ({ Type: 'Client', ...c })),
+                          ...maskedLoans.map(l => ({ Type: 'Prêt', ...l })),
+                          ...maskedPayments.map(p => ({ Type: 'Paiement', ...p })),
+                        ]
+
+                        const totalRecords = (clients?.length || 0) + (loans?.length || 0) + (payments?.length || 0)
+
+                        // Log export activity for audit trail
+                        await logExportActivity('PDF', 'clients,loans,payments', totalRecords)
+
+                        const headers = ['Type', ...Object.keys(allData[0] || {}).filter(k => k !== 'Type')]
+                        const rows = allData.map(item => headers.map(h => String(item[h as keyof typeof item] || '')))
+                        exportToPDF(rows, headers, `export-donnees-${format(new Date(), 'yyyy-MM-dd')}`, 'Export des données')
+                        toast.success('Export PDF généré avec succès')
+                      }
+                      catch (error) {
+                        console.error('Error exporting data:', error)
+                        toast.error('Erreur lors de l\'export')
+                      }
+                    }}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Exporter en PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={async () => {
+                      try {
+                        const { data: clients, error: clientsError } = await supabase.from('clients').select('*')
+                        if (clientsError)
+                          throw clientsError
+
+                        const { data: loans, error: loansError } = await supabase.from('loans').select('*')
+                        if (loansError)
+                          throw loansError
+
+                        const { data: payments, error: paymentsError } = await supabase.from('payments').select('*')
+                        if (paymentsError)
+                          throw paymentsError
+
+                        // Mask sensitive data before export
+                        const maskedClients = maskSensitiveData(clients || [], SENSITIVE_FIELDS)
+                        const maskedLoans = loans || []
+                        const maskedPayments = payments || []
+
+                        const allData = [
+                          ...maskedClients.map(c => ({ Type: 'Client', ...c })),
+                          ...maskedLoans.map(l => ({ Type: 'Prêt', ...l })),
+                          ...maskedPayments.map(p => ({ Type: 'Paiement', ...p })),
+                        ]
+
+                        const totalRecords = (clients?.length || 0) + (loans?.length || 0) + (payments?.length || 0)
+
+                        // Log export activity for audit trail
+                        await logExportActivity('XLSX', 'clients,loans,payments', totalRecords)
+
+                        const headers = ['Type', ...Object.keys(allData[0] || {}).filter(k => k !== 'Type')]
+                        const rows = allData.map(item => headers.map(h => String(item[h as keyof typeof item] || '')))
+                        await exportToXLSX(rows, headers, `export-donnees-${format(new Date(), 'yyyy-MM-dd')}`, 'Export')
+                        toast.success('Export Excel généré avec succès')
+                      }
+                      catch (error) {
+                        console.error('Error exporting data:', error)
+                        toast.error('Erreur lors de l\'export')
+                      }
+                    }}
+                    >
+                      <FileSpreadsheet className="w-4 h-4 mr-2" />
+                      Exporter en Excel (XLSX)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button variant="outline" className="flex-1">
+                  Importer les données
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </MainLayout>
+  )
+}

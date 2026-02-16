@@ -1,0 +1,91 @@
+# Vérification des erreurs frontend, backend (Supabase) et secrets
+# Déclenché manuellement (workflow_dispatch) ou sur push/PR pour la CI
+name: Verify (Frontend, Backend, Secrets)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # Vérification des secrets GitHub (uniquement en déclenchement manuel)
+  verify-secrets:
+    name: Vérifier les secrets GitHub
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Vérifier TAURI_PRIVATE_KEY et TAURI_KEY_PASSWORD
+        run: |
+          echo "Vérification des secrets (les valeurs ne sont jamais affichées)..."
+          if [ -z "$TAURI_PRIVATE_KEY" ]; then
+            echo "::error::TAURI_PRIVATE_KEY n'est pas défini. Settings > Secrets and variables > Actions > TAURI_PRIVATE_KEY (contenu de src-tauri/tauri.key)"
+            exit 1
+          fi
+          if [ -z "$TAURI_KEY_PASSWORD" ]; then
+            echo "::error::TAURI_KEY_PASSWORD n'est pas défini. Ajoutez-le dans Settings > Secrets."
+            exit 1
+          fi
+          echo "Secrets TAURI configurés."
+        env:
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+
+  # Vérification frontend : lint + build
+  verify-frontend:
+    name: Vérifier le frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build frontend
+        run: npm run build
+
+  # Vérification du build Tauri (sans signature, pour valider Rust + frontend)
+  verify-tauri-build:
+    name: Vérifier le build Tauri
+    runs-on: ubuntu-latest
+    needs: verify-frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Tauri (no bundle, vérification uniquement)
+        run: npm run tauri build -- --no-bundle

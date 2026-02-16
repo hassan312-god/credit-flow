@@ -1,0 +1,11 @@
+{
+  "version": "0.1.0",
+  "notes": "Version 0.1.0 - Build de test local\n\nNouveautés :\n- Correction des erreurs d'affichage en mode desktop\n- Amélioration de la gestion des imports React\n- Configuration du système de mise à jour automatique\n- Build multi-plateforme fonctionnel\n\nCorrections :\n- Page blanche en mode desktop corrigée\n- Erreur createContext résolue\n- Optimisation du build Vite\n- Génération des signatures numériques",
+  "pub_date": "2025-02-03T10:45:00Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "SIGNATURE_PLACEHOLDER",
+      "url": "https://github.com/hassan312-god/credit-flow/releases/download/v0.1.0/N'FA%20KA%20SÉRUM_0.1.0_x64_en-US.msi"
+    }
+  }
+}

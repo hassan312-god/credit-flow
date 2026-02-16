@@ -1,0 +1,29 @@
+# This is a GitHub Actions workflow file
+
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Set up Rust
+        uses: rust-lang/rustup
+        with:
+          default-toolchain: stable
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          rust-version: stable
+
+      - name: Build
+        run: cargo build --release
