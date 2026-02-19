@@ -2,6 +2,7 @@
 import { Analytics } from '@vercel/analytics/nuxt'
 import { ConfigProvider } from 'reka-ui'
 import { Toaster } from '@/components/ui/sonner'
+import { defineShortcuts } from '~/composables/defineShortcuts'
 import { useAppSettings } from '~/composables/useAppSettings'
 import 'vue-sonner/style.css'
 

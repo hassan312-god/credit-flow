@@ -1,6 +1,7 @@
 import type { User } from '@supabase/supabase-js'
 import type { AppRole } from '~/types/database'
 import { canAccessPath as checkPathAccess } from '~/constants/menuAccess'
+import { useSupabase } from '~/composables/useSupabase'
 
 export function useAuthRole() {
   const state = useState<{ user: User | null, role: AppRole | null, profile: { full_name: string, email: string, avatar_url?: string | null } | null, loading: boolean }>('auth-role-state', () => ({
