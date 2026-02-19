@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { onBeforeRouteLeave } from 'vue-router'
+
 definePageMeta({ layout: 'default' })
 
 const DAYS = [
@@ -21,12 +23,34 @@ interface WorkSchedule {
 }
 
 const supabase = useSupabase().value
+const { role } = useAuthRole()
 const schedules = ref<WorkSchedule[]>([])
 const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
+const dirty = ref(false)
+const autoSaveTimeout = ref<ReturnType<typeof setTimeout> | null>(null)
+
+/** Seuls admin et directeur peuvent modifier les horaires (cohérent avec RLS). */
+const canEdit = computed(() => role.value === 'admin' || role.value === 'directeur')
 
 const allSchedules = ref<{ id: string, day_of_week: number, start_time: string, end_time: string, is_active: boolean }[]>([])
+
+const AUTO_SAVE_DELAY_MS = 1200
+
+function scheduleAutoSave() {
+  if (!canEdit.value)
+    return
+  dirty.value = true
+  if (autoSaveTimeout.value)
+    clearTimeout(autoSaveTimeout.value)
+  autoSaveTimeout.value = setTimeout(() => {
+    autoSaveTimeout.value = null
+    saveAll().then(() => {
+      dirty.value = false
+    })
+  }, AUTO_SAVE_DELAY_MS)
+}
 
 async function fetchSchedules() {
   loading.value = true
@@ -75,18 +99,22 @@ async function fetchSchedules() {
 
 function setTime(dayOfWeek: number, field: 'start_time' | 'end_time', value: string) {
   const s = allSchedules.value.find(x => x.day_of_week === dayOfWeek)
-  if (s)
+  if (s) {
     s[field] = value
+    scheduleAutoSave()
+  }
 }
 
 function setActive(dayOfWeek: number, isActive: boolean) {
   const s = allSchedules.value.find(x => x.day_of_week === dayOfWeek)
-  if (s)
+  if (s) {
     s.is_active = isActive
+    scheduleAutoSave()
+  }
 }
 
 async function saveAll() {
-  if (!supabase)
+  if (!supabase || !canEdit.value)
     return
   saving.value = true
   error.value = ''
@@ -114,6 +142,18 @@ async function saveAll() {
   }
 }
 
+onBeforeRouteLeave(async (_to, _from, next) => {
+  if (autoSaveTimeout.value) {
+    clearTimeout(autoSaveTimeout.value)
+    autoSaveTimeout.value = null
+  }
+  if (dirty.value || saving.value) {
+    await saveAll()
+    dirty.value = false
+  }
+  next()
+})
+
 onMounted(() => fetchSchedules())
 </script>
 
@@ -123,15 +163,21 @@ onMounted(() => fetchSchedules())
       <h2 class="text-2xl font-bold tracking-tight">
         Horaires de travail
       </h2>
-      <Button :disabled="loading || saving" @click="saveAll">
-        {{ saving ? 'Enregistrement…' : 'Enregistrer tout' }}
+      <Button :disabled="loading || saving || !canEdit" @click="saveAll">
+        {{ saving ? 'Enregistrement…' : dirty ? 'Enregistrer maintenant' : 'Enregistrer tout' }}
       </Button>
     </div>
     <p class="text-muted-foreground text-sm">
-      Définissez les horaires pour chaque jour. Les directeurs et admins peuvent modifier. Enregistrez pour appliquer à tous les employés.
+      Définissez les horaires pour chaque jour. Seuls les directeurs et administrateurs peuvent les modifier ; les changements sont enregistrés automatiquement.
+    </p>
+    <p v-if="!canEdit" class="text-amber-600 dark:text-amber-400 text-sm">
+      Vous n'avez pas les droits pour modifier les horaires. Seuls les administrateurs et directeurs peuvent les changer.
     </p>
     <p v-if="error" class="text-destructive text-sm">
       {{ error }}
+    </p>
+    <p v-if="dirty && !saving" class="text-muted-foreground text-xs">
+      Modifications en cours d'enregistrement…
     </p>
     <div v-if="loading" class="py-12 text-center text-muted-foreground">
       Chargement…
@@ -145,7 +191,11 @@ onMounted(() => fetchSchedules())
         </CardHeader>
         <CardContent class="flex flex-col gap-3">
           <div class="flex items-center gap-2">
-            <Switch :checked="s.is_active" @update:checked="(v: boolean) => setActive(s.day_of_week, v)" />
+            <Switch
+              :checked="s.is_active"
+              :disabled="!canEdit"
+              @update:checked="(v: boolean) => setActive(s.day_of_week, v)"
+            />
             <span class="text-sm">Jour travaillé</span>
           </div>
           <div class="grid grid-cols-2 gap-2">
@@ -154,7 +204,7 @@ onMounted(() => fetchSchedules())
               <Input
                 type="time"
                 :value="s.start_time"
-                :disabled="!s.is_active"
+                :disabled="!s.is_active || !canEdit"
                 @input="setTime(s.day_of_week, 'start_time', (($event.target as HTMLInputElement).value))"
               />
             </div>
@@ -163,7 +213,7 @@ onMounted(() => fetchSchedules())
               <Input
                 type="time"
                 :value="s.end_time"
-                :disabled="!s.is_active"
+                :disabled="!s.is_active || !canEdit"
                 @input="setTime(s.day_of_week, 'end_time', (($event.target as HTMLInputElement).value))"
               />
             </div>

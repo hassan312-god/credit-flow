@@ -1,4 +1,6 @@
 <script setup>
+import { useAppSettings } from '~/composables/useAppSettings'
+
 const { theme } = useAppSettings()
 
 useHead({

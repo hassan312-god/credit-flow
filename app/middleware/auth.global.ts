@@ -1,3 +1,5 @@
+import { useAuthRole } from '~/composables/useAuthRole'
+
 const publicPaths = ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth']
 
 export default defineNuxtRouteMiddleware((to) => {

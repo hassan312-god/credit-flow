@@ -2,7 +2,11 @@
 import { Analytics } from '@vercel/analytics/nuxt'
 import { ConfigProvider } from 'reka-ui'
 import { Toaster } from '@/components/ui/sonner'
+import { useAppSettings } from '~/composables/useAppSettings'
 import 'vue-sonner/style.css'
+
+/** Évite "Invalid vnode" / "missing template" si le module Analytics n'expose pas un vrai composant (ex. en dev). */
+const hasAnalytics = computed(() => Boolean(Analytics && typeof Analytics === 'object' && ('render' in Analytics || 'template' in Analytics || 'setup' in Analytics)))
 
 const colorMode = useColorMode()
 // theme-color: valeur neutre en SSR pour limiter les hydration mismatches
@@ -57,7 +61,7 @@ const dir = computed(() => textDirection.value === 'rtl' ? 'rtl' : 'ltr')
 </script>
 
 <template>
-  <Body class="overscroll-none antialiased bg-background text-foreground">
+  <div class="overscroll-none antialiased bg-background text-foreground min-h-svh">
     <ConfigProvider :dir="dir">
       <div id="app" vaul-drawer-wrapper class="relative">
         <NuxtLayout>
@@ -71,8 +75,8 @@ const dir = computed(() => textDirection.value === 'rtl' ? 'rtl' : 'ltr')
     </ConfigProvider>
 
     <ClientOnly>
-      <Analytics />
+      <component :is="Analytics" v-if="hasAnalytics" />
       <template #fallback></template>
     </ClientOnly>
-  </Body>
+  </div>
 </template>
