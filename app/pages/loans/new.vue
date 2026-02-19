@@ -8,6 +8,7 @@ type ClientRow = Database['public']['Tables']['clients']['Row']
 
 const route = useRoute()
 const router = useRouter()
+const { user } = useAuthRole()
 const clients = ref<ClientRow[]>([])
 const loadingClients = ref(true)
 const submitting = ref(false)
@@ -91,6 +92,7 @@ async function submit() {
         status: 'en_attente',
         total_amount: totalAmount.value,
         monthly_payment: monthlyPayment.value,
+        created_by: user.value?.id ?? null,
       })
       .select('id')
       .single()

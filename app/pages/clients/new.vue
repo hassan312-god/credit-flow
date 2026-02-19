@@ -3,6 +3,8 @@ import { ArrowLeft } from 'lucide-vue-next'
 
 definePageMeta({ layout: 'default' })
 
+const { user } = useAuthRole()
+
 const form = ref({
   full_name: '',
   phone: '',
@@ -39,6 +41,7 @@ async function submit() {
       address: form.value.address?.trim() || null,
       profession: form.value.profession?.trim() || null,
       monthly_income: form.value.monthly_income === '' ? null : Number(form.value.monthly_income),
+      created_by: user.value?.id ?? null,
     })
     if (e)
       throw e

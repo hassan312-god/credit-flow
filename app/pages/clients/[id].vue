@@ -41,7 +41,8 @@ const deleting = ref(false)
 const deleteError = ref('')
 
 const { role } = useAuthRole()
-const canDeleteClient = computed(() => role.value === 'directeur' || role.value === 'admin')
+/** Seul le directeur peut supprimer un client (et tout ses prêts / paiements). Cohérent avec la RLS. */
+const canDeleteClient = computed(() => role.value === 'directeur')
 
 const statusLabels: Record<LoanStatus, string> = {
   en_attente: 'En attente',
@@ -299,7 +300,7 @@ watch(clientId, () => fetchData())
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer ce client ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. Tous les prêts associés à ce client seront également supprimés. Souhaitez-vous continuer ?
+              Cette action est irréversible. Le client, tous ses prêts, les échéanciers et les paiements associés seront définitivement supprimés. Seul le directeur peut effectuer cette action. Continuer ?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <p v-if="deleteError" class="text-destructive text-sm">
