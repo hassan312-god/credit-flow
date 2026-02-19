@@ -103,7 +103,7 @@ function statusLabel(s: LoanStatus) {
   return labels[s] || s
 }
 
-/** Taux de prêts remboursés (0–100) pour le graphique radial */
+/** Taux de prêts remboursés (0–100) pour le graphique radial (style Recharts RadialBarChart) */
 const repaymentRate = computed(() => {
   const total = stats.value.totalLoans
   if (total === 0)
@@ -111,14 +111,21 @@ const repaymentRate = computed(() => {
   return Math.round((stats.value.repaidLoans / total) * 100)
 })
 
-/** Circonférence du cercle (rayon 60, stroke ~24) pour le radial */
-const RADIAL_SIZE = 140
-const RADIUS = 56
-const STROKE = 20
-const circumference = 2 * Math.PI * RADIUS
+// Dimensions du radial (alignées sur le design: innerRadius 80, outerRadius 140)
+const RADIAL_CX = 140
+const RADIAL_CY = 140
+const RADIAL_INNER = 80
+const RADIAL_OUTER = 140
+const RADIAL_GRID_INNER = 74
+const RADIAL_GRID_OUTER = 86
+const RADIAL_VIEW_SIZE = 280
+
+/** Rayon moyen du ring pour stroke-dasharray (80–140 → 110) */
+const radialRingRadius = 110
+const radialRingCircumference = 2 * Math.PI * radialRingRadius
 const radialStrokeDash = computed(() => {
   const p = Math.min(100, Math.max(0, repaymentRate.value))
-  return (p / 100) * circumference
+  return (p / 100) * radialRingCircumference
 })
 </script>
 
@@ -229,49 +236,71 @@ const radialStrokeDash = computed(() => {
               Prêts remboursés par rapport au total
             </CardDescription>
           </CardHeader>
-          <CardContent class="flex flex-1 flex-col items-center justify-center pb-0">
-            <div
-              class="relative mx-auto flex aspect-square max-h-[250px] items-center justify-center"
-              :style="{ width: `${RADIAL_SIZE}px`, height: `${RADIAL_SIZE}px` }"
-            >
+          <CardContent class="flex flex-1 pb-0">
+            <div class="mx-auto aspect-square max-h-[250px] w-full max-w-[250px]">
               <svg
                 class="size-full -rotate-90"
-                viewBox="0 0 140 140"
+                :viewBox="`0 0 ${RADIAL_VIEW_SIZE} ${RADIAL_VIEW_SIZE}`"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                <!-- Cercle de fond -->
+                <!-- PolarGrid: deux cercles (first:fill-muted last:fill-background) -->
                 <circle
-                  cx="70"
-                  cy="70"
-                  :r="RADIUS"
-                  stroke="currentColor"
-                  stroke-width="10"
-                  fill="none"
-                  class="text-muted/30"
+                  :cx="RADIAL_CX"
+                  :cy="RADIAL_CY"
+                  :r="RADIAL_GRID_INNER"
+                  class="fill-muted"
                 />
-                <!-- Arc de progression (couleur chart-2) -->
                 <circle
-                  cx="70"
-                  cy="70"
-                  :r="RADIUS"
+                  :cx="RADIAL_CX"
+                  :cy="RADIAL_CY"
+                  :r="RADIAL_GRID_OUTER"
+                  class="fill-background"
+                />
+                <!-- Ring 80–140: piste de fond (full circle) -->
+                <circle
+                  :cx="RADIAL_CX"
+                  :cy="RADIAL_CY"
+                  :r="radialRingRadius"
+                  stroke="currentColor"
+                  :stroke-width="RADIAL_OUTER - RADIAL_INNER"
+                  fill="none"
+                  class="text-muted/40"
+                />
+                <!-- Ring 80–140: barre de progression (chart-2) -->
+                <circle
+                  :cx="RADIAL_CX"
+                  :cy="RADIAL_CY"
+                  :r="radialRingRadius"
                   stroke="var(--color-chart-2, var(--chart-2))"
-                  stroke-width="10"
+                  :stroke-width="RADIAL_OUTER - RADIAL_INNER"
                   stroke-linecap="round"
                   fill="none"
-                  :stroke-dasharray="`${radialStrokeDash} ${circumference}`"
+                  :stroke-dasharray="`${radialStrokeDash} ${radialRingCircumference}`"
                   class="transition-[stroke-dasharray] duration-700 ease-out"
                 />
+                <!-- Label au centre (PolarRadiusAxis / Label) -->
+                <g :transform="`translate(${RADIAL_CX}, ${RADIAL_CY})`">
+                  <text
+                    x="0"
+                    y="0"
+                    text-anchor="middle"
+                    dominant-baseline="middle"
+                    class="fill-foreground text-4xl font-bold tabular-nums"
+                  >
+                    {{ repaymentRate }}%
+                  </text>
+                  <text
+                    x="0"
+                    y="24"
+                    text-anchor="middle"
+                    dominant-baseline="middle"
+                    class="fill-muted-foreground text-sm"
+                  >
+                    Remboursés
+                  </text>
+                </g>
               </svg>
-              <div class="absolute inset-0 flex flex-col items-center justify-center gap-0">
-                <span class="fill-foreground text-4xl font-bold tabular-nums">
-                  <NumberFlow :value="repaymentRate" />
-                  <span class="text-2xl">%</span>
-                </span>
-                <span class="fill-muted-foreground text-sm">
-                  Remboursés
-                </span>
-              </div>
             </div>
           </CardContent>
           <CardFooter class="flex-col gap-2 text-sm">

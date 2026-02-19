@@ -22,7 +22,7 @@ interface WorkSchedule {
   created_at: string
 }
 
-const supabase = useSupabase().value
+const supabaseRef = useSupabase()
 const { role } = useAuthRole()
 const schedules = ref<WorkSchedule[]>([])
 const loading = ref(true)
@@ -52,7 +52,13 @@ function scheduleAutoSave() {
   }, AUTO_SAVE_DELAY_MS)
 }
 
+/** Lit toujours le client Supabase à jour (évite null si le plugin n'était pas prêt au premier rendu). */
+function getSupabase() {
+  return supabaseRef?.value ?? null
+}
+
 async function fetchSchedules() {
+  const supabase = getSupabase()
   loading.value = true
   error.value = ''
   try {
@@ -69,11 +75,13 @@ async function fetchSchedules() {
     for (const day of DAYS) {
       const s = existing.find(x => x.day_of_week === day.value)
       if (s) {
+        const rawStart = s.start_time == null ? '' : String(s.start_time)
+        const rawEnd = s.end_time == null ? '' : String(s.end_time)
         allSchedules.value.push({
           id: s.id,
           day_of_week: s.day_of_week,
-          start_time: (s.start_time && String(s.start_time).slice(0, 5)) || '08:00',
-          end_time: (s.end_time && String(s.end_time).slice(0, 5)) || '17:00',
+          start_time: (rawStart.length >= 5 ? rawStart.slice(0, 5) : rawStart) || '08:00',
+          end_time: (rawEnd.length >= 5 ? rawEnd.slice(0, 5) : rawEnd) || '17:00',
           is_active: !!s.is_active,
         })
       }
@@ -114,16 +122,19 @@ function setActive(dayOfWeek: number, isActive: boolean) {
 }
 
 async function saveAll() {
+  const supabase = getSupabase()
   if (!supabase || !canEdit.value)
     return
   saving.value = true
   error.value = ''
   try {
     for (const s of allSchedules.value) {
+      const startStr = String(s.start_time).trim()
+      const endStr = String(s.end_time).trim()
       const payload = {
         day_of_week: s.day_of_week,
-        start_time: `${s.start_time}:00`.slice(0, 8),
-        end_time: `${s.end_time}:00`.slice(0, 8),
+        start_time: (startStr.length <= 5 ? `${startStr}:00`.slice(0, 8) : startStr.slice(0, 8)) || '08:00:00',
+        end_time: (endStr.length <= 5 ? `${endStr}:00`.slice(0, 8) : endStr.slice(0, 8)) || '17:00:00',
         is_active: s.is_active,
         updated_at: new Date().toISOString(),
         ...(s.id ? { id: s.id } : {}),
@@ -155,6 +166,9 @@ onBeforeRouteLeave(async (_to, _from, next) => {
 })
 
 onMounted(() => fetchSchedules())
+
+// Recharger les horaires quand on revient sur la page (navigation ou onglet) pour afficher les dernières données enregistrées
+onActivated(() => fetchSchedules())
 </script>
 
 <template>
